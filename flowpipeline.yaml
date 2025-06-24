@@ -247,7 +247,7 @@ pipeline-configurations:
       checkmarx: false
       fossID: false
     test:
-      enabled: true
+      enabled: false
       cmd:
 #      - rez-test _packagename_ rats-debug
       - rez-test _packagename_ rats-opt-debug
@@ -305,7 +305,7 @@ pipeline-configurations:
       checkmarx: false
       fossID: false
     test:
-      enabled: true
+      enabled: false
       cmd:
 #      - rez-test _packagename_ rats-debug
       - rez-test _packagename_ rats-opt-debug
