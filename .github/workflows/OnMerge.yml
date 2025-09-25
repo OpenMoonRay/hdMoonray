@@ -1,0 +1,21 @@
+name: After Merge
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - '**.md'
+      - '.github/**'
+      - 'flowpipeline.yaml'
+      - 'LICENSE'
+      - 'tsc/**'
+
+jobs:
+  MergeAction:
+    uses: dwanim/openmoonray/.github/workflows/SubmoduleUpdate.yml@main
+    with:
+      repo: "openmoonray"
+      branch: "main"
+    secrets: inherit
