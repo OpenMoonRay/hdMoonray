@@ -12,7 +12,17 @@ on:
       - 'LICENSE'
       - 'tsc/**'
 
+env:
+  CHATROOM: ${{ secrets.TRIGGER_RATS_CHATROOM }}
+
 jobs:
+  MergeMessage:
+    runs-on: EL9
+    steps:
+      - name: Report to Chat Room
+        run: |
+          curl -X POST -H 'Content-Type: application/json' --url ${CHATROOM} \
+              -d '{"text": "A push to the main branch of the $(basename ${{ github.repository }}) repo. A CI/RaTS test run should start in the next 5 minutes."}'
   MergeAction:
     uses: dwanim/openmoonray/.github/workflows/SubmoduleUpdate.yml@main
     with:
