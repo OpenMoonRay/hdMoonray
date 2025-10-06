@@ -31,7 +31,7 @@ RndrRenderer::RndrRenderer(uint32_t numThreads)
 
     // we use 1 less than the default number of threads chosen by moonray,
     // to allow the app to run...
-    // may want to use tbb::this_task_arena::max_concurrency() - 1 for Houdini setting?
+    // may want to use std::thread::hardware_concurrency() - 1 for Houdini setting?
     if (numThreads == 0) numThreads = mRenderOptions->getThreads() - 1;
     mRenderOptions->setThreads(numThreads);
     mRenderOptions->setRenderMode(moonray::rndr::RenderMode::PROGRESSIVE); // BATCH, PROGRESS_CHECKPOINT

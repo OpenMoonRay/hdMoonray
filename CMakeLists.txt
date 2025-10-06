@@ -31,6 +31,14 @@ if(NOT pxr_FOUND)
     find_package(pxr REQUIRED)
 endif()
 
+# This is needed for linking against the USD 0.25.5 libraries
+# as they depend on OpenGL but don't specify it in
+# their cmake config.
+# See:
+# * https://github.com/PixarAnimationStudios/OpenUSD/issues/3310
+# * https://github.com/PixarAnimationStudios/OpenUSD/pull/3205
+find_package(OpenGL REQUIRED)
+
 find_package(JPEG REQUIRED)
 find_package(OpenImageIO REQUIRED)
 
