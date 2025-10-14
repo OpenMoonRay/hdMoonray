@@ -73,6 +73,14 @@ variants = [
     ],
     [   # variant 4
         'os-rocky-9',
+        'refplat-houdini21.0',
+        'usd_imaging-0.25.5.1.x',
+        'openimageio-3.0',
+        'opt_level-optdebug',
+        'python-3.11'
+    ],
+    [   # variant 5
+        'os-rocky-9',
         'refplat-vfx2022.0',
         'usd_imaging-0.22.5.x.4',
         'openimageio-2.3.20.0.x',
