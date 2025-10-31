@@ -5,12 +5,15 @@ function(${PROJECT_NAME}_cxx_compile_definitions target)
     target_compile_definitions(${target}
         PRIVATE
             $<$<CONFIG:DEBUG>:
+                BOOST_NO_CXX98_FUNCTION_BASE
                 DEBUG                               # Enables extra validation/debugging code
             >
             $<$<CONFIG:RELWITHDEBINFO>:
+                BOOST_NO_CXX98_FUNCTION_BASE
                 BOOST_DISABLE_ASSERTS               # Disable BOOST_ASSERT macro
             >
             $<$<CONFIG:RELEASE>:
+                BOOST_NO_CXX98_FUNCTION_BASE
                 BOOST_DISABLE_ASSERTS               # Disable BOOST_ASSERT macro
             >
 
