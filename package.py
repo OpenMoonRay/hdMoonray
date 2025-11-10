@@ -74,7 +74,7 @@ variants = [
     [   # variant 4
         'os-rocky-9',
         'refplat-houdini21.0',
-        'usd_imaging-0.25.5.1.x',
+        'usd_imaging-0.25.5.1.x.5',
         'openimageio-3.0',
         'opt_level-optdebug',
         'python-3.11'
