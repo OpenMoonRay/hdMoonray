@@ -270,14 +270,14 @@ PerspectiveCamera("primaryCamera") {
     ["film_width_aperture"] = 20.9549999,
 }
 
-UserData("/world/plane.primvars:primId") {
-    ["float_key"] = "primId",
-    ["float_values_0"] = { 16},
-    ["rate"] = "constant",
-}
-
 UserData("/world/plane.primvars:displayColor") {
     ["color_key"] = "displayColor",
     ["color_values_0"] = { Rgb(1, 0, 0), Rgb(1, 0, 1), Rgb(1, 0, 0), Rgb(1, 0, 1)},
     ["rate"] = "vertex",
+}
+
+UserData("/world/plane.primvars:primId") {
+    ["float_key"] = "primId",
+    ["float_values_0"] = { 16},
+    ["rate"] = "constant",
 }

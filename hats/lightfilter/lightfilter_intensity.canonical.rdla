@@ -70,9 +70,9 @@ PerspectiveCamera("primaryCamera") {
     ["film_width_aperture"] = 240,
 }
 
-UserData("/wall.primvars:primId") {
+UserData("/floor.primvars:primId") {
     ["float_key"] = "primId",
-    ["float_values_0"] = { 1},
+    ["float_values_0"] = { 0},
     ["rate"] = "constant",
 }
 
@@ -82,8 +82,8 @@ IntensityLightFilter("/intensity") {
     ["invert"] = true,
 }
 
-UserData("/floor.primvars:primId") {
+UserData("/wall.primvars:primId") {
     ["float_key"] = "primId",
-    ["float_values_0"] = { 0},
+    ["float_values_0"] = { 1},
     ["rate"] = "constant",
 }

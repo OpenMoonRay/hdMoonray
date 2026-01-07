@@ -71,12 +71,6 @@ PerspectiveCamera("primaryCamera") {
     ["film_width_aperture"] = 20.9549999,
 }
 
-UserData("/box.primvars:primId") {
-    ["float_key"] = "primId",
-    ["float_values_0"] = { 1},
-    ["rate"] = "constant",
-}
-
 VdbVolume("/Material/shader") {
     ["color_mult"] = bind(undef(), Rgb(1, 0.800000012, 0.800000012)),
 }
@@ -85,4 +79,10 @@ UserData("/box.primvars:displayColor") {
     ["color_key"] = "displayColor",
     ["color_values_0"] = { Rgb(1, 1, 0), Rgb(0, 1, 1), Rgb(1, 0, 1)},
     ["rate"] = "uniform",
+}
+
+UserData("/box.primvars:primId") {
+    ["float_key"] = "primId",
+    ["float_values_0"] = { 1},
+    ["rate"] = "constant",
 }

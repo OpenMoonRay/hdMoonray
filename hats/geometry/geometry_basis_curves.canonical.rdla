@@ -82,27 +82,27 @@ PerspectiveCamera("primaryCamera") {
     ["film_width_aperture"] = 20.9549999,
 }
 
-UserData("/linear.primvars:displayColor") {
-    ["color_key"] = "displayColor",
-    ["color_values_0"] = { Rgb(1, 0, 0)},
-    ["rate"] = "constant",
-}
-
-UserData("/bspline.primvars:displayColor") {
-    ["color_key"] = "displayColor",
-    ["color_values_0"] = { Rgb(0, 1, 0)},
-    ["rate"] = "constant",
-}
-
 UserData("/bspline.primvars:primId") {
     ["float_key"] = "primId",
     ["float_values_0"] = { 1},
     ["rate"] = "constant",
 }
 
-UserData("/linear.primvars:primId") {
-    ["float_key"] = "primId",
-    ["float_values_0"] = { 0},
+UserData("/linear.primvars:displayColor") {
+    ["color_key"] = "displayColor",
+    ["color_values_0"] = { Rgb(1, 0, 0)},
+    ["rate"] = "constant",
+}
+
+UserData("/bezier.primvars:displayColor") {
+    ["color_key"] = "displayColor",
+    ["color_values_0"] = { Rgb(0, 0, 1), Rgb(0, 1, 0), Rgb(0, 1, 1), Rgb(1, 0, 0), Rgb(1, 0, 1), Rgb(1, 1, 0), Rgb(1, 1, 1)},
+    ["rate"] = "vertex",
+}
+
+UserData("/bspline.primvars:displayColor") {
+    ["color_key"] = "displayColor",
+    ["color_values_0"] = { Rgb(0, 1, 0)},
     ["rate"] = "constant",
 }
 
@@ -112,8 +112,8 @@ UserData("/bezier.primvars:primId") {
     ["rate"] = "constant",
 }
 
-UserData("/bezier.primvars:displayColor") {
-    ["color_key"] = "displayColor",
-    ["color_values_0"] = { Rgb(0, 0, 1), Rgb(0, 1, 0), Rgb(0, 1, 1), Rgb(1, 0, 0), Rgb(1, 0, 1), Rgb(1, 1, 0), Rgb(1, 1, 1)},
-    ["rate"] = "vertex",
+UserData("/linear.primvars:primId") {
+    ["float_key"] = "primId",
+    ["float_values_0"] = { 0},
+    ["rate"] = "constant",
 }

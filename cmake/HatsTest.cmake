@@ -31,6 +31,8 @@ function(add_hats_test test_basename)
     set(input_usd ${CMAKE_CURRENT_SOURCE_DIR}/${test_basename}.usd)
     set(generated_rdl ${CMAKE_CURRENT_BINARY_DIR}/${test_basename}.rdla)
     set(canonical_rdl ${CMAKE_CURRENT_SOURCE_DIR}/${test_basename}.canonical.rdla)
+    set(generated_exr ${CMAKE_CURRENT_BINARY_DIR}/${test_basename}.exr)
+    set(canonical_exr ${CMAKE_CURRENT_BINARY_DIR}/${test_basename}.canonical.exr)
 
     set(generate_test_name hats_generate_${test_basename})
     add_test(NAME ${generate_test_name}
@@ -55,6 +57,15 @@ function(add_hats_test test_basename)
     )
     set_tests_properties(${compare_test_name} PROPERTIES
             LABELS "compare"
+            DEPENDS ${generate_test_name}
+    )
+
+    set(render_test_name hats_render_${test_basename})
+    add_test(NAME ${render_test_name}
+             COMMAND moonray -in "${generated_rdl}" -out "${generated_exr}"
+    )
+    set_tests_properties(${render_test_name} PROPERTIES
+            LABELS "render"
             DEPENDS ${generate_test_name}
     )
 endfunction()

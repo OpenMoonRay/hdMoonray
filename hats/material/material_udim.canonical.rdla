@@ -85,14 +85,14 @@ PerspectiveCamera("primaryCamera") {
     ["film_width_aperture"] = 240,
 }
 
-UserData("/plane1/_.primvars:primId") {
-    ["float_key"] = "primId",
-    ["float_values_0"] = { 0},
-    ["rate"] = "constant",
-}
-
 UserData("/plane2/_.primvars:primId") {
     ["float_key"] = "primId",
     ["float_values_0"] = { 1},
+    ["rate"] = "constant",
+}
+
+UserData("/plane1/_.primvars:primId") {
+    ["float_key"] = "primId",
+    ["float_values_0"] = { 0},
     ["rate"] = "constant",
 }

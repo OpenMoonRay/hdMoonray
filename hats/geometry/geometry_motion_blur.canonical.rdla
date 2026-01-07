@@ -227,63 +227,9 @@ PerspectiveCamera("primaryCamera") {
     ["film_width_aperture"] = 0.209549993,
 }
 
-UserData("/points_frame_delta/points_0.primvars:displayColor") {
+UserData("/grid_acceleration/mesh_0.primvars:displayColor") {
     ["color_key"] = "displayColor",
-    ["color_values_0"] = { Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0)},
-    ["rate"] = "vertex",
-}
-
-UserData("/grid_velocity/mesh_0.primvars:primId") {
-    ["float_key"] = "primId",
-    ["float_values_0"] = { 2},
-    ["rate"] = "constant",
-}
-
-UserData("/grid_frame_delta/mesh_0.primvars:displayColor") {
-    ["color_key"] = "displayColor",
-    ["color_values_0"] = { Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0)},
-    ["rate"] = "vertex",
-}
-
-UserData("/curves_hermite/curve_0.primvars:primId") {
-    ["float_key"] = "primId",
-    ["float_values_0"] = { 9},
-    ["rate"] = "constant",
-}
-
-UserData("/grid_acceleration/mesh_0.primvars:primId") {
-    ["float_key"] = "primId",
-    ["float_values_0"] = { 3},
-    ["rate"] = "constant",
-}
-
-UserData("/curves_acceleration/curve_0.primvars:primId") {
-    ["float_key"] = "primId",
-    ["float_values_0"] = { 8},
-    ["rate"] = "constant",
-}
-
-UserData("/points_velocity/points_0.primvars:displayColor") {
-    ["color_key"] = "displayColor",
-    ["color_values_0"] = { Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0)},
-    ["rate"] = "vertex",
-}
-
-UserData("/curves_frame_delta/curve_0.primvars:primId") {
-    ["float_key"] = "primId",
-    ["float_values_0"] = { 6},
-    ["rate"] = "constant",
-}
-
-UserData("/points_frame_delta/points_0.primvars:primId") {
-    ["float_key"] = "primId",
-    ["float_values_0"] = { 11},
-    ["rate"] = "constant",
-}
-
-UserData("/grid_velocity/mesh_0.primvars:displayColor") {
-    ["color_key"] = "displayColor",
-    ["color_values_0"] = { Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0)},
+    ["color_values_0"] = { Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1)},
     ["rate"] = "vertex",
 }
 
@@ -293,45 +239,15 @@ UserData("/curves_frame_delta/curve_0.primvars:displayColor") {
     ["rate"] = "vertex",
 }
 
-UserData("/points_hermite/points_0.primvars:displayColor") {
+UserData("/curves_node_xform/curve_0.primvars:displayColor") {
     ["color_key"] = "displayColor",
-    ["color_values_0"] = { Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1)},
+    ["color_values_0"] = { Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0)},
     ["rate"] = "vertex",
 }
 
-UserData("/points_velocity/points_0.primvars:primId") {
-    ["float_key"] = "primId",
-    ["float_values_0"] = { 12},
-    ["rate"] = "constant",
-}
-
-UserData("/points_hermite/points_0.primvars:primId") {
-    ["float_key"] = "primId",
-    ["float_values_0"] = { 14},
-    ["rate"] = "constant",
-}
-
-UserData("/grid_node_xform/mesh_0.primvars:primId") {
-    ["float_key"] = "primId",
-    ["float_values_0"] = { 0},
-    ["rate"] = "constant",
-}
-
-UserData("/grid_hermite/mesh_0.primvars:displayColor") {
+UserData("/grid_node_xform/mesh_0.primvars:displayColor") {
     ["color_key"] = "displayColor",
-    ["color_values_0"] = { Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1)},
-    ["rate"] = "vertex",
-}
-
-UserData("/curves_node_xform/curve_0.primvars:primId") {
-    ["float_key"] = "primId",
-    ["float_values_0"] = { 5},
-    ["rate"] = "constant",
-}
-
-UserData("/curves_acceleration/curve_0.primvars:displayColor") {
-    ["color_key"] = "displayColor",
-    ["color_values_0"] = { Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1)},
+    ["color_values_0"] = { Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0)},
     ["rate"] = "vertex",
 }
 
@@ -341,51 +257,21 @@ UserData("/grid_hermite/mesh_0.primvars:primId") {
     ["rate"] = "constant",
 }
 
-UserData("/points_acceleration/points_0.primvars:primId") {
+UserData("/curves_hermite/curve_0.primvars:primId") {
     ["float_key"] = "primId",
-    ["float_values_0"] = { 13},
+    ["float_values_0"] = { 9},
     ["rate"] = "constant",
 }
 
-UserData("/points_node_xform/points_0.primvars:primId") {
+UserData("/grid_velocity/mesh_0.primvars:primId") {
     ["float_key"] = "primId",
-    ["float_values_0"] = { 10},
+    ["float_values_0"] = { 2},
     ["rate"] = "constant",
 }
 
-UserData("/points_acceleration/points_0.primvars:displayColor") {
+UserData("/points_hermite/points_0.primvars:displayColor") {
     ["color_key"] = "displayColor",
-    ["color_values_0"] = { Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1)},
-    ["rate"] = "vertex",
-}
-
-UserData("/curves_velocity/curve_0.primvars:displayColor") {
-    ["color_key"] = "displayColor",
-    ["color_values_0"] = { Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0)},
-    ["rate"] = "vertex",
-}
-
-UserData("/grid_acceleration/mesh_0.primvars:displayColor") {
-    ["color_key"] = "displayColor",
-    ["color_values_0"] = { Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1)},
-    ["rate"] = "vertex",
-}
-
-UserData("/points_node_xform/points_0.primvars:displayColor") {
-    ["color_key"] = "displayColor",
-    ["color_values_0"] = { Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0)},
-    ["rate"] = "vertex",
-}
-
-UserData("/grid_frame_delta/mesh_0.primvars:primId") {
-    ["float_key"] = "primId",
-    ["float_values_0"] = { 1},
-    ["rate"] = "constant",
-}
-
-UserData("/curves_node_xform/curve_0.primvars:displayColor") {
-    ["color_key"] = "displayColor",
-    ["color_values_0"] = { Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0)},
+    ["color_values_0"] = { Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1)},
     ["rate"] = "vertex",
 }
 
@@ -395,14 +281,128 @@ UserData("/curves_hermite/curve_0.primvars:displayColor") {
     ["rate"] = "vertex",
 }
 
+UserData("/points_acceleration/points_0.primvars:displayColor") {
+    ["color_key"] = "displayColor",
+    ["color_values_0"] = { Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1)},
+    ["rate"] = "vertex",
+}
+
+UserData("/grid_frame_delta/mesh_0.primvars:primId") {
+    ["float_key"] = "primId",
+    ["float_values_0"] = { 1},
+    ["rate"] = "constant",
+}
+
+UserData("/curves_acceleration/curve_0.primvars:displayColor") {
+    ["color_key"] = "displayColor",
+    ["color_values_0"] = { Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1), Rgb(0, 0, 1)},
+    ["rate"] = "vertex",
+}
+
+UserData("/points_node_xform/points_0.primvars:displayColor") {
+    ["color_key"] = "displayColor",
+    ["color_values_0"] = { Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0)},
+    ["rate"] = "vertex",
+}
+
 UserData("/curves_velocity/curve_0.primvars:primId") {
     ["float_key"] = "primId",
     ["float_values_0"] = { 7},
     ["rate"] = "constant",
 }
 
-UserData("/grid_node_xform/mesh_0.primvars:displayColor") {
+UserData("/curves_acceleration/curve_0.primvars:primId") {
+    ["float_key"] = "primId",
+    ["float_values_0"] = { 8},
+    ["rate"] = "constant",
+}
+
+UserData("/grid_velocity/mesh_0.primvars:displayColor") {
     ["color_key"] = "displayColor",
-    ["color_values_0"] = { Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0), Rgb(1, 1, 0)},
+    ["color_values_0"] = { Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0)},
     ["rate"] = "vertex",
+}
+
+UserData("/grid_frame_delta/mesh_0.primvars:displayColor") {
+    ["color_key"] = "displayColor",
+    ["color_values_0"] = { Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0)},
+    ["rate"] = "vertex",
+}
+
+UserData("/grid_acceleration/mesh_0.primvars:primId") {
+    ["float_key"] = "primId",
+    ["float_values_0"] = { 3},
+    ["rate"] = "constant",
+}
+
+UserData("/points_frame_delta/points_0.primvars:displayColor") {
+    ["color_key"] = "displayColor",
+    ["color_values_0"] = { Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0), Rgb(1, 0, 0)},
+    ["rate"] = "vertex",
+}
+
+UserData("/curves_frame_delta/curve_0.primvars:primId") {
+    ["float_key"] = "primId",
+    ["float_values_0"] = { 6},
+    ["rate"] = "constant",
+}
+
+UserData("/curves_velocity/curve_0.primvars:displayColor") {
+    ["color_key"] = "displayColor",
+    ["color_values_0"] = { Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0)},
+    ["rate"] = "vertex",
+}
+
+UserData("/points_hermite/points_0.primvars:primId") {
+    ["float_key"] = "primId",
+    ["float_values_0"] = { 14},
+    ["rate"] = "constant",
+}
+
+UserData("/points_acceleration/points_0.primvars:primId") {
+    ["float_key"] = "primId",
+    ["float_values_0"] = { 13},
+    ["rate"] = "constant",
+}
+
+UserData("/points_velocity/points_0.primvars:displayColor") {
+    ["color_key"] = "displayColor",
+    ["color_values_0"] = { Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0), Rgb(0, 1, 0)},
+    ["rate"] = "vertex",
+}
+
+UserData("/curves_node_xform/curve_0.primvars:primId") {
+    ["float_key"] = "primId",
+    ["float_values_0"] = { 5},
+    ["rate"] = "constant",
+}
+
+UserData("/grid_node_xform/mesh_0.primvars:primId") {
+    ["float_key"] = "primId",
+    ["float_values_0"] = { 0},
+    ["rate"] = "constant",
+}
+
+UserData("/points_node_xform/points_0.primvars:primId") {
+    ["float_key"] = "primId",
+    ["float_values_0"] = { 10},
+    ["rate"] = "constant",
+}
+
+UserData("/grid_hermite/mesh_0.primvars:displayColor") {
+    ["color_key"] = "displayColor",
+    ["color_values_0"] = { Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1), Rgb(1, 0, 1)},
+    ["rate"] = "vertex",
+}
+
+UserData("/points_frame_delta/points_0.primvars:primId") {
+    ["float_key"] = "primId",
+    ["float_values_0"] = { 11},
+    ["rate"] = "constant",
+}
+
+UserData("/points_velocity/points_0.primvars:primId") {
+    ["float_key"] = "primId",
+    ["float_values_0"] = { 12},
+    ["rate"] = "constant",
 }

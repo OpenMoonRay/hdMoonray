@@ -70,14 +70,14 @@ UserData("/two_triangles.primvars:displayColor") {
     ["rate"] = "uniform",
 }
 
-UserData("/two_triangles.primvars:primId") {
-    ["float_key"] = "primId",
-    ["float_values_0"] = { 0},
-    ["rate"] = "constant",
-}
-
 UserData("/two_triangles.primvars:displayOpacity") {
     ["float_key"] = "displayOpacity",
     ["float_values_0"] = { 1},
     ["rate"] = "uniform",
+}
+
+UserData("/two_triangles.primvars:primId") {
+    ["float_key"] = "primId",
+    ["float_values_0"] = { 0},
+    ["rate"] = "constant",
 }

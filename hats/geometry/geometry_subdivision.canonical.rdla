@@ -172,54 +172,6 @@ PerspectiveCamera("primaryCamera") {
     ["film_width_aperture"] = 20.9549999,
 }
 
-UserData("/cubeCatmullSharpCorners.primvars:primId") {
-    ["float_key"] = "primId",
-    ["float_values_0"] = { 7},
-    ["rate"] = "constant",
-}
-
-UserData("/plane.primvars:primId") {
-    ["float_key"] = "primId",
-    ["float_values_0"] = { 9},
-    ["rate"] = "constant",
-}
-
-UserData("/cubeFaceVaryingAll.primvars:primId") {
-    ["float_key"] = "primId",
-    ["float_values_0"] = { 4},
-    ["rate"] = "constant",
-}
-
-UserData("/plane.primvars:displayColor") {
-    ["color_key"] = "displayColor",
-    ["color_values_0"] = { Rgb(1, 0, 0), Rgb(1, 0, 1), Rgb(1, 0, 0), Rgb(1, 0, 1)},
-    ["rate"] = "vertex",
-}
-
-UserData("/cubeCatmullCreases.primvars:primId") {
-    ["float_key"] = "primId",
-    ["float_values_0"] = { 8},
-    ["rate"] = "constant",
-}
-
-UserData("/cube.primvars:primId") {
-    ["float_key"] = "primId",
-    ["float_values_0"] = { 0},
-    ["rate"] = "constant",
-}
-
-UserData("/cubeCatmull.primvars:primId") {
-    ["float_key"] = "primId",
-    ["float_values_0"] = { 1},
-    ["rate"] = "constant",
-}
-
-UserData("/cubeBilinear.primvars:primId") {
-    ["float_key"] = "primId",
-    ["float_values_0"] = { 3},
-    ["rate"] = "constant",
-}
-
 UserData("/cubeCatmullTriangleSmooth.primvars:primId") {
     ["float_key"] = "primId",
     ["float_values_0"] = { 6},
@@ -232,8 +184,56 @@ UserData("/cubeLoop.primvars:primId") {
     ["rate"] = "constant",
 }
 
+UserData("/plane.primvars:displayColor") {
+    ["color_key"] = "displayColor",
+    ["color_values_0"] = { Rgb(1, 0, 0), Rgb(1, 0, 1), Rgb(1, 0, 0), Rgb(1, 0, 1)},
+    ["rate"] = "vertex",
+}
+
+UserData("/cubeFaceVaryingAll.primvars:primId") {
+    ["float_key"] = "primId",
+    ["float_values_0"] = { 4},
+    ["rate"] = "constant",
+}
+
+UserData("/cubeCatmull.primvars:primId") {
+    ["float_key"] = "primId",
+    ["float_values_0"] = { 1},
+    ["rate"] = "constant",
+}
+
 UserData("/cubeCatmullFaceVaryingAll.primvars:primId") {
     ["float_key"] = "primId",
     ["float_values_0"] = { 5},
+    ["rate"] = "constant",
+}
+
+UserData("/cubeCatmullSharpCorners.primvars:primId") {
+    ["float_key"] = "primId",
+    ["float_values_0"] = { 7},
+    ["rate"] = "constant",
+}
+
+UserData("/cubeCatmullCreases.primvars:primId") {
+    ["float_key"] = "primId",
+    ["float_values_0"] = { 8},
+    ["rate"] = "constant",
+}
+
+UserData("/plane.primvars:primId") {
+    ["float_key"] = "primId",
+    ["float_values_0"] = { 9},
+    ["rate"] = "constant",
+}
+
+UserData("/cube.primvars:primId") {
+    ["float_key"] = "primId",
+    ["float_values_0"] = { 0},
+    ["rate"] = "constant",
+}
+
+UserData("/cubeBilinear.primvars:primId") {
+    ["float_key"] = "primId",
+    ["float_values_0"] = { 3},
     ["rate"] = "constant",
 }

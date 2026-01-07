@@ -76,14 +76,14 @@ ColorRampLightFilter("/colorRamp") {
     ["interpolation_types"] = { 0, 0},
 }
 
-UserData("/wall.primvars:primId") {
-    ["float_key"] = "primId",
-    ["float_values_0"] = { 1},
-    ["rate"] = "constant",
-}
-
 UserData("/floor.primvars:primId") {
     ["float_key"] = "primId",
     ["float_values_0"] = { 0},
+    ["rate"] = "constant",
+}
+
+UserData("/wall.primvars:primId") {
+    ["float_key"] = "primId",
+    ["float_values_0"] = { 1},
     ["rate"] = "constant",
 }

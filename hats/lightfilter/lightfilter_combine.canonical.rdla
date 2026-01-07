@@ -72,6 +72,18 @@ PerspectiveCamera("primaryCamera") {
     ["film_width_aperture"] = 240,
 }
 
+UserData("/wall.primvars:primId") {
+    ["float_key"] = "primId",
+    ["float_values_0"] = { 1},
+    ["rate"] = "constant",
+}
+
+UserData("/floor.primvars:primId") {
+    ["float_key"] = "primId",
+    ["float_values_0"] = { 0},
+    ["rate"] = "constant",
+}
+
 CombineLightFilter("/combine") {
     ["light_filters"] = { RodLightFilter("/rod1"), RodLightFilter("/rod2")},
 }
@@ -92,16 +104,4 @@ RodLightFilter("/rod1") {
     ["height"] = 25,
     ["radius"] = 2,
     ["color"] = Rgb(1, 1, 0),
-}
-
-UserData("/wall.primvars:primId") {
-    ["float_key"] = "primId",
-    ["float_values_0"] = { 1},
-    ["rate"] = "constant",
-}
-
-UserData("/floor.primvars:primId") {
-    ["float_key"] = "primId",
-    ["float_values_0"] = { 0},
-    ["rate"] = "constant",
 }

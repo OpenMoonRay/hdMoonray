@@ -76,6 +76,12 @@ UserData("/wall.primvars:primId") {
     ["rate"] = "constant",
 }
 
+UserData("/floor.primvars:primId") {
+    ["float_key"] = "primId",
+    ["float_values_0"] = { 0},
+    ["rate"] = "constant",
+}
+
 VdbLightFilter("/vdb") {
     ["node_xform"] = blur(Mat4(0.02, 0, 0, 0, 0, 0.050000000000000003, 0, 0, 0, 0, 0.01, 0, 0, 1, -8, 1), Mat4(0.02, 0, 0, 0, 0, 0.050000000000000003, 0, 0, 0, 0, 0.01, 0, 0, 1, -8, 1)),
     ["vdb_map"] = "/work/gshad/moonshine_test/rats_data/light/filter/vdb/textures/torus.vdb",
@@ -86,10 +92,4 @@ VdbLightFilter("/vdb") {
     ["density_remap_interpolation_types"] = { 1, 1, 1, 1, 1},
     ["vdb_interpolation_type"] = "quadratic",
     ["invert_density"] = true,
-}
-
-UserData("/floor.primvars:primId") {
-    ["float_key"] = "primId",
-    ["float_values_0"] = { 0},
-    ["rate"] = "constant",
 }

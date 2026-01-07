@@ -6,8 +6,8 @@ SceneVariables {
 
 ImageMap("/surfacing_plane/planeMap.out") {
     ["texture"] = "/work/gshad/moonshine_test/rats_data/material/dwametal/defaults/misc/rgb_checker.exr",
-    ["offset"] = Vec2(-5, -5),
-    ["scale"] = Vec2(10, 10),
+    ["offset"] = bind(undef(), Vec2(-5, -5)),
+    ["scale"] = bind(undef(), Vec2(10, 10)),
 }
 
 RdlMeshGeometry("/geom/sphere") {
@@ -101,15 +101,9 @@ PerspectiveCamera("primaryCamera") {
     ["film_width_aperture"] = 240,
 }
 
-UserData("/geom/sphere.primvars:primId") {
-    ["float_key"] = "primId",
-    ["float_values_0"] = { 1},
-    ["rate"] = "constant",
-}
-
-UserData("/plane/plane.primvars:name") {
-    ["string_key"] = "name",
-    ["string_values"] = { ""},
+UserData("/geom/sphere.primvars:subd__hi") {
+    ["float_key"] = "subd__hi",
+    ["float_values_0"] = { 2.80259693e-45},
     ["rate"] = "constant",
 }
 
@@ -119,32 +113,14 @@ UserData("/plane/plane.primvars:dwa_mesh_translator_version") {
     ["rate"] = "constant",
 }
 
-UserData("/geom/sphere.primvars:dwa_mesh_translator_version") {
-    ["float_key"] = "dwa_mesh_translator_version",
-    ["float_values_0"] = { 2.80259693e-45},
-    ["rate"] = "constant",
-}
-
-UserData("/geom/sphere.primvars:subd__hi") {
+UserData("/plane/plane.primvars:subd__hi") {
     ["float_key"] = "subd__hi",
-    ["float_values_0"] = { 2.80259693e-45},
-    ["rate"] = "constant",
-}
-
-UserData("/plane/plane.primvars:primId") {
-    ["float_key"] = "primId",
-    ["float_values_0"] = { 0},
+    ["float_values_0"] = { 7.00649232e-45},
     ["rate"] = "constant",
 }
 
 UserData("/geom/sphere.primvars:dwa_mesh_file_translator_version") {
     ["float_key"] = "dwa_mesh_file_translator_version",
-    ["float_values_0"] = { 1.40129846e-45},
-    ["rate"] = "constant",
-}
-
-UserData("/plane/plane.primvars:subd__lo") {
-    ["float_key"] = "subd__lo",
     ["float_values_0"] = { 1.40129846e-45},
     ["rate"] = "constant",
 }
@@ -155,8 +131,20 @@ UserData("/geom/sphere.primvars:subd__lo") {
     ["rate"] = "constant",
 }
 
-UserData("/plane/plane.primvars:dwa_mesh_file_translator_version") {
-    ["float_key"] = "dwa_mesh_file_translator_version",
+UserData("/plane/plane.primvars:name") {
+    ["string_key"] = "name",
+    ["string_values"] = { ""},
+    ["rate"] = "constant",
+}
+
+UserData("/geom/sphere.primvars:primId") {
+    ["float_key"] = "primId",
+    ["float_values_0"] = { 1},
+    ["rate"] = "constant",
+}
+
+UserData("/plane/plane.primvars:subd__lo") {
+    ["float_key"] = "subd__lo",
     ["float_values_0"] = { 1.40129846e-45},
     ["rate"] = "constant",
 }
@@ -167,8 +155,20 @@ UserData("/geom/sphere.primvars:name") {
     ["rate"] = "constant",
 }
 
-UserData("/plane/plane.primvars:subd__hi") {
-    ["float_key"] = "subd__hi",
-    ["float_values_0"] = { 7.00649232e-45},
+UserData("/plane/plane.primvars:primId") {
+    ["float_key"] = "primId",
+    ["float_values_0"] = { 0},
+    ["rate"] = "constant",
+}
+
+UserData("/geom/sphere.primvars:dwa_mesh_translator_version") {
+    ["float_key"] = "dwa_mesh_translator_version",
+    ["float_values_0"] = { 2.80259693e-45},
+    ["rate"] = "constant",
+}
+
+UserData("/plane/plane.primvars:dwa_mesh_file_translator_version") {
+    ["float_key"] = "dwa_mesh_file_translator_version",
+    ["float_values_0"] = { 1.40129846e-45},
     ["rate"] = "constant",
 }

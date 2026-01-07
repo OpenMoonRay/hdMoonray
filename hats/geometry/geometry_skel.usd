@@ -6,7 +6,10 @@
     upAxis = "Y"
 )
 
-def SkelRoot "group1" {
+def SkelRoot "group1" (
+    prepend apiSchemas = ["SkelBindingAPI"]
+    )
+    {
     rel skel:skeleton = <skeleton>
     rel skel:animationSource = <animation>
 

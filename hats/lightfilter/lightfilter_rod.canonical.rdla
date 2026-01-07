@@ -70,12 +70,6 @@ PerspectiveCamera("primaryCamera") {
     ["film_width_aperture"] = 240,
 }
 
-UserData("/wall.primvars:primId") {
-    ["float_key"] = "primId",
-    ["float_values_0"] = { 1},
-    ["rate"] = "constant",
-}
-
 UserData("/floor.primvars:primId") {
     ["float_key"] = "primId",
     ["float_values_0"] = { 0},
@@ -90,4 +84,10 @@ RodLightFilter("/rod") {
     ["radius"] = 2,
     ["edge"] = 2,
     ["color"] = Rgb(1, 0, 0.300000012),
+}
+
+UserData("/wall.primvars:primId") {
+    ["float_key"] = "primId",
+    ["float_values_0"] = { 1},
+    ["rate"] = "constant",
 }

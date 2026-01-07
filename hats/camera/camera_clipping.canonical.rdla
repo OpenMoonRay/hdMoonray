@@ -163,21 +163,9 @@ PerspectiveCamera("primaryCamera") {
     ["film_width_aperture"] = 10,
 }
 
-UserData("/box2.primvars:primId") {
+UserData("/box5.primvars:primId") {
     ["float_key"] = "primId",
-    ["float_values_0"] = { 4},
-    ["rate"] = "constant",
-}
-
-UserData("/box4.primvars:primId") {
-    ["float_key"] = "primId",
-    ["float_values_0"] = { 6},
-    ["rate"] = "constant",
-}
-
-UserData("/wallGeom/_.primvars:primId") {
-    ["float_key"] = "primId",
-    ["float_values_0"] = { 1},
+    ["float_values_0"] = { 7},
     ["rate"] = "constant",
 }
 
@@ -187,9 +175,15 @@ UserData("/box7.primvars:primId") {
     ["rate"] = "constant",
 }
 
-UserData("/box5.primvars:primId") {
+UserData("/box3.primvars:primId") {
     ["float_key"] = "primId",
-    ["float_values_0"] = { 7},
+    ["float_values_0"] = { 5},
+    ["rate"] = "constant",
+}
+
+UserData("/box0.primvars:primId") {
+    ["float_key"] = "primId",
+    ["float_values_0"] = { 2},
     ["rate"] = "constant",
 }
 
@@ -199,9 +193,15 @@ UserData("/floorGeom/_.primvars:primId") {
     ["rate"] = "constant",
 }
 
-UserData("/box0.primvars:primId") {
+UserData("/wallGeom/_.primvars:primId") {
     ["float_key"] = "primId",
-    ["float_values_0"] = { 2},
+    ["float_values_0"] = { 1},
+    ["rate"] = "constant",
+}
+
+UserData("/box4.primvars:primId") {
+    ["float_key"] = "primId",
+    ["float_values_0"] = { 6},
     ["rate"] = "constant",
 }
 
@@ -217,8 +217,8 @@ UserData("/box6.primvars:primId") {
     ["rate"] = "constant",
 }
 
-UserData("/box3.primvars:primId") {
+UserData("/box2.primvars:primId") {
     ["float_key"] = "primId",
-    ["float_values_0"] = { 5},
+    ["float_values_0"] = { 4},
     ["rate"] = "constant",
 }

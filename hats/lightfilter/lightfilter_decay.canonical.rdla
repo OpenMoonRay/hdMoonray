@@ -70,13 +70,10 @@ PerspectiveCamera("primaryCamera") {
     ["film_width_aperture"] = 240,
 }
 
-DecayLightFilter("/decay") {
-    ["falloff_near"] = true,
-    ["falloff_far"] = true,
-    ["near_start"] = 3,
-    ["near_end"] = 5,
-    ["far_start"] = 7,
-    ["far_end"] = 9,
+UserData("/floor.primvars:primId") {
+    ["float_key"] = "primId",
+    ["float_values_0"] = { 0},
+    ["rate"] = "constant",
 }
 
 UserData("/wall.primvars:primId") {
@@ -85,8 +82,11 @@ UserData("/wall.primvars:primId") {
     ["rate"] = "constant",
 }
 
-UserData("/floor.primvars:primId") {
-    ["float_key"] = "primId",
-    ["float_values_0"] = { 0},
-    ["rate"] = "constant",
+DecayLightFilter("/decay") {
+    ["falloff_near"] = true,
+    ["falloff_far"] = true,
+    ["near_start"] = 3,
+    ["near_end"] = 5,
+    ["far_start"] = 7,
+    ["far_end"] = 9,
 }

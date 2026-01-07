@@ -83,6 +83,12 @@ PerspectiveCamera("primaryCamera") {
     ["film_width_aperture"] = 240,
 }
 
+UserData("/floor.primvars:primId") {
+    ["float_key"] = "primId",
+    ["float_values_0"] = { 0},
+    ["rate"] = "constant",
+}
+
 UserData("/wall.primvars:primId") {
     ["float_key"] = "primId",
     ["float_values_0"] = { 1},
@@ -92,10 +98,4 @@ UserData("/wall.primvars:primId") {
 CookieLightFilter("/cookie") {
     ["projector"] = PerspectiveCamera("/cookie_projector"),
     ["texture_map"] = ImageMap("/cookie/imagemap"),
-}
-
-UserData("/floor.primvars:primId") {
-    ["float_key"] = "primId",
-    ["float_values_0"] = { 0},
-    ["rate"] = "constant",
 }

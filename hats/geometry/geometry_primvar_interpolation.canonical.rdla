@@ -130,6 +130,12 @@ PerspectiveCamera("primaryCamera") {
     ["film_width_aperture"] = 20.9549999,
 }
 
+UserData("/varying.primvars:displayColor") {
+    ["color_key"] = "displayColor",
+    ["color_values_0"] = { Rgb(1, 0, 0), Rgb(0, 1, 0), Rgb(0, 0, 1), Rgb(1, 0, 1)},
+    ["rate"] = "varying",
+}
+
 UserData("/faceVarying.primvars:displayColor") {
     ["color_key"] = "displayColor",
     ["color_values_0"] = { Rgb(1, 0, 0), Rgb(0, 1, 0), Rgb(0, 0, 1), Rgb(1, 0, 1), Rgb(1, 1, 0), Rgb(0, 0, 1)},
@@ -142,21 +148,15 @@ UserData("/uniform.primvars:primId") {
     ["rate"] = "constant",
 }
 
-UserData("/vertex.primvars:primId") {
-    ["float_key"] = "primId",
-    ["float_values_0"] = { 3},
-    ["rate"] = "constant",
-}
-
-UserData("/invalid.primvars:displayColor") {
-    ["color_key"] = "displayColor",
-    ["color_values_0"] = { Rgb(1, 0, 0), Rgb(0, 1, 0), Rgb(0, 0, 1), Rgb(1, 0, 1)},
-    ["rate"] = "face varying",
-}
-
 UserData("/constant.primvars:displayColor") {
     ["color_key"] = "displayColor",
     ["color_values_0"] = { Rgb(1, 0, 0)},
+    ["rate"] = "constant",
+}
+
+UserData("/faceVarying.primvars:primId") {
+    ["float_key"] = "primId",
+    ["float_values_0"] = { 4},
     ["rate"] = "constant",
 }
 
@@ -166,28 +166,16 @@ UserData("/vertex.primvars:displayColor") {
     ["rate"] = "vertex",
 }
 
-UserData("/invalid.primvars:primId") {
+UserData("/vertex.primvars:primId") {
     ["float_key"] = "primId",
-    ["float_values_0"] = { 5},
+    ["float_values_0"] = { 3},
     ["rate"] = "constant",
 }
 
-UserData("/uniform.primvars:displayColor") {
-    ["color_key"] = "displayColor",
-    ["color_values_0"] = { Rgb(1, 0, 0), Rgb(0, 0, 1)},
-    ["rate"] = "uniform",
-}
-
-UserData("/faceVarying.primvars:primId") {
+UserData("/varying.primvars:primId") {
     ["float_key"] = "primId",
-    ["float_values_0"] = { 4},
+    ["float_values_0"] = { 2},
     ["rate"] = "constant",
-}
-
-UserData("/varying.primvars:displayColor") {
-    ["color_key"] = "displayColor",
-    ["color_values_0"] = { Rgb(1, 0, 0), Rgb(0, 1, 0), Rgb(0, 0, 1), Rgb(1, 0, 1)},
-    ["rate"] = "varying",
 }
 
 UserData("/constant.primvars:primId") {
@@ -196,8 +184,20 @@ UserData("/constant.primvars:primId") {
     ["rate"] = "constant",
 }
 
-UserData("/varying.primvars:primId") {
+UserData("/invalid.primvars:primId") {
     ["float_key"] = "primId",
-    ["float_values_0"] = { 2},
+    ["float_values_0"] = { 5},
     ["rate"] = "constant",
+}
+
+UserData("/invalid.primvars:displayColor") {
+    ["color_key"] = "displayColor",
+    ["color_values_0"] = { Rgb(1, 0, 0), Rgb(0, 1, 0), Rgb(0, 0, 1), Rgb(1, 0, 1)},
+    ["rate"] = "face varying",
+}
+
+UserData("/uniform.primvars:displayColor") {
+    ["color_key"] = "displayColor",
+    ["color_values_0"] = { Rgb(1, 0, 0), Rgb(0, 0, 1)},
+    ["rate"] = "uniform",
 }

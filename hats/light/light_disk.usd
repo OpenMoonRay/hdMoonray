@@ -14,16 +14,15 @@ def Camera "camera"
     float2 clippingRange = (0.01, 10000)
 }
 
-def "gronkle" ( payload =  @/work/rd/raas/hydra/rats/data/gronkle.usdc@)
+def Capsule "shape"
 {
-    matrix4d xformOp:transform:a = ( (0.0216271, 0, -0.020791, 0),
-                                   (0, 0.03, 0, 0),
-                                   (0.020791, 0, 0.0216271, 0),
-                                   (0, 0, -7, 1) )
-    uniform token[] xformOpOrder = ["xformOp:transform:a","xformOp:transform"]
-    rel material:binding = </surfacing_gronkle>
+    matrix4d xformOp:transform = ( (3, 0, 0, 0),
+                                   (0, 3, 0, 0),
+                                   (0, 0, 3, 0),
+                                   (0, 1, -5, 1) )
+    uniform token[] xformOpOrder = ["xformOp:transform"]
+    rel material:binding = </surfacing_shape>
 }
-
 
 def "floor" ( payload = @/work/rd/raas/hydra/rats/data/plane_xz_unit.usd@ )
 {
@@ -61,7 +60,7 @@ def Material "surfacing_floor"
         }
 }
 
-def Material "surfacing_gronkle"
+def Material "surfacing_shape"
 {
         color4f outputs:moonray:surface.connect = <baseMtl.outputs:surface>
 
