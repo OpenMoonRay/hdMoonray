@@ -281,13 +281,17 @@ Material::updateTerminal(pxr::TfToken terminalName,
         }
 
         // Create a node for each channel entry
+        // Moonray name must be absolute so that it is unique in the scene.
+        // (HDM-401 : USD 0.25.5 returns relative node paths)
+        std::string moonrayNodeName = node.path.MakeAbsolutePath(GetId()).GetString();
+
         auto it = nodeChannelMap.find(node.path.GetString());
         if (it != nodeChannelMap.end()) {
             std::set<std::string>& channelSet = it->second;
             for (const std::string& channel : channelSet) {
 
                 const std::string nodeName =
-                    getNodeWithChannelName(node.path.GetString(),
+                    getNodeWithChannelName(moonrayNodeName,
                                            channel);
 
                 next = makeMoonrayShader(renderDelegate,
@@ -302,7 +306,7 @@ Material::updateTerminal(pxr::TfToken terminalName,
             next = makeMoonrayShader(renderDelegate,
                                      sceneDelegate,
                                      node,
-                                     node.path.GetString(),
+                                     moonrayNodeName,
                                      geom);
         }
 
@@ -314,12 +318,14 @@ Material::updateTerminal(pxr::TfToken terminalName,
         // Input connection
         SceneObject* input;
 
+        // Moonray name is absolute path (HDM-401)
+        std::string moonrayInputName = rel.inputId.MakeAbsolutePath(GetId()).GetString();
         bool foundNodeWithChannel = false;
         for (const pxr::HdMaterialNode& node : network.nodes) {
             if (node.path == rel.inputId) {
 
                 const std::string nodeWithChannel =
-                    getNodeWithChannelName(rel.inputId.GetString(),
+                    getNodeWithChannelName(moonrayInputName,
                                            rel.inputName.GetString());
 
                 input = renderDelegate.getSceneObject(nodeWithChannel);
@@ -335,7 +341,7 @@ Material::updateTerminal(pxr::TfToken terminalName,
         // (i.e. material) so just use the node name without
         // a channel extension to get it from the render delegate.
         if (!foundNodeWithChannel) {
-            input = renderDelegate.getSceneObject(rel.inputId);
+            input = renderDelegate.getSceneObject(moonrayInputName);
         }
 
         if (!input) {
@@ -377,12 +383,14 @@ Material::updateTerminal(pxr::TfToken terminalName,
         // Output
         SceneObject* output;
         // Check if output is in nodeChannelMap
+        // Moonray name is absolute path (HDM-401)
+        std::string moonrayOutputName = rel.outputId.MakeAbsolutePath(GetId()).GetString();
         auto it = nodeChannelMap.find(rel.outputId.GetString());
         if (it != nodeChannelMap.end()) {
             // Create a binding for each channel's node
             for (const std::string& channel : it->second) {
                 const std::string outputNodeName =
-                    getNodeWithChannelName(rel.outputId.GetString(),
+                    getNodeWithChannelName(moonrayOutputName,
                                            channel);
 
                 output = renderDelegate.getSceneObject(outputNodeName);
@@ -407,7 +415,7 @@ Material::updateTerminal(pxr::TfToken terminalName,
                 }
             }
         } else {
-            output = renderDelegate.getSceneObject(rel.outputId);
+            output = renderDelegate.getSceneObject(moonrayOutputName);
             if (!output) {
                 continue;
             }
