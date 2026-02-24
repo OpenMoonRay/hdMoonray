@@ -83,7 +83,7 @@ function(${PROJECT_NAME}_ispc_compile_options target)
     set_property(TARGET ${target}
                  PROPERTY TARGET_OBJECTS $<TARGET_OBJECTS:${target}>)
     set_property(TARGET ${target}
-                 PROPERTY DEPENDENCY "")
+                 PROPERTY ISPC_DEP_TARGET "")
     check_language(ISPC)
     if(NOT CMAKE_ISPC_COMPILER)
         get_target_property(SOURCES ${target} SOURCES)
@@ -145,7 +145,7 @@ function(${PROJECT_NAME}_ispc_compile_options target)
         add_custom_target(${target}_ispc_dep DEPENDS ${ISPC_TARGET_OBJECTS})
         add_dependencies(${target} ${target}_ispc_dep)
         set_property(TARGET ${target}
-                 PROPERTY DEPENDENCY ${target}_ispc_dep)
+                 PROPERTY ISPC_DEP_TARGET ${target}_ispc_dep)
         set_property(
                 TARGET ${target}
                 PROPERTY

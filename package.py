@@ -36,7 +36,7 @@ if 'scons' in sys.argv:
     build_system_pbr = 'bart_scons-10'
 else:
     build_system = 'cmake'
-    build_system_pbr = 'cmake_modules-1.0'
+    build_system_pbr = 'cmake_modules-1.1'
 
 variants = [
     [   # variant 0
