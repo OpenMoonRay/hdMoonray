@@ -31,6 +31,16 @@ if(NOT pxr_FOUND)
     find_package(pxr REQUIRED)
 endif()
 
+if(TARGET usd_ms)
+    foreach(pxr_lib gf tf trace vt work cameraUtil hd hdx hf sdf usd usdGeom usdImaging usdSkel usdShade usdLux usdVol ndr sdr ar)
+        if(NOT TARGET ${pxr_lib})
+            add_library(${pxr_lib} INTERFACE IMPORTED)
+            set_target_properties(${pxr_lib} PROPERTIES INTERFACE_LINK_LIBRARIES "usd_ms;OpenGL::GL")
+        endif()
+    endforeach()
+endif()
+
+
 # This is needed for linking against the USD 0.25.5 libraries
 # as they depend on OpenGL but don't specify it in
 # their cmake config.
