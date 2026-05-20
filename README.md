@@ -49,3 +49,4 @@ the desired settings:
     HDMOONRAY_DISABLE_LIGHTING=1 Turn off all the lights (and turn on the default dome light)
     HDMOONRAY_DOUBLESIDED=1 Make all geometry doublesided unless moonray:side_type=1
 
+Policies concerning [Governance](https://github.com/OpenMoonRay/openmoonray/blob/main/GOVERNANCE.md), [Code of Conduct](https://github.com/OpenMoonRay/openmoonray/blob/main/CODE_OF_CONDUCT.md), [Contribution](https://github.com/OpenMoonRay/openmoonray/blob/main/CONTRIBUTING.md), and the list of [Maintainers](https://github.com/OpenMoonRay/openmoonray/blob/main/MAINTAINERS.md) are available in the OpenMoonRay super project.
