@@ -4,7 +4,7 @@ This allows Moonray to be used to render the viewer of DCC applications,
 and as part of the command-line tool to render USD using Moonray.
 
 This repository is part of the larger MoonRay/Arras codebase.  It is included as a submodule in the top-level
-OpenMoonRay repository located here: [OpenMoonRay](https://github.com/dreamworksanimation/openmoonray)
+OpenMoonRay repository located here: [OpenMoonRay](https://github.com/OpenMoonRay/openmoonray)
 
 ## Render Settings
 There are a number of switches that control the Render. In usdview these are under
