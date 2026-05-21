@@ -1,10 +1,9 @@
-# hdMoonray
+# hdMoonray - part of the [MoonRay](https://github.com/OpenMoonRay/openmoonray) project
+Policies concerning [Governance](https://github.com/OpenMoonRay/openmoonray/blob/main/GOVERNANCE.md), [Code of Conduct](https://github.com/OpenMoonRay/openmoonray/blob/main/CODE_OF_CONDUCT.md), [Contribution](https://github.com/OpenMoonRay/openmoonray/blob/main/CONTRIBUTING.md), and the list of [Maintainers](https://github.com/OpenMoonRay/openmoonray/blob/main/MAINTAINERS.md) are available in the overarching MoonRay project, defined in the [`OpenMoonRay/openmoonray` GitHub repository superproject](https://github.com/OpenMoonRay/openmoonray).
+
 This repository contains the Hydra plugin (delegate) for MoonRay, HdMoonRay.
 This allows Moonray to be used to render the viewer of DCC applications,
 and as part of the command-line tool to render USD using Moonray.
-
-This repository is part of the larger MoonRay/Arras codebase.  It is included as a submodule in the top-level
-OpenMoonRay repository located here: [OpenMoonRay](https://github.com/OpenMoonRay/openmoonray)
 
 ## Render Settings
 There are a number of switches that control the Render. In usdview these are under
@@ -49,4 +48,3 @@ the desired settings:
     HDMOONRAY_DISABLE_LIGHTING=1 Turn off all the lights (and turn on the default dome light)
     HDMOONRAY_DOUBLESIDED=1 Make all geometry doublesided unless moonray:side_type=1
 
-Policies concerning [Governance](https://github.com/OpenMoonRay/openmoonray/blob/main/GOVERNANCE.md), [Code of Conduct](https://github.com/OpenMoonRay/openmoonray/blob/main/CODE_OF_CONDUCT.md), [Contribution](https://github.com/OpenMoonRay/openmoonray/blob/main/CONTRIBUTING.md), and the list of [Maintainers](https://github.com/OpenMoonRay/openmoonray/blob/main/MAINTAINERS.md) are available in the OpenMoonRay super project.
