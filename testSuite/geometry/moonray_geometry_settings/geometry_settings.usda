@@ -1,0 +1,134 @@
+#usda 1.0
+(
+    defaultPrim = "World"
+    metersPerUnit = 1
+    upAxis = "Y"
+)
+
+def Material "preview_material"
+{
+    token outputs:surface.connect = </preview_material/preview.outputs:surface>
+    token outputs:moonray:surface.connect = </preview_material/preview.outputs:surface>
+
+    def Shader "preview"
+    {
+        uniform token info:id = "UsdPreviewSurface"
+        token outputs:surface
+        color3f inputs:diffuseColor = (0.45, 0.62, 0.85)
+        float inputs:roughness = 0.5
+    }
+}
+
+def Xform "World"
+{
+    def Camera "camera"
+    {
+        matrix4d xformOp:transform = ( (1, 0, 0, 0),
+                                       (0, 0.965926, -0.258819, 0),
+                                       (0, 0.258819, 0.965926, 0),
+                                       (0, 1.5, 6, 1) )
+        uniform token[] xformOpOrder = ["xformOp:transform"]
+        float focalLength = 45
+        float horizontalAperture = 36
+        float verticalAperture = 20.25
+        float2 clippingRange = (0.01, 1000)
+    }
+
+    def Mesh "subd_quad" (
+        prepend apiSchemas = ["MaterialBindingAPI"]
+    )
+    {
+        int[] faceVertexCounts = [4]
+        int[] faceVertexIndices = [0, 1, 2, 3]
+        point3f[] points = [(-1.25, -1, 0), (1.25, -1, 0), (1.25, 1, 0), (-1.25, 1, 0)]
+        uniform token subdivisionScheme = "catmullClark"
+        rel material:binding = </preview_material>
+
+        bool primvars:moonray:is_subd = true (
+            interpolation = "constant"
+        )
+        token primvars:moonray:subd_scheme = "bilinear" (
+            interpolation = "constant"
+        )
+        token primvars:moonray:subd_boundary = "edge only" (
+            interpolation = "constant"
+        )
+        token primvars:moonray:subd_fvar_linear = "all" (
+            interpolation = "constant"
+        )
+        float primvars:moonray:mesh_resolution = 6 (
+            interpolation = "constant"
+        )
+        float primvars:moonray:adaptive_error = 0.5 (
+            interpolation = "constant"
+        )
+        bool primvars:moonray:smooth_normal = false (
+            interpolation = "constant"
+        )
+        token primvars:moonray:motion_blur_type = "static" (
+            interpolation = "constant"
+        )
+    }
+
+    def Mesh "forced_polygon_quad" (
+        prepend apiSchemas = ["MaterialBindingAPI"]
+    )
+    {
+        int[] faceVertexCounts = [4]
+        int[] faceVertexIndices = [0, 1, 2, 3]
+        point3f[] points = [(-1, -0.75, 0), (1, -0.75, 0), (1, 0.75, 0), (-1, 0.75, 0)]
+        uniform token subdivisionScheme = "catmullClark"
+        rel material:binding = </preview_material>
+        matrix4d xformOp:transform = ( (1, 0, 0, 0),
+                                       (0, 1, 0, 0),
+                                       (0, 0, 1, 0),
+                                       (0, -1.9, 0, 1) )
+        uniform token[] xformOpOrder = ["xformOp:transform"]
+
+        bool primvars:moonray:is_subd = false (
+            interpolation = "constant"
+        )
+    }
+
+    def RectLight "key"
+    {
+        matrix4d xformOp:transform = ( (0.707107, 0, 0.707107, 0),
+                                       (0.353553, 0.866025, -0.353553, 0),
+                                       (-0.612372, 0.5, 0.612372, 0),
+                                       (-2.5, 4, 3, 1) )
+        uniform token[] xformOpOrder = ["xformOp:transform"]
+        color3f inputs:color = (1, 0.95, 0.85)
+        float inputs:intensity = 350
+        bool inputs:normalize = true
+        float inputs:width = 2
+        float inputs:height = 2
+    }
+}
+
+def Scope "Render"
+{
+    def RenderSettings "RenderSettings"
+    {
+        rel camera = </World/camera>
+        rel products = </Render/Product>
+        int2 resolution = (64, 64)
+    }
+
+    def RenderProduct "Product"
+    {
+        token productType = "raster"
+        string productName = "moonray_geometry_settings.exr"
+        rel orderedVars = </Render/Vars/color>
+    }
+
+    def Scope "Vars"
+    {
+        def RenderVar "color"
+        {
+            custom string driver:parameters:aov:name = "color"
+            token dataType = "color4f"
+            string sourceName = "color"
+            token sourceType = "raw"
+        }
+    }
+}
