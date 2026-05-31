@@ -68,6 +68,18 @@ def Xform "World"
         token primvars:moonray:motion_blur_type = "static" (
             interpolation = "constant"
         )
+        string primvars:moonray:label = "geometry_settings_subd" (
+            interpolation = "constant"
+        )
+        string primvars:moonray:shadow_receiver_label = "geometry_settings_shadow" (
+            interpolation = "constant"
+        )
+        token primvars:moonray:side_type = "force two-sided" (
+            interpolation = "constant"
+        )
+        bool primvars:moonray:reverse_normals = false (
+            interpolation = "constant"
+        )
     }
 
     def Mesh "forced_polygon_quad" (

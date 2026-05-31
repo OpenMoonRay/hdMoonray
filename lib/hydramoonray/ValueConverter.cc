@@ -56,6 +56,23 @@ static bool _narrowIntChecked(SceneObject* sceneObj,
     return true;
 }
 
+static bool _setFloatFromIntegral64(SceneObject* sceneObj,
+                                    const Attribute* attribute,
+                                    std::int64_t value)
+{
+    const long double fMin = -static_cast<long double>(std::numeric_limits<Float>::max());
+    const long double fMax = static_cast<long double>(std::numeric_limits<Float>::max());
+    const long double wideValue = static_cast<long double>(value);
+    if (wideValue < fMin || wideValue > fMax) {
+        Logger::error(sceneObj->getName(), '.', attribute->getName(),
+                      ": integer value ", value, " out of Float range");
+        return false;
+    }
+    sceneObj->set(AttributeKey<Float>(*attribute), static_cast<Float>(value));
+    _clearBinding(sceneObj, attribute);
+    return true;
+}
+
 static std::string _normalizedToken(const std::string& value)
 {
     std::string result = value;
@@ -313,20 +330,29 @@ ValueConverter::setAttribute(SceneObject* sceneObj, const Attribute* attribute, 
         if (_setAttributeRef<Long, long>(sceneObj, attribute, val)) return;
         break;
     case TYPE_FLOAT:
-        if (val.IsHolding<int>()) {
-            const float floatVal = static_cast<float>(val.UncheckedGet<int>());
-            sceneObj->set(AttributeKey<Float>(*attribute), floatVal);
-            return;
-        } else if (val.IsHolding<long>()) {
-            const float floatVal = static_cast<float>(val.UncheckedGet<long>());
-            sceneObj->set(AttributeKey<Float>(*attribute), floatVal);
-            return;
-        } else {
-            if (_setAttributeRef<Float, float>(sceneObj, attribute, val)) return;
-            if (_setAttribute<Float, double>(sceneObj, attribute, val)) return;
-            // handle incorrect types in Input bindings
-            if (_setAttributeRef<Float, pxr::GfVec3f>(sceneObj, attribute, val)) return;
+        {
+            std::int64_t int64Val = 0;
+            if (_extractIntegral64(val, &int64Val)) {
+                _setFloatFromIntegral64(sceneObj, attribute, int64Val);
+                return;
+            }
         }
+        if (val.IsHolding<unsigned long long>()) {
+            const unsigned long long ullVal = val.UncheckedGet<unsigned long long>();
+            if (static_cast<long double>(ullVal) >
+                    static_cast<long double>(std::numeric_limits<Float>::max())) {
+                Logger::error(sceneObj->getName(), '.', attribute->getName(),
+                              ": unsigned integer value ", ullVal, " out of Float range");
+                return;
+            }
+            sceneObj->set(AttributeKey<Float>(*attribute), static_cast<Float>(ullVal));
+            _clearBinding(sceneObj, attribute);
+            return;
+        }
+        if (_setAttributeRef<Float, float>(sceneObj, attribute, val)) return;
+        if (_setAttribute<Float, double>(sceneObj, attribute, val)) return;
+        // handle incorrect types in Input bindings
+        if (_setAttributeRef<Float, pxr::GfVec3f>(sceneObj, attribute, val)) return;
         break;
     case TYPE_DOUBLE:
         if (_setAttributeRef<Double, double>(sceneObj, attribute, val)) return;

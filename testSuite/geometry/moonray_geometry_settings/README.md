@@ -13,7 +13,7 @@ Run after sourcing the Houdini and MoonRay environments:
 ```zsh
 export HDMOONRAY_RDLA_OUTPUT=/tmp/moonray_geometry_settings.rdla
 husk -V4 -R HdMoonrayRendererPlugin -f 1 geometry_settings.usda
-grep -n "adaptive_error\\|mesh_resolution\\|is_subd\\|subd_scheme\\|subd_boundary\\|subd_fvar_linear\\|smooth_normal\\|motion_blur_type" /tmp/moonray_geometry_settings.rdla
+grep -n "adaptive_error\\|mesh_resolution\\|is_subd\\|subd_scheme\\|subd_boundary\\|subd_fvar_linear\\|smooth_normal\\|motion_blur_type\\|label\\|shadow_receiver_label\\|side_type\\|reverse_normals" /tmp/moonray_geometry_settings.rdla
 ```
 
 Expected RDL class:
@@ -29,6 +29,10 @@ Expected user-authored attributes on `/World/subd_quad`:
 - `adaptive_error = 0.5`
 - `smooth_normal = false`
 - `motion_blur_type = "static"`
+- `label = "geometry_settings_subd"`
+- `shadow_receiver_label = "geometry_settings_shadow"`
+- `side_type = "force two-sided"`
+- `reverse_normals = false`
 
 Expected user-authored attribute on `/World/forced_polygon_quad`:
 
@@ -37,3 +41,8 @@ Expected user-authored attribute on `/World/forced_polygon_quad`:
 Crease/corner arrays and topology arrays are intentionally not represented as
 user-facing renderer settings here. hdMoonray receives them from USD mesh
 topology/subdivision tags when present.
+
+`motion_blur_type` is validated here as a correctly authored and consumed
+RDL geometry attribute. Its visible render behavior also requires appropriate
+velocity/acceleration or multi-sample position data plus enabled render motion
+blur settings, so that behavior belongs in a separate motion blur fixture.
