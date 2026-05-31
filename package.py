@@ -85,7 +85,7 @@ variants = [
         'usd_imaging-0.22.5.x.4',
         'openimageio-2.3.20.0.x',
         'opt_level-optdebug',
-        'python-3.9'
+        'python-3.11'
     ],
 ]
 
@@ -120,7 +120,7 @@ tests = {
     #     },
     "rats-opt-debug": {
         "command": "rats -a --rco=2 --nohtml --rac --maxConcurrentTests=10",
-        "requires": ["rats", "opt_level-optdebug", "usd_core_dwa_plugin", "moonshine_usd", "usd_imaging-0.22.5", "moonshine_dwa", "houdini_dwa-19", "python-3.9", "gcc", "refplat-vfx2022"]
+        "requires": ["rats", "opt_level-optdebug", "usd_core_dwa_plugin", "moonshine_usd", "usd_imaging-0.22.5", "moonshine_dwa", "houdini_dwa-19", "python-3.11", "gcc", "refplat-vfx2022"]
         }
     }
 

@@ -32,6 +32,14 @@ TF_DEFINE_PRIVATE_TOKENS(Tokens,
     (pruneWrapDeform)
     (forcePolygon)
     (executionMode)
+    ((houdiniFrame, "houdini:frame"))
+    ((houdiniFps, "houdini:fps"))
+    ((houdiniViewport, "houdini:viewport"))
+    ((usdFilename, "usdFilename"))
+    ((usdFileTimeStamp, "usdFileTimeStamp"))
+    ((renderCameraPath, "renderCameraPath"))
+    ((batchCommandLine, "batchCommandLine"))
+    ((huskDelegateOptions, "huskDelegateOptions"))
 );
 
 }
@@ -148,6 +156,46 @@ RenderSettings::getExecutionMode() const
     } else {
         return "auto";
     }
+}
+
+bool
+RenderSettings::getHoudiniFrame(float& frame) const
+{
+    VtValue val = mDelegate.GetRenderSetting(Tokens->houdiniFrame);
+    if (val.IsEmpty()) return false;
+    if (val.IsHolding<double>()) {
+        frame = static_cast<float>(val.UncheckedGet<double>());
+        return true;
+    }
+    if (val.IsHolding<float>()) {
+        frame = val.UncheckedGet<float>();
+        return true;
+    }
+    if (val.IsHolding<int>()) {
+        frame = static_cast<float>(val.UncheckedGet<int>());
+        return true;
+    }
+    return false;
+}
+
+bool
+RenderSettings::getHoudiniFps(double& fps) const
+{
+    VtValue val = mDelegate.GetRenderSetting(Tokens->houdiniFps);
+    if (val.IsEmpty()) return false;
+    if (val.IsHolding<double>()) {
+        fps = val.UncheckedGet<double>();
+        return true;
+    }
+    if (val.IsHolding<float>()) {
+        fps = static_cast<double>(val.UncheckedGet<float>());
+        return true;
+    }
+    if (val.IsHolding<int>()) {
+        fps = static_cast<double>(val.UncheckedGet<int>());
+        return true;
+    }
+    return false;
 }
 
 void

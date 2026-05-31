@@ -18,8 +18,7 @@ class RenderDelegate;
 class Light: public pxr::HdLight
 {
 public:
-    Light(const pxr::TfToken& type, const pxr::SdfPath& id):
-        pxr::HdLight(id), mType(type), mRectToSpotlight(false) {}
+    Light(const pxr::TfToken& type, const pxr::SdfPath& id);
 
     /// Dirty bits to pass to first call to Sync()
     pxr::HdDirtyBits GetInitialDirtyBitsMask() const override;
@@ -65,4 +64,3 @@ private:
 };
 
 }
-

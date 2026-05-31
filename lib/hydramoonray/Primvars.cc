@@ -39,17 +39,30 @@ namespace {
         return false;
     }
 
+    template<typename T>
+    bool emptyArray(const T& v, const TfToken& name)
+    {
+        if (!v.empty()) {
+            return false;
+        }
+        Logger::warn("Skipping empty primvar '", name, "'");
+        return true;
+    }
+
     // utility to set a Vec3f attribute
     inline void setVec3fPrimvar(Geometry* geometry,
                                 const std::string& rdlName,
+                                const TfToken& hydraName,
                                 const VtValue& values)
     {
         if (values.IsHolding<VtVec3fArray>()) {
             const VtVec3fArray& va = values.UncheckedGet<VtVec3fArray>();
+            if (emptyArray(va, hydraName)) return;
             const Vec3f* p = reinterpret_cast<const Vec3f*>(&va[0]);
             geometry->set(rdlName, Vec3fVector(p, p + va.size()));
         } else {
-            Logger::warn(rdlName, " requires a Vec3f array");
+            Logger::warn("Skipping primvar '", hydraName, "': ", rdlName,
+                         " requires a Vec3f array, got ", values.GetTypeName());
         }
     }
 }
@@ -172,7 +185,7 @@ GeometryMixin::primvarChanged(HdSceneDelegate *sceneDelegate,
             if (value.IsEmpty()) {
                 mGeometry->resetToDefault("accleration_list"); // sic
             } else {
-                setVec3fPrimvar(mGeometry, "accleration_list", value);
+                setVec3fPrimvar(mGeometry, "accleration_list", name, value);
             }
         } catch (std::exception& e) {
             // geometry isn't guarantred to have "accleration_list"
@@ -243,85 +256,103 @@ void setUserDataInterpolation(UserData* userData,
     }
 }
 
-void setUserDataValues(UserData* userData, 
-                       const TfToken& name, 
-                       const VtValue& values, 
-                       const TfToken& role)
-{
-    // we have to handle the types case-by-case
+	bool setUserDataValues(UserData* userData,
+	                       const TfToken& name,
+	                       const VtValue& values,
+	                       const TfToken& role)
+	{
+	    // we have to handle the types case-by-case
     //
     // Apparently, int user data cannot be output into RenderOutput
     // buffers, so id-type primvars must be of float type. If the
     // RenderBuffer is requested as an int format, it is translated
-    // from float to int in RenderBuffer::Resolve() [q.v.]
-    if (values.IsHolding<VtFloatArray>()) {
-        const VtFloatArray& v = values.UncheckedGet<VtFloatArray>();
-        const float* p = &v[0];
-        userData->setFloatData(name, FloatVector(p, p + v.size()));
-    } else if (values.IsHolding<float>()) {
-        float v = values.UncheckedGet<float>();
-        userData->setFloatData(name, FloatVector{v});
-    } else if (values.IsHolding<double>()) {
-        float v = float(values.UncheckedGet<double>());
-        userData->setFloatData(name, FloatVector{v});
-    } else if (values.IsHolding<VtVec2fArray>()) {
-        const VtVec2fArray& v = values.UncheckedGet<VtVec2fArray>();
-        const Vec2f* p = reinterpret_cast<const Vec2f*>(&v[0]);
-        userData->setVec2fData(name, Vec2fVector(p, p + v.size()));
-    } else if (values.IsHolding<VtVec3fArray>()) {
-        const VtVec3fArray& v = values.UncheckedGet<VtVec3fArray>();
-        if (role == HdPrimvarRoleTokens->color) {
-            const Rgb* p = reinterpret_cast<const Rgb*>(&v[0]);
-            userData->setColorData(name, RgbVector(p, p + v.size()));
-        } else {
-            const Vec3f* p = reinterpret_cast<const Vec3f*>(&v[0]);
-            userData->setVec3fData(name, Vec3fVector(p, p + v.size()));
+	    // from float to int in RenderBuffer::Resolve() [q.v.]
+	    if (values.IsHolding<VtFloatArray>()) {
+	        const VtFloatArray& v = values.UncheckedGet<VtFloatArray>();
+	        if (emptyArray(v, name)) return false;
+	        const float* p = &v[0];
+	        userData->setFloatData(name, FloatVector(p, p + v.size()));
+	    } else if (values.IsHolding<float>()) {
+	        float v = values.UncheckedGet<float>();
+	        userData->setFloatData(name, FloatVector{v});
+	    } else if (values.IsHolding<double>()) {
+	        float v = float(values.UncheckedGet<double>());
+	        userData->setFloatData(name, FloatVector{v});
+	    } else if (values.IsHolding<VtVec2fArray>()) {
+	        const VtVec2fArray& v = values.UncheckedGet<VtVec2fArray>();
+	        if (emptyArray(v, name)) return false;
+	        const Vec2f* p = reinterpret_cast<const Vec2f*>(&v[0]);
+	        userData->setVec2fData(name, Vec2fVector(p, p + v.size()));
+	    } else if (values.IsHolding<VtVec3fArray>()) {
+	        const VtVec3fArray& v = values.UncheckedGet<VtVec3fArray>();
+	        if (emptyArray(v, name)) return false;
+	        if (role == HdPrimvarRoleTokens->color) {
+	            const Rgb* p = reinterpret_cast<const Rgb*>(&v[0]);
+	            userData->setColorData(name, RgbVector(p, p + v.size()));
+	        } else {
+	            const Vec3f* p = reinterpret_cast<const Vec3f*>(&v[0]);
+	            userData->setVec3fData(name, Vec3fVector(p, p + v.size()));
         }
     } else if (values.IsHolding<GfVec3f>()) {
         const GfVec3f& v = values.UncheckedGet<GfVec3f>();
-        if (role == HdPrimvarRoleTokens->color) {
-            userData->setColorData(name, RgbVector{reinterpret_cast<const Rgb&>(v)});
-        } else {
-            userData->setVec3fData(name, Vec3fVector{reinterpret_cast<const Vec3f&>(v)});
-        }
-    } else if (values.IsHolding<VtStringArray>()) {
-        const VtStringArray& v = values.UncheckedGet<VtStringArray>();
-        const std::string* p = &v[0];
-        userData->setStringData(name, StringVector(p, p + v.size()));
-    } else if (values.IsHolding<std::string>()) {
-        const std::string& v = values.Get<std::string>();
-        userData->setStringData(name, StringVector{v});
-    } else if (values.IsHolding<VtUIntArray>()) {
-        // HDM-266 moonray does not support attribute type Int for face varying attribute, 
-        // cast to float
-        const VtUIntArray& v = values.UncheckedGet<VtUIntArray>();
-        const float* p = reinterpret_cast<const float*>(&v[0]);
-        userData->setFloatData(name, FloatVector(p, p + v.size()));
-    } else if (values.IsHolding<VtIntArray>()) {
-        const VtIntArray& v = values.UncheckedGet<VtIntArray>();
-        // HDM-266 moonray does not support attribute type Int for face varying attribute, 
-        // cast to float
-        const float* p = reinterpret_cast<const float*>(&v[0]);
-        userData->setFloatData(name.GetString(), FloatVector(p, p + v.size()));
-    } else if (values.IsHolding<int>()) {
-        int v = values.UncheckedGet<int>();
-        userData->setIntData(name, IntVector{v});
-    } else if (values.IsHolding<long>()) {
-        int v = int(values.UncheckedGet<long>());
-        userData->setIntData(name, IntVector{v});
-    } else if (values.IsHolding<VtBoolArray>()) {
-        const VtBoolArray& v = values.UncheckedGet<VtBoolArray>();
-        const bool* p = &v[0];
-        userData->setBoolData(name, BoolVector(p, p + v.size()));
-    } else {
-        Logger::warn(userData->getName(), ": ", values.GetTypeName(), " not translated");
-        }
-    }
-}
+	        if (role == HdPrimvarRoleTokens->color) {
+	            userData->setColorData(name, RgbVector{reinterpret_cast<const Rgb&>(v)});
+	        } else {
+	            userData->setVec3fData(name, Vec3fVector{reinterpret_cast<const Vec3f&>(v)});
+	        }
+	    } else if (values.IsHolding<VtStringArray>()) {
+	        const VtStringArray& v = values.UncheckedGet<VtStringArray>();
+	        if (emptyArray(v, name)) return false;
+	        const std::string* p = &v[0];
+	        userData->setStringData(name, StringVector(p, p + v.size()));
+	    } else if (values.IsHolding<std::string>()) {
+	        const std::string& v = values.Get<std::string>();
+	        userData->setStringData(name, StringVector{v});
+	    } else if (values.IsHolding<VtUIntArray>()) {
+	        // HDM-266 moonray does not support attribute type Int for face varying attribute,
+	        // cast to float
+	        const VtUIntArray& v = values.UncheckedGet<VtUIntArray>();
+	        if (emptyArray(v, name)) return false;
+	        FloatVector data;
+	        data.reserve(v.size());
+	        for (unsigned int item : v) {
+	            data.push_back(static_cast<float>(item));
+	        }
+	        userData->setFloatData(name, std::move(data));
+	    } else if (values.IsHolding<VtIntArray>()) {
+	        const VtIntArray& v = values.UncheckedGet<VtIntArray>();
+	        // HDM-266 moonray does not support attribute type Int for face varying attribute,
+	        // cast to float
+	        if (emptyArray(v, name)) return false;
+	        FloatVector data;
+	        data.reserve(v.size());
+	        for (int item : v) {
+	            data.push_back(static_cast<float>(item));
+	        }
+	        userData->setFloatData(name.GetString(), std::move(data));
+	    } else if (values.IsHolding<int>()) {
+	        int v = values.UncheckedGet<int>();
+	        userData->setIntData(name, IntVector{v});
+	    } else if (values.IsHolding<long>()) {
+	        int v = int(values.UncheckedGet<long>());
+	        userData->setIntData(name, IntVector{v});
+	    } else if (values.IsHolding<VtBoolArray>()) {
+	        const VtBoolArray& v = values.UncheckedGet<VtBoolArray>();
+	        if (emptyArray(v, name)) return false;
+	        BoolVector data;
+	        for (bool item : v) {
+	            data.push_back(item);
+	        }
+	        userData->setBoolData(name, std::move(data));
+	    } else {
+	        Logger::warn("Skipping primvar '", name, "' on ", userData->getName(),
+	                     ": ", values.GetTypeName(), " not translated");
+	        return false;
+	    }
+	    return true;
+	}
 
 } // namespace {
-
-namespace hdMoonray {
 
 
 void
@@ -351,10 +382,13 @@ GeometryMixin::primvarUserData(RenderDelegate& renderDelegate,
         mUserDataChanged = true;
     }
 
-    // store the primvar values into the UserData object
-    UpdateGuard guard(renderDelegate, userData);
-    setUserDataInterpolation(userData, interp);
-    setUserDataValues(userData, name, value, role);
+	    // store the primvar values into the UserData object
+	    UpdateGuard guard(renderDelegate, userData);
+	    setUserDataInterpolation(userData, interp);
+	    if (!setUserDataValues(userData, name, value, role)) {
+	        mUserData.erase(name);
+	        mUserDataChanged = true;
+	    }
 }
 
 
@@ -374,28 +408,33 @@ GeometryMixin::setVec3fPrimvarMb(HdSceneDelegate* sceneDelegate,
             mGeometry->resetToDefault(rdlName_1);
             return;
         }
-   
-        HdTimeSampleArray<VtValue, 4> vals;
-        sceneDelegate->SamplePrimvar(rprim.GetId(), hydraName, &vals);
 
-        if (vals.count <= 1) {
-            setVec3fPrimvar(mGeometry, rdlName_0, value);
-            mGeometry->resetToDefault(rdlName_1);
-        } else {
-            const bool sizesMatch =
-                vals.values[0].Get<pxr::VtVec3fArray>().size() ==
-                vals.values[vals.count - 1].Get<pxr::VtVec3fArray>().size();
+	        HdTimeSampleArray<VtValue, 4> vals;
+	        sceneDelegate->SamplePrimvar(rprim.GetId(), hydraName, &vals);
 
-            if (sizesMatch) {
-                setVec3fPrimvar(mGeometry, rdlName_0, vals.values[0]);
-                setVec3fPrimvar(mGeometry, rdlName_1, vals.values[vals.count - 1]);
-                                 
-            } else {
-                // If the sizes of the arrays don't match, then the topology
-                // is changing and we should just use the second set of values
-                setVec3fPrimvar(mGeometry, rdlName_0, vals.values[vals.count - 1]);
-            }
-        }          
+	        if (vals.count <= 1) {
+	            setVec3fPrimvar(mGeometry, rdlName_0, hydraName, value);
+	            mGeometry->resetToDefault(rdlName_1);
+	        } else {
+	            if (!vals.values[0].IsHolding<pxr::VtVec3fArray>() ||
+	                !vals.values[vals.count - 1].IsHolding<pxr::VtVec3fArray>()) {
+	                Logger::warn("Skipping primvar '", hydraName,
+	                             "': motion samples require Vec3f arrays");
+	                return;
+	            }
+	            const bool sizesMatch =
+	                vals.values[0].Get<pxr::VtVec3fArray>().size() ==
+	                vals.values[vals.count - 1].Get<pxr::VtVec3fArray>().size();
+
+	            if (sizesMatch) {
+	                setVec3fPrimvar(mGeometry, rdlName_0, hydraName, vals.values[0]);
+	                setVec3fPrimvar(mGeometry, rdlName_1, hydraName, vals.values[vals.count - 1]);
+	            } else {
+	                // If the sizes of the arrays don't match, then the topology
+	                // is changing and we should just use the second set of values
+	                setVec3fPrimvar(mGeometry, rdlName_0, hydraName, vals.values[vals.count - 1]);
+	            }
+	        }
     } catch (std::exception& e) {
         // may be called in cases that rdlName_0 or _1 don't exist : e.g.
         // if Hydra generates a "points" primvar for procedurals that don't
@@ -404,6 +443,3 @@ GeometryMixin::setVec3fPrimvarMb(HdSceneDelegate* sceneDelegate,
 }
 
 }
-
-
-

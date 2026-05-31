@@ -26,7 +26,7 @@ Build hdMoonRay variant 6, e.g.:
     rez-env buildtools
     cd hdmoonray
     rez-build -i --variants 6
-    # os-CentOS-7 opt_level-optdebug usd_core_dwa_plugin moonshine_usd usd_imaging-0.22.5 moonshine_dwa houdini_dwa-19 python-3.9 gcc refplat-vfx2022
+    # os-CentOS-7 opt_level-optdebug usd_core_dwa_plugin moonshine_usd usd_imaging-0.22.5 moonshine_dwa houdini_dwa-19 python-3.11 gcc refplat-vfx2022
 
 ### Running
 
@@ -38,7 +38,7 @@ is one.
 To run the RaTS tests, use the following rez-env:
 
     rez2
-    rez-env hdMoonray rats opt_level-optdebug usd_core_dwa_plugin moonshine_usd usd_imaging-0.22.5 moonshine_dwa houdini_dwa-19 python-3.9 gcc refplat-vfx2022
+    rez-env hdMoonray rats opt_level-optdebug usd_core_dwa_plugin moonshine_usd usd_imaging-0.22.5 moonshine_dwa houdini_dwa-19 python-3.11 gcc refplat-vfx2022
 
 Then, use the normal RaTS commands **from the hdmoonray rez install dir**, e.g.:
 

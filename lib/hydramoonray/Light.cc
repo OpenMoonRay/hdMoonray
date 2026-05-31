@@ -4,6 +4,7 @@
 #include "Light.h"
 #include "LightFilter.h"
 #include "Mesh.h"
+#include "PrimTypeUtils.h"
 #include "RenderDelegate.h"
 #include "ValueConverter.h"
 #include "HdmLog.h"
@@ -55,6 +56,13 @@ defaultRdlClassName(const pxr::TfToken& type)
 namespace hdMoonray {
 
 using scene_rdl2::logging::Logger;
+
+Light::Light(const pxr::TfToken& type, const pxr::SdfPath& id):
+    pxr::HdLight(id),
+    mType(canonicalSprimType(type)),
+    mRectToSpotlight(false)
+{
+}
 
 pxr::HdDirtyBits
 Light::GetInitialDirtyBitsMask() const
@@ -111,7 +119,7 @@ Light::rdlClassName(const pxr::SdfPath& id,
 bool
 Light::isSupportedType(const pxr::TfToken& type)
 {
-    return !defaultRdlClassName(type).empty();
+    return !defaultRdlClassName(canonicalSprimType(type)).empty();
 }
 
 

@@ -7,6 +7,7 @@
 #include "Camera.h"
 
 #include <pxr/imaging/hd/renderPassState.h>
+#include <pxr/usdImaging/usdImaging/delegate.h>
 #include <scene_rdl2/scene/rdl2/Utils.h>
 
 #include <iostream>
@@ -101,6 +102,7 @@ RenderPass::_Execute(const pxr::HdRenderPassStateSharedPtr& renderPassState,
         motionSteps[0] = interval.first;
         motionSteps[1] = interval.second;
     }
+    renderDelegate.renderSettings().getHoudiniFrame(frame);
 
     const bool motionBlur = renderDelegate.getEnableMotionBlur() &&
                             motionSteps[0] < motionSteps[1];
@@ -151,4 +153,3 @@ RenderPass::_Execute(const pxr::HdRenderPassStateSharedPtr& renderPassState,
 }
 
 }
-

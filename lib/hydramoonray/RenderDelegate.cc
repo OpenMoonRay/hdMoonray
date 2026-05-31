@@ -11,6 +11,7 @@
 #include "Material.h"
 #include "Mesh.h"
 #include "Points.h"
+#include "PrimTypeUtils.h"
 #include "Procedural.h"
 #include "RenderBuffer.h"
 #include "Renderer.h"
@@ -164,7 +165,7 @@ RenderDelegate::GetSupportedRprimTypes() const
 pxr::TfTokenVector const&
 RenderDelegate::GetSupportedSprimTypes() const
 {
-    static const pxr::TfTokenVector SUPPORTED_SPRIM_TYPES = {
+    static pxr::TfTokenVector SUPPORTED_SPRIM_TYPES = {
         pxr::HdPrimTypeTokens->camera,
         //pxr::HdPrimTypeTokens->drawTarget, // used by hdSt to return OpenGL textures
         pxr::HdPrimTypeTokens->material,
@@ -180,16 +181,30 @@ RenderDelegate::GetSupportedSprimTypes() const
         lightFilterToken,
         pxr::HdPrimTypeTokens->extComputation,
     };
+    static const bool aliasesAdded = []() {
+        for (const pxr::TfToken& alias : supportedSprimTypeAliases()) {
+            SUPPORTED_SPRIM_TYPES.push_back(alias);
+        }
+        return true;
+    }();
+    (void)aliasesAdded;
     return SUPPORTED_SPRIM_TYPES;
 }
 
 pxr::TfTokenVector const&
 RenderDelegate::GetSupportedBprimTypes() const
 {
-    static const pxr::TfTokenVector SUPPORTED_BPRIM_TYPES = {
+    static pxr::TfTokenVector SUPPORTED_BPRIM_TYPES = {
         pxr::HdPrimTypeTokens->renderBuffer,
         openvdbAssetToken,
     };
+    static const bool aliasesAdded = []() {
+        for (const pxr::TfToken& alias : supportedBprimTypeAliases()) {
+            SUPPORTED_BPRIM_TYPES.push_back(alias);
+        }
+        return true;
+    }();
+    (void)aliasesAdded;
     return SUPPORTED_BPRIM_TYPES;
 }
 
@@ -199,6 +214,21 @@ RenderDelegate::GetResourceRegistry() const
     static pxr::HdResourceRegistrySharedPtr ptr;
     if (not ptr) ptr.reset(new pxr::HdResourceRegistry());
     return ptr;
+}
+
+void
+RenderDelegate::SetRenderSetting(pxr::TfToken const& key, pxr::VtValue const& value)
+{
+    pxr::HdRenderDelegate::SetRenderSetting(key, value);
+
+    static const pxr::TfToken renderPauseToken("houdini:render_pause");
+    if (key == renderPauseToken && value.IsHolding<bool>()) {
+        if (value.UncheckedGet<bool>()) {
+            Pause();
+        } else {
+            Resume();
+        }
+    }
 }
 
 // Result of this is passed to RenderBuffer::Allocate
@@ -311,18 +341,19 @@ pxr::HdSprim*
 RenderDelegate::CreateSprim(pxr::TfToken const& typeId,
                             pxr::SdfPath const& sprimId)
 {
-    if (typeId == pxr::HdPrimTypeTokens->camera) {
+    const pxr::TfToken type = canonicalSprimType(typeId);
+    if (type == pxr::HdPrimTypeTokens->camera) {
         return new Camera(sprimId);
-    } else  if (typeId == pxr::HdPrimTypeTokens->material) {
+    } else  if (type == pxr::HdPrimTypeTokens->material) {
         return new Material(sprimId);
-    } else  if (typeId == pxr::HdPrimTypeTokens->coordSys) {
+    } else  if (type == pxr::HdPrimTypeTokens->coordSys) {
         return new CoordSys(sprimId);
-    } else if (typeId == pxr::HdPrimTypeTokens->extComputation) {
+    } else if (type == pxr::HdPrimTypeTokens->extComputation) {
         return new pxr::HdExtComputation(sprimId); // no subclass needed
-    } else if (typeId == lightFilterToken) {
-        return new LightFilter(typeId,sprimId);
-    } else if (Light::isSupportedType(typeId)) {
-        auto p = new Light(typeId, sprimId);
+    } else if (type == lightFilterToken) {
+        return new LightFilter(type,sprimId);
+    } else if (Light::isSupportedType(type)) {
+        auto p = new Light(type, sprimId);
         if (not sprimId.IsEmpty())
             mLights.insert(p);
         return p;
@@ -349,9 +380,10 @@ pxr::HdBprim *
 RenderDelegate::CreateBprim(pxr::TfToken const& typeId,
                             pxr::SdfPath const& bprimId)
 {
-    if (typeId == pxr::HdPrimTypeTokens->renderBuffer) {
+    const pxr::TfToken type = canonicalBprimType(typeId);
+    if (type == pxr::HdPrimTypeTokens->renderBuffer) {
         return new RenderBuffer(bprimId);
-    } else if (typeId == openvdbAssetToken) {
+    } else if (type == openvdbAssetToken) {
         return new OpenVdbAsset(bprimId);
     } else {
         Logger::warn(bprimId, ": unknown Bprim type ", typeId);

@@ -5,8 +5,8 @@
 
 #include "RenderSettings.h"
 
+#include <pxr/pxr.h>
 #include <pxr/imaging/hd/renderDelegate.h>
-#include <pxr/usdImaging/usdImaging/delegate.h>
 
 namespace scene_rdl2 {namespace rdl2 {
 class Camera;
@@ -20,6 +20,10 @@ class SceneObject;
 class LayerAssignment;
 class VolumeShader;
 } }
+
+PXR_NAMESPACE_OPEN_SCOPE
+class UsdImagingDelegate;
+PXR_NAMESPACE_CLOSE_SCOPE
 
 namespace hdMoonray {
 
@@ -57,6 +61,11 @@ public:
     /// UI.
     pxr::HdRenderSettingDescriptorList GetRenderSettingDescriptors() const override
     { return mRenderSettingDescriptors; }
+
+    /// Houdini and husk send render settings outside normal Hydra dirty-bit
+    /// Sync() flow. Keep the base storage/versioning, and apply fast controls
+    /// that need immediate response.
+    void SetRenderSetting(pxr::TfToken const& key, pxr::VtValue const& value) override;
 
 #if PXR_VERSION >= 2108
     /// Commands supported by this render delegate.
@@ -313,7 +322,7 @@ private:
 
     Renderer* mRenderer = nullptr;
     RenderSettings mRenderSettings;
-    unsigned mPreviousRenderSettings = 0;
+    unsigned mPreviousRenderSettings = ~0u;
     pxr::HdRenderSettingDescriptorList mRenderSettingDescriptors;
 
     bool mDisableLighting = false;

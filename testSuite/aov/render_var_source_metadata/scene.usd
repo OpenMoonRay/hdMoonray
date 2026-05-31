@@ -1,0 +1,79 @@
+#usda 1.0
+(
+    startTimeCode = 1
+    endTimeCode = 1
+)
+
+def Camera "camera"
+{
+    float2 clippingRange = (0.01, 10000)
+    float focalLength = 50
+    float horizontalAperture = 36
+    float verticalAperture = 20.25
+    matrix4d xformOp:transform = ( (1, 0, 0, 0),
+                                   (0, 1, 0, 0),
+                                   (0, 0, 1, 0),
+                                   (0, 0, 6, 1) )
+    uniform token[] xformOpOrder = ["xformOp:transform"]
+}
+
+def Mesh "card"
+{
+    int[] faceVertexCounts = [4]
+    int[] faceVertexIndices = [0, 1, 3, 2]
+    point3f[] points = [(-1, -1, 0), (1, -1, 0), (-1, 1, 0), (1, 1, 0)]
+    color3f[] primvars:displayColor = [(1, 1, 1)] (
+        interpolation = "constant"
+    )
+    float2[] primvars:st = [(0, 0), (1, 0), (0, 1), (1, 1)] (
+        interpolation = "vertex"
+    )
+}
+
+def DomeLight "dome"
+{
+    color3f inputs:color = (1, 1, 1)
+    float inputs:intensity = 1
+}
+
+def Scope "Render"
+{
+    def Scope "Products"
+    {
+        def Scope "Vars"
+        {
+            def RenderVar "st"
+            {
+                token dataType = "float2"
+                string sourceName = "st"
+                token sourceType = "primvar"
+            }
+
+            def RenderVar "beauty"
+            {
+                token dataType = "color3f"
+                string sourceName = "beauty"
+                token sourceType = "raw"
+            }
+        }
+
+        def RenderProduct "product"
+        {
+            rel orderedVars = [
+                </Render/Products/Vars/beauty>,
+                </Render/Products/Vars/st>,
+            ]
+            token productName = "/tmp/moonray_render_var_source_metadata.exr"
+            token productType = "raster"
+        }
+    }
+
+    def RenderSettings "settings"
+    {
+        rel camera = </camera>
+        rel products = </Render/Products/product>
+        int2 resolution = (256, 144)
+        custom int moonray:sceneVariable:pixel_samples = 2
+        custom int moonray:sceneVariable:max_depth = 0
+    }
+}

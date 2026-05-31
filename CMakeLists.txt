@@ -47,7 +47,7 @@ find_package(OpenImageIO REQUIRED)
 find_package(TBB REQUIRED)
 
 if (NOT DEFINED BOOST_PYTHON_COMPONENT_NAME)
-    # may need to be, e.g. python36, python39
+    # may need to be, e.g. python36, python311
     set(BOOST_PYTHON_COMPONENT_NAME python)
 endif()
 
@@ -137,4 +137,3 @@ install(
     DESTINATION .
     USE_SOURCE_PERMISSIONS
 )
-

@@ -6,7 +6,10 @@
 #include <scene_rdl2/render/logging/logging.h>
 
 #include <cstdint>
+#include <algorithm>
+#include <cctype>
 #include <limits>
+#include <string>
 
 #include <pxr/usd/sdf/assetPath.h>
 
@@ -50,6 +53,88 @@ static bool _narrowIntChecked(SceneObject* sceneObj,
         return false;
     }
     *out = static_cast<Int>(value);
+    return true;
+}
+
+static std::string _normalizedToken(const std::string& value)
+{
+    std::string result = value;
+    std::transform(result.begin(), result.end(), result.begin(),
+                   [](unsigned char c) {
+                       if (c == '-' || c == ' ') return '_';
+                       return static_cast<char>(std::tolower(c));
+                   });
+    return result;
+}
+
+static bool _rampInterpolationTokenToInt(const std::string& token, Int* out)
+{
+    const std::string key = _normalizedToken(token);
+
+    // MoonRay ramp interpolation enums are documented in the generated
+    // scene class metadata for ramp IntVector attributes:
+    // None: 0 | Linear: 1 | Exponential Up: 2 | Exponential Down: 3 |
+    // Smooth: 4 | Catmull Rom: 5 | Monotone Cubic: 6
+    if (key == "none" || key == "constant") {
+        *out = 0;
+        return true;
+    }
+    if (key == "linear") {
+        *out = 1;
+        return true;
+    }
+    if (key == "exponential_up" || key == "ease_in") {
+        *out = 2;
+        return true;
+    }
+    if (key == "exponential_down" || key == "ease_out") {
+        *out = 3;
+        return true;
+    }
+    // Houdini ramp menus can author Hermite, Bezier, and B-spline tokens.
+    // MoonRay's native ramp metadata has one smooth/cubic interpolation slot,
+    // so those Houdini spline-style bases map to Smooth.
+    if (key == "smooth" || key == "smoothstep" || key == "hermite" ||
+        key == "bezier" || key == "bspline" || key == "b_spline") {
+        *out = 4;
+        return true;
+    }
+    if (key == "catmull_rom" || key == "catmullrom") {
+        *out = 5;
+        return true;
+    }
+    if (key == "monotone_cubic" || key == "monotonecubic") {
+        *out = 6;
+        return true;
+    }
+    return false;
+}
+
+static bool _setRampInterpolationVectorFromToken(SceneObject* sceneObj,
+                                                 const Attribute* attribute,
+                                                 const std::string& token)
+{
+    const std::string attrName = attribute->getName();
+    if (attrName.find("interpolation") == std::string::npos) {
+        return false;
+    }
+
+    Int interpolation = 0;
+    if (!_rampInterpolationTokenToInt(token, &interpolation)) {
+        Logger::warn(sceneObj->getName(), '.', attrName,
+                     ": unsupported ramp interpolation token '", token,
+                     "' for IntVector attribute; keeping the MoonRay default");
+        return true;
+    }
+
+    IntVector values = attribute->getDefaultValue<IntVector>();
+    if (values.empty()) {
+        values.push_back(interpolation);
+    } else {
+        std::fill(values.begin(), values.end(), interpolation);
+    }
+    sceneObj->set(AttributeKey<IntVector>(*attribute), values);
+    _clearBinding(sceneObj, attribute);
     return true;
 }
 
@@ -123,6 +208,7 @@ template<typename T, typename H>
 struct Converter<std::vector<T>, pxr::VtArray<H>>
 {
     static std::vector<T> _(const pxr::VtArray<H>& v) {
+        if (v.empty()) return {};
         const T* p = &(RefConverter<T,H>::_(v[0]));
         return std::vector<T>(p, p + v.size());
     }
@@ -133,6 +219,7 @@ template<>
 struct Converter<BoolVector, pxr::VtArray<bool>>
 {
     static BoolVector _(const pxr::VtArray<bool>& v) {
+        if (v.empty()) return {};
         return BoolVector(&v[0], &v[0] + v.size());
     }
 };
@@ -295,6 +382,22 @@ ValueConverter::setAttribute(SceneObject* sceneObj, const Attribute* attribute, 
         break;
     case TYPE_INT_VECTOR:
         if (_setAttribute<IntVector, pxr::VtArray<int>>(sceneObj, attribute, val)) return;
+        if (val.IsHolding<pxr::TfToken>()) {
+            const std::string token = val.UncheckedGet<pxr::TfToken>().GetString();
+            if (_setRampInterpolationVectorFromToken(sceneObj, attribute, token)) return;
+            Logger::warn(sceneObj->getName(), '.', attribute->getName(),
+                         ": unsupported scalar token value '", token,
+                         "' for IntVector attribute; keeping the MoonRay default");
+            return;
+        }
+        if (val.IsHolding<std::string>()) {
+            const std::string token = val.UncheckedGet<std::string>();
+            if (_setRampInterpolationVectorFromToken(sceneObj, attribute, token)) return;
+            Logger::warn(sceneObj->getName(), '.', attribute->getName(),
+                         ": unsupported scalar string value '", token,
+                         "' for IntVector attribute; keeping the MoonRay default");
+            return;
+        }
         break;
     case TYPE_LONG_VECTOR:
         if (_setAttribute<LongVector, pxr::VtArray<long>>(sceneObj, attribute, val)) return;

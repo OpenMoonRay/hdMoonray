@@ -131,6 +131,50 @@ void split(pxr::TfToken token, pxr::TfToken& prefix, pxr::TfToken& suffix)
     suffix = token;
 }
 
+pxr::TfToken
+tokenFromValue(const pxr::VtValue& value)
+{
+    if (value.IsHolding<pxr::TfToken>()) {
+        return value.UncheckedGet<pxr::TfToken>();
+    }
+    if (value.IsHolding<std::string>()) {
+        return pxr::TfToken(value.UncheckedGet<std::string>());
+    }
+    return pxr::TfToken();
+}
+
+pxr::TfToken
+aovNameFromSettings(const pxr::HdRenderPassAovBinding& aovBinding)
+{
+    auto sourceNameIt = aovBinding.aovSettings.find(pxr::TfToken("sourceName"));
+    pxr::TfToken sourceName = sourceNameIt == aovBinding.aovSettings.end() ?
+        pxr::TfToken() : tokenFromValue(sourceNameIt->second);
+    if (sourceName.IsEmpty()) {
+        return aovBinding.aovName;
+    }
+
+    auto sourceTypeIt = aovBinding.aovSettings.find(pxr::TfToken("sourceType"));
+    const pxr::TfToken sourceType = sourceTypeIt == aovBinding.aovSettings.end() ?
+        pxr::TfToken() : tokenFromValue(sourceTypeIt->second);
+    if (sourceType == pxr::TfToken("primvar") || sourceType == pxr::TfToken("primvars")) {
+        if (lookup(sourceName)) {
+            return sourceName;
+        }
+        return pxr::TfToken("primvars:" + sourceName.GetString());
+    }
+    if (sourceType == pxr::HdAovTokens->lpe || sourceType == pxr::TfToken("lpe")) {
+        return pxr::TfToken("lpe:" + sourceName.GetString());
+    }
+    if (sourceType == pxr::HdAovTokens->shader || sourceType == pxr::TfToken("shader")) {
+        return pxr::TfToken("shader:" + sourceName.GetString());
+    }
+    if (!sourceType.IsEmpty() && sourceType != pxr::TfToken("raw")) {
+        scene_rdl2::logging::Logger::warn("Unsupported AOV sourceType '", sourceType,
+                                          "' for sourceName '", sourceName, "'");
+    }
+    return sourceName;
+}
+
 }
 
 namespace hdMoonray {
@@ -217,7 +261,7 @@ RenderBuffer::bind(const pxr::HdRenderPassAovBinding& aovBinding, const Camera* 
 {
     hdmLogRenderBuffer("Bind", GetId());
 
-    mAovName = aovBinding.aovName;
+    mAovName = aovNameFromSettings(aovBinding);
     mNear = camera->getNear();
     mFar = camera->getFar();
     pxr::HdAovSettingsMap aovSettings = aovBinding.aovSettings;
@@ -342,6 +386,10 @@ RenderBuffer::bind(const pxr::HdRenderPassAovBinding& aovBinding, const Camera* 
                 } else if (prefix == pxr::HdAovTokens->shader) {
                     ro.setResult(ro.RESULT_MATERIAL_AOV);
                     ro.setMaterialAov(suffix.GetString());
+                } else {
+                    Logger::warn("Unsupported AOV mapping '", mAovName,
+                                 "'; RenderOutput disabled");
+                    ro.setActive(false);
                 }
             }
 
