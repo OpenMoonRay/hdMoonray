@@ -18,6 +18,9 @@
 #include <scene_rdl2/scene/rdl2/Light.h>
 #include <scene_rdl2/scene/rdl2/LightFilter.h>
 #include <scene_rdl2/scene/rdl2/Geometry.h>
+#include <scene_rdl2/scene/rdl2/SceneClass.h>
+#include <scene_rdl2/scene/rdl2/SceneContext.h>
+#include <scene_rdl2/common/except/exceptions.h>
 #include <scene_rdl2/common/math/Math.h>
 
 #include <scene_rdl2/render/logging/logging.h>
@@ -51,6 +54,31 @@ defaultRdlClassName(const pxr::TfToken& type)
     return it->second;
 }
 
+bool
+isMoonRayLightClass(const std::string& className, hdMoonray::RenderDelegate& renderDelegate)
+{
+    try {
+        const SceneClass* sceneClass = renderDelegate.sceneContext().getSceneClass(className);
+        return sceneClass && (sceneClass->getDeclaredInterface() & INTERFACE_LIGHT);
+    } catch (const scene_rdl2::except::KeyError&) {
+        return false;
+    }
+}
+
+bool
+isUsdShapedLight(const pxr::SdfPath& id, pxr::HdSceneDelegate *sceneDelegate)
+{
+    return sceneDelegate->GetLightParamValue(id, pxr::HdLightTokens->shapingConeAngle).IsHolding<float>() ||
+           sceneDelegate->GetLightParamValue(id, pxr::HdLightTokens->shapingConeSoftness).IsHolding<float>();
+}
+
+bool
+canUseMoonRaySpotLightForType(const pxr::TfToken& type)
+{
+    return type == pxr::HdPrimTypeTokens->diskLight ||
+           type == pxr::HdPrimTypeTokens->sphereLight;
+}
+
 }
 
 namespace hdMoonray {
@@ -73,15 +101,33 @@ Light::GetInitialDirtyBitsMask() const
 
 const std::string&
 Light::rdlClassName(const pxr::SdfPath& id,
-                    pxr::HdSceneDelegate *sceneDelegate)
+                    pxr::HdSceneDelegate *sceneDelegate,
+                    RenderDelegate& renderDelegate)
 {
     // identify the rdl light class to use. This can be specified via "token moonray::class =" or
     // deduced from the Lux/Usd type
     const std::string& luxRdlClass(defaultRdlClassName(mType));
+    mRectToSpotlight = false;
+
     pxr::VtValue v = sceneDelegate->GetLightParamValue(id, moonrayClassToken);
     bool isRectLight = false;
     if (v.IsHolding<pxr::TfToken>()) {
         pxr::TfToken classToken = v.UncheckedGet<pxr::TfToken>();
+        const std::string& className = classToken.GetString();
+        if (!isMoonRayLightClass(className, renderDelegate)) {
+            if (!luxRdlClass.empty()) {
+                const bool shapedSpot = isUsdShapedLight(id, sceneDelegate) &&
+                                        canUseMoonRaySpotLightForType(mType);
+                const std::string& fallbackClass = shapedSpot ? spotLightToken.GetString() : luxRdlClass;
+                Logger::warn(id, ".moonray:class: invalid MoonRay light class '", classToken,
+                             "'; falling back to USD light type '", mType,
+                             "' as '", fallbackClass, "'");
+                return fallbackClass;
+            }
+            Logger::error(id, ".moonray:class: invalid MoonRay light class '", classToken,
+                          "' and no fallback exists for USD light type '", mType, "'");
+            return luxRdlClass;
+        }
         if (classToken == rectLightToken) {
             isRectLight = true;
         }
@@ -96,18 +142,19 @@ Light::rdlClassName(const pxr::SdfPath& id,
             Logger::warn(id, ".moonray:class: '", classToken,
                          "' may not be compatible with USD light type '", mType, "'");
         }
-        return classToken.GetString();
+        mRectToSpotlight = isRectLight && isUsdShapedLight(id, sceneDelegate);
+        return className;
     }
-    // existence of shaping api makes a SpotLight
-    v = sceneDelegate->GetLightParamValue(id, pxr::HdLightTokens->shapingConeAngle);
-    if (v.IsHolding<float>() && v.UncheckedGet<float>() < 90.0f) {
-        if (mType != pxr::HdPrimTypeTokens->diskLight) {
+    // Houdini/Solaris authors spotlights as a UsdLux SphereLight or DiskLight
+    // with UsdLuxShapingAPI cone attributes, not as a separate USD SpotLight
+    // prim. The USD default cone angle of 90 degrees is still a valid authored
+    // shaped light; do not require angle < 90 to select MoonRay SpotLight.
+    if (isUsdShapedLight(id, sceneDelegate)) {
+        if (!canUseMoonRaySpotLightForType(mType)) {
             Logger::warn(id, ": shaping api may not be compatible with USD light type '", mType, "'");
+        } else {
+            return spotLightToken.GetString();
         }
-        if (isRectLight) {
-            mRectToSpotlight = true;
-        }
-        return spotLightToken.GetString();
     }
     if (luxRdlClass.empty()) {
         Logger::error(id, ": Unsupported light type ", mType, " replaced by DiskLight");
@@ -124,7 +171,7 @@ Light::isSupportedType(const pxr::TfToken& type)
 
 
 void
-Light::fixCylinderLight(scene_rdl2::rdl2::Mat4d& mat) {
+Light::fixLightXform(scene_rdl2::rdl2::Mat4d& mat) {
     // in Usd/Lux cylinder is along x-axis, in moonray it is along y.
     if (mType == pxr::HdPrimTypeTokens->cylinderLight) {
         // rotate -90deg about z
@@ -143,17 +190,17 @@ Light::syncXform(const pxr::SdfPath& id,
     if (sampledXforms.count <= 1) {
         scene_rdl2::rdl2::Mat4d rdl2Xform0 =
             reinterpret_cast<scene_rdl2::rdl2::Mat4d&>(sampledXforms.values[0]);
-        fixCylinderLight(rdl2Xform0);
+        fixLightXform(rdl2Xform0);
         mLight->set(mLight->sNodeXformKey, rdl2Xform0);
     } else {
         // first and last samples will be sample interval boundaries
         scene_rdl2::rdl2::Mat4d rdl2Xform0 =
             reinterpret_cast<scene_rdl2::rdl2::Mat4d&>(sampledXforms.values[0]);
-        fixCylinderLight(rdl2Xform0);
+        fixLightXform(rdl2Xform0);
         mLight->set(mLight->sNodeXformKey, rdl2Xform0);
         scene_rdl2::rdl2::Mat4d rdl2Xform1 =
             reinterpret_cast<scene_rdl2::rdl2::Mat4d&>(sampledXforms.values[sampledXforms.count-1]);
-        fixCylinderLight(rdl2Xform1);
+        fixLightXform(rdl2Xform1);
         mLight->set(mLight->sNodeXformKey, rdl2Xform1, scene_rdl2::rdl2::TIMESTEP_END);
    }
 }
@@ -269,6 +316,9 @@ Light::syncParams(const pxr::SdfPath& id,
                 float coneAngle = 90; // Lux default value
                 val = sceneDelegate->GetLightParamValue(id, pxr::HdLightTokens->shapingConeAngle);
                 if (val.IsHolding<float>()) coneAngle = val.UncheckedGet<float>();
+                coneAngle = scene_rdl2::math::clamp(coneAngle, 0.0f, 180.0f);
+                // USD shaping:cone:angle is an off-axis half angle; MoonRay
+                // SpotLight outer_cone_angle is the full side-to-side apex.
                 mLight->set(AttributeKey<float>(**it), 2 * coneAngle);
                 continue;
 
@@ -276,13 +326,14 @@ Light::syncParams(const pxr::SdfPath& id,
                 float softness = 0; // Lux default value
                 val = sceneDelegate->GetLightParamValue(id, luxName);
                 if (val.IsHolding<float>()) softness = val.UncheckedGet<float>();
+                softness = scene_rdl2::math::clamp(softness, 0.0f, 1.0f);
                 float coneAngle = 90; // Lux default value
                 val = sceneDelegate->GetLightParamValue(id, pxr::HdLightTokens->shapingConeAngle);
                 if (val.IsHolding<float>()) coneAngle = val.UncheckedGet<float>();
-                float innerConeAngle = coneAngle;
-                if (softness > 0) {
-                    innerConeAngle = (softness < 1) ? coneAngle * (1 - softness) : 0.0f;
-                }
+                coneAngle = scene_rdl2::math::clamp(coneAngle, 0.0f, 180.0f);
+                // USD softness is the fraction of non-cutoff angles used for
+                // falloff. MoonRay inner_cone_angle is the full bright apex.
+                const float innerConeAngle = coneAngle * (1.0f - softness);
                 mLight->set(AttributeKey<float>(**it), 2 * innerConeAngle);
                 continue;
 
@@ -385,7 +436,7 @@ Light::Sync(pxr::HdSceneDelegate *sceneDelegate,
         if (not (intensity > 0)) return; // don't create invisible lights
         // currently if the class changes, Finalize() is called, so there is no need to check
         // for this after the object is created.
-        const std::string& rdlClass = rdlClassName(id, sceneDelegate);
+        const std::string& rdlClass = rdlClassName(id, sceneDelegate, renderDelegate);
         scene_rdl2::rdl2::SceneObject* object = renderDelegate.createSceneObject(rdlClass, id);
         mLight = object ? object->asA<scene_rdl2::rdl2::Light>() : nullptr;
         if (not mLight) return; // if there was an error this already printed an error message

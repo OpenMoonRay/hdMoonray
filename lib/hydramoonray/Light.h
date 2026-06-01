@@ -36,7 +36,8 @@ public:
 
 private:
     const std::string& rdlClassName(const pxr::SdfPath& id,
-                                    pxr::HdSceneDelegate *sceneDelegate);
+                                    pxr::HdSceneDelegate *sceneDelegate,
+                                    RenderDelegate& renderDelegate);
 
     void syncXform(const pxr::SdfPath& id,
                    pxr::HdSceneDelegate *sceneDelegate);
@@ -47,7 +48,7 @@ private:
                         pxr::HdSceneDelegate *sceneDelegate,
                         RenderDelegate& renderDelegate);
 
-    void fixCylinderLight(scene_rdl2::rdl2::Mat4d& mat);
+    void fixLightXform(scene_rdl2::rdl2::Mat4d& mat);
 
     pxr::TfToken mType;
 
