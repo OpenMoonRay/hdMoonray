@@ -229,6 +229,25 @@ Light::setOn(bool value, RenderDelegate& renderDelegate) {
     }
 }
 
+void
+Light::resetLightObject(RenderDelegate& renderDelegate)
+{
+    if (!mLight) {
+        return;
+    }
+
+    // RDL SceneObjects cannot be deleted from SceneContext during interactive
+    // updates. Match the geometry lifecycle: make the old object inert and let
+    // createSceneObject() reuse or class-suffix replacement objects as needed.
+    UpdateGuard guard(renderDelegate, mLight);
+    setOn(false, renderDelegate);
+    renderDelegate.releaseCategory(mLight, RenderDelegate::CategoryType::LightLink, mLightLinkCategory);
+    renderDelegate.releaseCategory(mLight, RenderDelegate::CategoryType::ShadowLink, mShadowLinkCategory);
+    mLight = nullptr;
+    mLightLinkCategory = pxr::TfToken();
+    mShadowLinkCategory = pxr::TfToken();
+}
+
 pxr::GfVec3f
 colorTemperatureToRGB(float kelvin)
 {
@@ -457,15 +476,7 @@ Light::Sync(pxr::HdSceneDelegate *sceneDelegate,
     if (mLight && ((*dirtyBits) & pxr::HdLight::DirtyParams)) {
         rdlClass = rdlClassName(id, sceneDelegate, renderDelegate);
         if (rdlClass != mLight->getSceneClass().getName()) {
-            {
-                UpdateGuard guard(renderDelegate, mLight);
-                setOn(false, renderDelegate);
-            }
-            renderDelegate.releaseCategory(mLight, RenderDelegate::CategoryType::LightLink, mLightLinkCategory);
-            renderDelegate.releaseCategory(mLight, RenderDelegate::CategoryType::ShadowLink, mShadowLinkCategory);
-            mLight = nullptr;
-            mLightLinkCategory = pxr::TfToken();
-            mShadowLinkCategory = pxr::TfToken();
+            resetLightObject(renderDelegate);
             *dirtyBits = pxr::HdLight::AllDirty;
         }
     }
@@ -540,14 +551,7 @@ Light::Sync(pxr::HdSceneDelegate *sceneDelegate,
 void
 Light::Finalize(pxr::HdRenderParam *renderParam)
 {
-    if (mLight) {
-        RenderDelegate& renderDelegate(RenderDelegate::get(renderParam));
-        UpdateGuard guard(renderDelegate, mLight);
-        setOn(false, renderDelegate);
-        renderDelegate.releaseCategory(mLight, RenderDelegate::CategoryType::LightLink, mLightLinkCategory);
-        renderDelegate.releaseCategory(mLight, RenderDelegate::CategoryType::ShadowLink, mShadowLinkCategory);
-        mLight = nullptr;
-    }
+    resetLightObject(RenderDelegate::get(renderParam));
 }
 
 }

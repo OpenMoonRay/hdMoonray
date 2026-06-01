@@ -58,6 +58,7 @@ private:
     scene_rdl2::rdl2::Light* mLight = nullptr;
     bool mOn = false;
     void setOn(bool, RenderDelegate& renderDelegate);
+    void resetLightObject(RenderDelegate& renderDelegate);
 
     // the name of a category holding all geometry lit by this light
     pxr::TfToken mLightLinkCategory;
