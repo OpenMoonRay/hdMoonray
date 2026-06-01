@@ -58,9 +58,9 @@ bool
 isMoonRayLightClass(const std::string& className, hdMoonray::RenderDelegate& renderDelegate)
 {
     try {
-        const SceneClass* sceneClass = renderDelegate.sceneContext().getSceneClass(className);
+        const SceneClass* sceneClass = renderDelegate.acquireSceneContext().createSceneClass(className);
         return sceneClass && (sceneClass->getDeclaredInterface() & INTERFACE_LIGHT);
-    } catch (const scene_rdl2::except::KeyError&) {
+    } catch (const std::exception&) {
         return false;
     }
 }
@@ -453,12 +453,29 @@ Light::Sync(pxr::HdSceneDelegate *sceneDelegate,
     }
 
     bool initialize = false;
+    std::string rdlClass;
+    if (mLight && ((*dirtyBits) & pxr::HdLight::DirtyParams)) {
+        rdlClass = rdlClassName(id, sceneDelegate, renderDelegate);
+        if (rdlClass != mLight->getSceneClass().getName()) {
+            {
+                UpdateGuard guard(renderDelegate, mLight);
+                setOn(false, renderDelegate);
+            }
+            renderDelegate.releaseCategory(mLight, RenderDelegate::CategoryType::LightLink, mLightLinkCategory);
+            renderDelegate.releaseCategory(mLight, RenderDelegate::CategoryType::ShadowLink, mShadowLinkCategory);
+            mLight = nullptr;
+            mLightLinkCategory = pxr::TfToken();
+            mShadowLinkCategory = pxr::TfToken();
+            *dirtyBits = pxr::HdLight::AllDirty;
+        }
+    }
+
     if (not mLight) {
         *dirtyBits = DirtyBits::Clean; // don't call Sync again if no light is created
         if (not (intensity > 0)) return; // don't create invisible lights
-        // currently if the class changes, Finalize() is called, so there is no need to check
-        // for this after the object is created.
-        const std::string& rdlClass = rdlClassName(id, sceneDelegate, renderDelegate);
+        if (rdlClass.empty()) {
+            rdlClass = rdlClassName(id, sceneDelegate, renderDelegate);
+        }
         scene_rdl2::rdl2::SceneObject* object = renderDelegate.createSceneObject(rdlClass, id);
         mLight = object ? object->asA<scene_rdl2::rdl2::Light>() : nullptr;
         if (not mLight) return; // if there was an error this already printed an error message
