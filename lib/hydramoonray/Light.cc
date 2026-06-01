@@ -79,6 +79,13 @@ canUseMoonRaySpotLightForType(const pxr::TfToken& type)
            type == pxr::HdPrimTypeTokens->sphereLight;
 }
 
+bool
+canUseMoonRayShapingForType(const pxr::TfToken& type)
+{
+    return canUseMoonRaySpotLightForType(type) ||
+           type == pxr::HdPrimTypeTokens->rectLight;
+}
+
 }
 
 namespace hdMoonray {
@@ -149,10 +156,14 @@ Light::rdlClassName(const pxr::SdfPath& id,
     // with UsdLuxShapingAPI cone attributes, not as a separate USD SpotLight
     // prim. The USD default cone angle of 90 degrees is still a valid authored
     // shaped light; do not require angle < 90 to select MoonRay SpotLight.
+    //
+    // RectLight also supports UsdLuxShapingAPI. Keep it as a MoonRay RectLight
+    // and translate cone angle to the native RectLight spread attribute below
+    // instead of converting the rectangular emitter to a SpotLight.
     if (isUsdShapedLight(id, sceneDelegate)) {
-        if (!canUseMoonRaySpotLightForType(mType)) {
+        if (!canUseMoonRayShapingForType(mType)) {
             Logger::warn(id, ": shaping api may not be compatible with USD light type '", mType, "'");
-        } else {
+        } else if (canUseMoonRaySpotLightForType(mType)) {
             return spotLightToken.GetString();
         }
     }
@@ -305,6 +316,7 @@ Light::syncParams(const pxr::SdfPath& id,
             { "angular_extent", pxr::HdLightTokens->angle },
             { "texture", pxr::HdLightTokens->textureFile },
             { "lens_radius", pxr::HdLightTokens->radius },
+            { "spread", pxr::HdLightTokens->shapingConeAngle },
             { "outer_cone_angle", pxr::HdLightTokens->shapingConeAngle },
             { "inner_cone_angle", pxr::HdLightTokens->shapingConeSoftness }
         };
@@ -312,7 +324,17 @@ Light::syncParams(const pxr::SdfPath& id,
         if (it2 != map.end()) {
             pxr::TfToken luxName = it2->second;
 
-            if (luxName == pxr::HdLightTokens->shapingConeAngle) {
+            if (attrName == "spread") {
+                float coneAngle = 90; // USD default value
+                val = sceneDelegate->GetLightParamValue(id, pxr::HdLightTokens->shapingConeAngle);
+                if (val.IsHolding<float>()) coneAngle = val.UncheckedGet<float>();
+                // MoonRay RectLight spread is the normalized cone angle:
+                // 1 is a diffuse 90-degree cone and 0 is parallel emission.
+                const float spread = scene_rdl2::math::clamp(coneAngle, 0.0f, 90.0f) / 90.0f;
+                mLight->set(AttributeKey<float>(**it), spread);
+                continue;
+
+            } else if (luxName == pxr::HdLightTokens->shapingConeAngle) {
                 float coneAngle = 90; // Lux default value
                 val = sceneDelegate->GetLightParamValue(id, pxr::HdLightTokens->shapingConeAngle);
                 if (val.IsHolding<float>()) coneAngle = val.UncheckedGet<float>();
