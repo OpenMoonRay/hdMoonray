@@ -7,7 +7,6 @@
 
 #include <scene_rdl2/scene/rdl2/RenderOutput.h>
 #include <scene_rdl2/scene/rdl2/BinaryWriter.h>
-
 #include <mcrt_messages/RDLMessage.h>
 #include <mcrt_messages/CreditUpdate.h>
 #include <mcrt_messages/RenderMessages.h>
@@ -17,6 +16,28 @@
 namespace hdMoonray {
 
 using scene_rdl2::logging::Logger;
+
+namespace {
+
+std::string
+leafName(const std::string& objectName)
+{
+    const std::string::size_type slash = objectName.find_last_of('/');
+    if (slash == std::string::npos || slash + 1 >= objectName.size()) {
+        return objectName;
+    }
+    return objectName.substr(slash + 1);
+}
+
+bool
+namesMatch(const std::string& requested, const std::string& leaf, const std::string& available)
+{
+    return available == requested ||
+           available == leaf ||
+           requested == "/_outputs/" + available;
+}
+
+}
 
 ArrasRenderer::ArrasRenderer()
 {
@@ -319,17 +340,46 @@ ArrasRenderer::resolve(scene_rdl2::rdl2::RenderOutput* ro, PixelData& pd)
     if (mProgress < 0) return false;
 
     // see if no change since last time
-    unsigned n = mFbReceiver->getFbActivityCounter();
-    if (n == pd.filmActivity) return false;
-    pd.filmActivity = n;
+    const unsigned activity = mFbReceiver->getFbActivityCounter();
+    const std::string roName = isBeauty(ro) ? std::string("beauty") : ro->getName();
+    if (activity == pd.filmActivity) return false;
 
     if (isBeauty(ro)) {
         mFbReceiver->getBeautyMTSafe(pd.vec, pd.mWidth, pd.mHeight);
         pd.mChannels = 4;
+        pd.filmActivity = activity;
     } else {
-        unsigned n = mFbReceiver->getRenderOutputMTSafe(ro->getName(), pd.vec, pd.mWidth, pd.mHeight);
-        if (not n) return false; // ignore occasional bad data
-        pd.mChannels = n;
+        int matchedId = -1;
+        const unsigned totalOutputs = mFbReceiver->getTotalRenderOutput();
+        const std::string leaf = leafName(roName);
+        for (unsigned id = 0; id < totalOutputs; ++id) {
+            const std::string& available = mFbReceiver->getRenderOutputName(id);
+            if (namesMatch(roName, leaf, available)) {
+                matchedId = static_cast<int>(id);
+                break;
+            }
+        }
+
+        int n = mFbReceiver->getRenderOutputMTSafe(roName, pd.vec, pd.mWidth, pd.mHeight);
+
+        if (n <= 0) {
+            if (leaf != roName) {
+                n = mFbReceiver->getRenderOutputMTSafe(leaf, pd.vec, pd.mWidth, pd.mHeight);
+            }
+
+            if (n <= 0) {
+                if (matchedId >= 0) {
+                    n = mFbReceiver->getRenderOutputMTSafe(
+                        static_cast<unsigned>(matchedId), pd.vec, pd.mWidth, pd.mHeight);
+                }
+            }
+        }
+
+        if (n <= 0) {
+            return false; // ignore occasional bad data
+        }
+        pd.mChannels = static_cast<unsigned>(n);
+        pd.filmActivity = activity;
     }
     pd.mData = pd.vec.data();
 
