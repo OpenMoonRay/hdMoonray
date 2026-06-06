@@ -163,6 +163,105 @@ Avoid this:
 - Do not put geometry tessellation controls in global render settings.
 - Do not replace authored prim-specific values with renderer defaults.
 
+## Native MoonRay Camera Controls
+
+Status: stable / proven for the first low-risk Camera LOP controls.
+
+Evidence:
+
+- File: `moonray_dcc_plugins/houdini/soho/parameters/moonray_Camera.ds`.
+- Backend source: `Camera.cc`.
+- Installed metadata: `coredata/PerspectiveCamera.json` and
+  `coredata/OrthographicCamera.json`.
+- H20.5.584 validation in a normal installed package path after DCC install
+  sync.
+
+Native contract:
+
+- MoonRay `PerspectiveCamera` and `OrthographicCamera` already have native
+  attributes for `mb_shutter_bias`, `bokeh`, `bokeh_sides`, `bokeh_image`,
+  `bokeh_angle`, `bokeh_weight_location`, and `bokeh_weight_strength`.
+- hdMoonray already has generic `moonray:*` pass-through for camera attributes
+  that exist on the active camera SceneClass.
+- The `PerspectiveCamera("primaryCamera")` copy path already copies the selected
+  motion-blur and bokeh attributes where needed.
+- Standard USD camera attributes still own DOF through `fStop` and
+  `focusDistance`.
+
+Why it worked:
+
+- The change stayed DCC-only because the backend was already consuming the
+  selected native attributes.
+- The UI controls default to `none`, so a default Camera LOP does not author
+  `moonray:*` camera attributes.
+- Explicit UI values author inspectable custom USD camera attrs such as
+  `moonray:bokeh_sides` and `moonray:mb_shutter_bias`.
+- RDLA proves both the authored camera and `primaryCamera` receive the values
+  when USD DOF is enabled.
+- The DOF-off probe showed bokeh attrs may remain on the authored camera object,
+  but are not copied to `primaryCamera`; the controls should therefore be
+  described as requiring USD DOF/fStop/focusDistance to be visibly effective.
+
+Copy this:
+
+- Use native camera metadata and existing backend pass-through before adding
+  new camera translation code.
+- Keep standard USD camera controls separate from renderer-specific `moonray:*`
+  overrides.
+- Use renderer DS control parms so defaults author nothing and explicit values
+  remain inspectable in USD.
+- Validate the visible folder in a fresh normal H20.5 session using the installed
+  package path, not only a source-path HOM override.
+
+Avoid this:
+
+- Do not expose `moonray:class` or native camera class switching as part of this
+  quick-win pattern.
+- Do not expose FisheyeCamera, SphericalCamera, DomeMaster3DCamera, BakeCamera,
+  stereo controls, `pixel_sample_map`, medium/material/projector, or bake-camera
+  workflows without a separate backend/UI audit.
+- Do not claim bokeh controls are visibly effective when USD DOF is off.
+
+## Camera LOP DS Registration
+
+Status: stable DCC discovery pattern.
+
+Evidence:
+
+- File: `moonray_dcc_plugins/houdini/python3.11libs/pythonrc.py`.
+- Source DS: `moonray_dcc_plugins/houdini/soho/parameters/moonray_Camera.ds`.
+- Installed package path:
+  `/Applications/MoonRay/installs/openmoonray/plugin/houdini`.
+
+Native contract:
+
+- `pythonrc.py` overrides `loputils.addRendererParmFolders()`.
+- The hook searches for `soho/parameters/<renderer>_<parmgroup>.ds`.
+- With the forced renderer name `moonray`, Camera LOP renderer properties
+  resolve to `soho/parameters/moonray_Camera.ds`.
+
+Why it mattered:
+
+- The first source-path HOM validation passed because the source
+  `HOUDINI_PATH` could find `moonray_Camera.ds`.
+- A normal Houdini session did not show the controls because it loaded the
+  installed plugin tree, where the new DS file was missing.
+- Running the existing DCC CMake install script synced the DS into the active
+  installed package and made the normal Camera LOP folder visible.
+
+Copy this:
+
+- For renderer-specific LOP UI work, identify the exact DS filename Houdini
+  expects before editing.
+- Validate `hou.findFile()` in the same package/runtime path artists use.
+- Confirm the installed DS matches source byte-for-byte after install sync.
+
+Avoid this:
+
+- Do not treat source-path HOM validation as enough proof for installed UI
+  behavior.
+- Do not manually hack installed DS files outside the source/install path.
+
 ## H20.5 Solaris Architecture Infrastructure
 
 Status: stable infrastructure evidence.
@@ -267,4 +366,3 @@ Avoid this:
 - Do not start UI exposure from authoring-only success.
 - Do not claim AOV support from metadata/channels alone.
 - Do not leave unsafe diagnostics installed.
-

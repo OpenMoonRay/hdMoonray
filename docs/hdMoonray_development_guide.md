@@ -118,6 +118,49 @@ For DS files:
 - Do not use a default value to fake a UI range.
 - Keep standard USD controls separate from renderer-specific overrides.
 
+### Renderer-Specific LOP DS Discovery
+
+Camera controls exposed a useful DCC integration trap. Houdini's MoonRay
+`pythonrc.py` overrides `loputils.addRendererParmFolders()` and searches for
+renderer parameter files using:
+
+```text
+soho/parameters/<renderer>_<parmgroup>.ds
+```
+
+Because the hook prepends the forced renderer name `moonray`, Camera LOP
+renderer properties look for:
+
+```text
+soho/parameters/moonray_Camera.ds
+```
+
+That file is the expected source DS file for the normal Solaris Camera LOP
+Moonray folder. Light and geometry follow the same pattern with
+`moonray_Light.ds`, `HdMoonrayRendererPlugin_Light.ds`,
+`moonray_Geometry.ds`, and `HdMoonrayRendererPlugin_Geometry.ds`.
+
+Source-path HOM validation is useful but not sufficient. During the native
+camera controls pass, source-path validation found `moonray_Camera.ds`, but a
+normal H20.5 session loaded MoonRay DCC files from:
+
+```text
+/Applications/MoonRay/installs/openmoonray/plugin/houdini
+```
+
+The installed tree initially did not contain `moonray_Camera.ds`, so the normal
+Camera LOP UI had no Moonray folder. The existing DCC install script synced the
+source file into the active package path:
+
+```sh
+cmake -P /Applications/MoonRay/build/moonray/moonray_dcc_plugins/houdini/cmake_install.cmake
+```
+
+After that sync, the installed DS matched source byte-for-byte and a fresh
+H20.5 Camera LOP showed the Moonray folder. Existing Houdini sessions may need
+a restart or a fresh node because parameter templates can be cached at node
+creation time.
+
 ## Commit And Parent Pin Discipline
 
 For submodule work:
@@ -144,6 +187,7 @@ Stable/proven patterns:
 - Explicit native SpotLight override.
 - RectLight ShapingAPI to native spread.
 - Geometry/subdivision/tessellation exposure.
+- Native MoonRay camera controls for `mb_shutter_bias` and bokeh parameters.
 
 Partial/WIP patterns:
 
@@ -162,9 +206,9 @@ Avoid these patterns:
 - Inventing renderer names, AOV names, or scene classes before checking MoonRay metadata/source.
 - Default-authoring renderer-specific overrides for standard Solaris lights.
 - Exposing Houdini controls before backend/RDLA/render proof exists.
+- Trusting source-path HOM UI validation without also testing the installed package path used by artists.
 - Using a hardcoded allowlist where installed MoonRay SceneClass metadata can be queried.
 - Rewriting broad renderer transport code from a single failing AOV.
 - Treating debug renderer success as production renderer success.
 - Mixing H20.5 and H21 validation evidence.
 - Leaving temporary diagnostics in installed runtime binaries.
-

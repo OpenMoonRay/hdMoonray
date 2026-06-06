@@ -48,6 +48,24 @@ strings <installed-artifact> | rg "<temporary diagnostic marker>"
 
 The AOV audit showed that stale installed dylibs can invalidate an otherwise careful investigation. Remove diagnostic strings and prove they are gone before final reporting.
 
+For Houdini DCC/DS work, also prove the installed package path. Source-path HOM
+validation can find a new DS file that artists do not actually load. In the
+native Camera controls pass, a source `HOUDINI_PATH` found
+`moonray_Camera.ds`, but a normal H20.5 session loaded:
+
+```text
+/Applications/MoonRay/installs/openmoonray/plugin/houdini
+```
+
+and initially had no `moonray_Camera.ds`. The existing install step:
+
+```sh
+cmake -P /Applications/MoonRay/build/moonray/moonray_dcc_plugins/houdini/cmake_install.cmake
+```
+
+synced the source DS into the installed package. The final UI proof came from a
+fresh normal H20.5 Camera LOP, not from the source-path check alone.
+
 ## Light Validation
 
 For light work, validate each layer:
@@ -114,6 +132,56 @@ Avoid:
 
 - Fake material wrappers.
 - Locked HDAs when a native editable subnet pattern fits Houdini better.
+
+## Camera Controls Validation
+
+Native Camera controls are stable only for the first exposed MoonRay attrs:
+
+- `moonray:mb_shutter_bias`
+- `moonray:bokeh`
+- `moonray:bokeh_sides`
+- `moonray:bokeh_image`
+- `moonray:bokeh_angle`
+- `moonray:bokeh_weight_location`
+- `moonray:bokeh_weight_strength`
+
+For camera UI work:
+
+1. Check native MoonRay camera metadata, such as
+   `coredata/PerspectiveCamera.json` and `coredata/OrthographicCamera.json`.
+2. Check `Camera.cc` for existing standard USD camera mapping and generic
+   `moonray:*` pass-through.
+3. Confirm the selected attrs are copied to `primaryCamera` if the active render
+   path uses `primaryCamera`.
+4. Identify the correct Camera LOP renderer DS file. With the current
+   `pythonrc.py` hook, Camera LOP Moonray properties resolve to
+   `soho/parameters/moonray_Camera.ds`.
+5. Validate with the normal installed H20.5 package path:
+   `hou.findFile("soho/parameters/moonray_Camera.ds")` should resolve under
+   `/Applications/MoonRay/installs/openmoonray/plugin/houdini`.
+6. Create a fresh Camera LOP after install sync and confirm the Moonray folder
+   and controls are visible.
+7. Export default USD and confirm no `moonray:*` camera attrs are authored.
+8. Explicitly set the controls and confirm the expected custom USD attrs.
+9. Dump RDLA/RDL and confirm `PerspectiveCamera("primaryCamera")` receives
+   `mb_shutter_bias`, `dof`, `dof_aperture`, `dof_focus_distance`, and the
+   bokeh attrs when USD DOF is enabled.
+
+DOF dependency:
+
+- Bokeh controls require standard USD DOF, usually `fStop` plus
+  `focusDistance`, to affect `primaryCamera` and the render visibly.
+- With DOF off, bokeh attrs may exist on the authored camera object but are not
+  copied to `primaryCamera`; do not present them as visibly effective in that
+  state.
+
+Deferred camera work:
+
+- `moonray:class` validation against `INTERFACE_CAMERA`.
+- FisheyeCamera, SphericalCamera, DomeMaster3DCamera, and BakeCamera.
+- Stereo controls.
+- `pixel_sample_map`.
+- Medium/material/projector/bake camera workflows.
 
 ## Render Settings Validation
 
@@ -210,4 +278,3 @@ Before ending a pass:
 - Only intended files changed.
 - No generated files are stale.
 - Parent submodule pins untouched unless explicitly requested.
-

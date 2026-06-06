@@ -12,6 +12,9 @@ Evidence:
 - RectLight shaping commit `4396439` maps USD cone angle to the native MoonRay `RectLight.spread` attribute.
 - Geometry/subdivision commit `d85ec55` maps to native MoonRay mesh settings instead of inventing global renderer controls.
 - Material builder commit `952eea3` creates real MoonRay VOP material/displacement nodes rather than a fake material wrapper.
+- Native Camera LOP controls use MoonRay `PerspectiveCamera` /
+  `OrthographicCamera` metadata for `mb_shutter_bias` and bokeh attributes, with
+  no new backend translation needed.
 
 Why it worked:
 
@@ -97,6 +100,9 @@ Evidence:
 - SpotLight native controls were restored only after verifying MoonRay SpotLight attributes and backend consumption.
 - The native SpotLight helper authors `moonray:class_control = set` and `moonray:class = SpotLight` only when explicitly enabled.
 - Geometry settings DS exposure followed backend Mesh translation.
+- Native Camera controls followed existing `Camera.cc` generic `moonray:*`
+  pass-through and `primaryCamera` copy support; the DCC DS only exposed already
+  consumed native attrs.
 - Render Settings LOP remains partial/WIP because AOV UI must not expose non-working production AOVs.
 
 Why it worked:
@@ -109,12 +115,15 @@ Future work should copy:
 - For every UI parm, list the authored USD property and consumed MoonRay attribute.
 - Preserve original MoonRay metadata labels/help where possible.
 - Use explicit controls for renderer-specific modes.
+- For DCC/DS work, prove the folder is visible in a fresh normal H20.5 session
+  using the installed package path.
 
 Future work should avoid:
 
 - UI checkboxes for AOVs whose production buffers are zero.
 - Restoring old controls only because they used to exist.
 - Default-authoring `moonray:class` for standard Solaris lights.
+- Treating source-path HOM validation as installed UI proof.
 
 ## Pattern 5: Validate Semantic Classes And Attributes
 
@@ -191,6 +200,47 @@ Future work should avoid:
 - Promoting a feature because EXR channels exist but pixels are empty.
 - Treating debug renderer behavior as production renderer behavior.
 
+## Pattern 7A: Prove Installed Houdini UI Discovery
+
+Rule: for DS/HDA work, the UI is not proven until Houdini loads the same
+package/runtime path artists use.
+
+Evidence:
+
+- Native MoonRay Camera controls were first validated with a source
+  `HOUDINI_PATH`, but a normal H20.5 Camera LOP still had no Moonray folder.
+- `pythonrc.py` searches for `soho/parameters/<renderer>_<parmgroup>.ds`; for
+  the forced renderer name `moonray` and Camera LOP parm group this means
+  `soho/parameters/moonray_Camera.ds`.
+- Normal H20.5 loaded DCC files from
+  `/Applications/MoonRay/installs/openmoonray/plugin/houdini`, where
+  `moonray_Camera.ds` was initially absent.
+- Running
+  `cmake -P /Applications/MoonRay/build/moonray/moonray_dcc_plugins/houdini/cmake_install.cmake`
+  synced the source DS into the installed package. A fresh normal Camera LOP
+  then showed the Moonray folder and exported the expected USD attrs.
+
+Why it worked:
+
+- The validation target changed from "can source find the DS file?" to "does
+  normal Houdini load and display the DS file?".
+- The fix used the existing source/install packaging path instead of a manual
+  installed-file edit.
+
+Future work should copy:
+
+- Run `hou.findFile()` for the expected DS file in the normal package path.
+- Create a fresh node after install sync, because parameter templates can be
+  cached at node creation time.
+- Confirm source and installed DS files match after the install step.
+
+Future work should avoid:
+
+- Adding a correct DS file only in source and reporting UI success from a custom
+  `HOUDINI_PATH`.
+- Adding duplicate renderer DS files without understanding whether
+  `pythonrc.py` will load both.
+
 ## Pattern 8: Keep WIP Work Clearly Marked
 
 Rule: partial progress should be documented, but not presented as supported behavior.
@@ -237,6 +287,8 @@ Before exposing UI:
 - Is the authored USD inspectable?
 - Does RDLA/RDL prove the value?
 - Does H20.5 production behavior prove it?
+- Does a fresh normal H20.5 session using the installed package path show the
+  intended parameter folder and controls?
 - Are original MoonRay labels/defaults/help preserved where possible?
 - Are defaults and UI ranges separate?
 
@@ -246,4 +298,3 @@ Before committing:
 - Are only intended files changed?
 - Are submodule pins left alone until the submodule commit is pushed?
 - Is WIP explicitly marked?
-

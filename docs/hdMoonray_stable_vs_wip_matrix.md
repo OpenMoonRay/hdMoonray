@@ -32,6 +32,8 @@ Public PRs are useful anchors, but local submodule history is the source of trut
 | RectLight ShapingAPI behavior | Stable / proven | `4396439` | `Light.cc` | RectLight with authored ShapingAPI cone attrs remains MoonRay `RectLight`; cone angle maps to native `spread` as `clamp(angle, 0, 90) / 90`. | Strong example of preserving authored light class when MoonRay has a native equivalent. |
 | Geometry render settings exposure | Stable / proven | `d85ec55`, `24bac7e`, `moonray_dcc_plugins` `78ca757` | `Mesh.cc`, geometry DS files, geometry fixture README/USD | Exposes real MoonRay geometry/subdivision attributes and preserves authored primvars through `isPrimvarUsed()` checks. | Good example of backend defaults plus prim-level override controls rather than global renderer settings. |
 | Subdivision / tessellation exposure | Stable / proven | `d85ec55`, `24bac7e`, `78ca757` | `Mesh.cc`, `HdMoonrayRendererPlugin_Geometry.ds`, `testSuite/geometry/moonray_geometry_settings/*` | Maps USD subdivision/tessellation intent to native MoonRay mesh settings with tracked fixture evidence. | Future geometry work should follow this prim-level, metadata-backed pattern. |
+| Native Camera controls: shutter bias and bokeh | Stable / proven for exposed controls only | Current local DCC quick win | `Camera.cc`, `moonray_Camera.ds`, `coredata/PerspectiveCamera.json`, `coredata/OrthographicCamera.json` | Camera LOP Moonray folder exposes `moonray:mb_shutter_bias` and bokeh attrs; defaults author nothing; explicit values author USD `moonray:*`; RDLA proves `PerspectiveCamera("primaryCamera")` receives shutter bias, USD DOF, and bokeh attrs when DOF is enabled. | Stable only for `mb_shutter_bias`, `bokeh`, `bokeh_sides`, `bokeh_image`, `bokeh_angle`, `bokeh_weight_location`, and `bokeh_weight_strength`. Camera class switching, alternate camera classes, stereo, `pixel_sample_map`, and bake/projector workflows remain deferred. |
+| Camera LOP DS discovery / installed UI validation | Stable DCC infrastructure pattern | Current local DCC quick win | `pythonrc.py`, `moonray_Camera.ds`, DCC CMake install script | `pythonrc.py` searches `soho/parameters/<renderer>_<parmgroup>.ds`; Camera LOP with forced renderer `moonray` expects `moonray_Camera.ds`. Normal H20.5 loads `/Applications/MoonRay/installs/openmoonray/plugin/houdini`, so source-path HOM validation was insufficient until CMake install synced the DS file. | Future DS/HDA work must validate fresh normal H20.5 UI visibility against the installed package path. |
 | H20.5 Solaris architecture / infrastructure | Stable infrastructure | `77a673e` | `PrimTypeUtils.*`, `ValueConverter.cc`, `RenderSettings.*`, `UsdRenderers.json`, adapter compatibility doc, fixtures | Adds H20.5 compatibility, canonical prim type handling, value conversion, render settings plumbing, and test fixtures. | Reuse utilities and compatibility patterns, but do not treat the whole commit as a narrow feature recipe. |
 | Render Settings LOP | Partial / WIP | `moonray_dcc_plugins` `8c995f8` through `6cd0361` | `moonray_render_settings.py`, generated HDA, `moonray_render_settings_lop_audit.md`, validation script | Source-generated HDA, USD RenderSettings/Product/RenderVar foundation, and owned USD Render ROP lifecycle are useful. AOV integration and final UX remain unsettled. | Good process evidence for source-of-truth HDA generation; not yet a stable renderer-settings pattern. |
 | Beauty buffer / USD Render ROP support | Partial / WIP | hdMoonray `2eb0808` | `ArrasRenderer.cc`, `UsdRenderers.json` | Beauty path is useful progress, but non-beauty AOVs remain blocked. | Do not claim full image-buffer/AOV support from this commit. |
@@ -47,11 +49,13 @@ Use these as primary examples:
 - Explicit native SpotLight override and UI helper.
 - RectLight ShapingAPI-to-`spread` preservation.
 - Geometry/subdivision/tessellation prim-level exposure.
+- Native Camera LOP shutter-bias and bokeh controls.
 
 Use these only as supporting infrastructure examples:
 
 - H20.5 Solaris architecture commit `77a673e`.
 - RenderSettings source-generated HDA mechanics.
+- Camera LOP DS discovery and installed-package validation.
 
 Use these only as cautionary examples:
 
@@ -68,4 +72,3 @@ An area may move to stable only when the relevant layer has proof:
 - H20.5 production render or Houdini UI behavior proves the user-facing result.
 - EXR stats prove image data when the feature is image-buffer/AOV related.
 - The repo, build, install, and runtime path were verified.
-
