@@ -301,7 +301,7 @@ Light::syncParams(const pxr::SdfPath& id,
                 // assumes that the geom uses the same delegate as the light, but I don't think 
                 // there is an alternative in Hydra 1
                 pxr::SdfPath geomPath = relval.UncheckedGet<pxr::SdfPath>();
-                geomPath.ReplacePrefix(pxr::SdfPath::AbsoluteRootPath(), sceneDelegate->GetDelegateID());
+                geomPath = geomPath.ReplacePrefix(pxr::SdfPath::AbsoluteRootPath(), sceneDelegate->GetDelegateID());
                 pxr::HdRprim* prim = const_cast<pxr::HdRprim*>(sceneDelegate->GetRenderIndex().GetRprim(geomPath));
                 Mesh* mesh = dynamic_cast<Mesh*>(prim);
                 if (mesh) {
