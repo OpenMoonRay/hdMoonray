@@ -17,7 +17,10 @@
 #include <scene_rdl2/scene/rdl2/Layer.h>
 #include <scene_rdl2/scene/rdl2/Material.h>
 #include <scene_rdl2/render/logging/logging.h>
+#include <algorithm>
+#include <cctype>
 #include <iostream>
+#include <string>
 
 using namespace scene_rdl2::rdl2;
 
@@ -27,6 +30,126 @@ using scene_rdl2::logging::Logger;
 pxr::TfToken moonrayClassToken("moonray:class");
 pxr::TfToken infoIdToken("info:id");
 pxr::TfToken fallbackClass("DecayLightFilter");
+
+std::string
+normalizedRampToken(const std::string& value)
+{
+    std::string result = value;
+    std::transform(result.begin(), result.end(), result.begin(),
+                   [](unsigned char c) {
+                       if (c == '-' || c == ' ') return '_';
+                       return static_cast<char>(std::tolower(c));
+                   });
+    return result;
+}
+
+bool
+rampInterpolationTokenToInt(const std::string& token, int* out)
+{
+    const std::string key = normalizedRampToken(token);
+
+    if (key == "none" || key == "constant") {
+        *out = 0;
+        return true;
+    }
+    if (key == "linear") {
+        *out = 1;
+        return true;
+    }
+    if (key == "exponential_up" || key == "ease_in") {
+        *out = 2;
+        return true;
+    }
+    if (key == "exponential_down" || key == "ease_out") {
+        *out = 3;
+        return true;
+    }
+    if (key == "smooth" || key == "smoothstep" || key == "hermite" ||
+        key == "bezier" || key == "bspline" || key == "b_spline") {
+        *out = 4;
+        return true;
+    }
+    if (key == "catmull_rom" || key == "catmullrom") {
+        *out = 5;
+        return true;
+    }
+    if (key == "monotone_cubic" || key == "monotonecubic") {
+        *out = 6;
+        return true;
+    }
+    return false;
+}
+
+int
+getAuthoredRampCount(const pxr::SdfPath& id,
+                     const std::string& attrName,
+                     pxr::HdSceneDelegate* sceneDelegate)
+{
+    pxr::VtValue countVal = sceneDelegate->GetLightParamValue(id, pxr::TfToken("inputs:ramp"));
+    if (countVal.IsHolding<int>()) {
+        return countVal.UncheckedGet<int>();
+    }
+    if (countVal.IsHolding<long>()) {
+        return static_cast<int>(countVal.UncheckedGet<long>());
+    }
+    if (countVal.IsHolding<long long>()) {
+        return static_cast<int>(countVal.UncheckedGet<long long>());
+    }
+
+    if (attrName == "interpolation_types") {
+        pxr::VtValue positions = sceneDelegate->GetLightParamValue(id, pxr::TfToken("inputs:distances"));
+        if (positions.IsHolding<pxr::VtArray<float>>()) {
+            return static_cast<int>(positions.UncheckedGet<pxr::VtArray<float>>().size());
+        }
+    } else if (attrName == "ramp_interpolation_types") {
+        pxr::VtValue positions = sceneDelegate->GetLightParamValue(id, pxr::TfToken("inputs:ramp_in_distances"));
+        if (positions.IsHolding<pxr::VtArray<float>>()) {
+            return static_cast<int>(positions.UncheckedGet<pxr::VtArray<float>>().size());
+        }
+    } else if (attrName == "density_remap_interpolation_types") {
+        pxr::VtValue positions = sceneDelegate->GetLightParamValue(id, pxr::TfToken("inputs:density_remap_inputs"));
+        if (positions.IsHolding<pxr::VtArray<float>>()) {
+            return static_cast<int>(positions.UncheckedGet<pxr::VtArray<float>>().size());
+        }
+    }
+
+    return 0;
+}
+
+pxr::VtValue
+expandRampInterpolationToken(const pxr::VtValue& val,
+                             const pxr::SdfPath& id,
+                             const std::string& attrName,
+                             pxr::HdSceneDelegate* sceneDelegate)
+{
+    if (attrName.find("interpolation") == std::string::npos) {
+        return val;
+    }
+
+    std::string token;
+    if (val.IsHolding<pxr::TfToken>()) {
+        token = val.UncheckedGet<pxr::TfToken>().GetString();
+    } else if (val.IsHolding<std::string>()) {
+        token = val.UncheckedGet<std::string>();
+    } else {
+        return val;
+    }
+
+    int interpolation = 0;
+    if (!rampInterpolationTokenToInt(token, &interpolation)) {
+        return val;
+    }
+
+    const int count = getAuthoredRampCount(id, attrName, sceneDelegate);
+    if (count <= 0) {
+        return val;
+    }
+
+    pxr::VtArray<int> values;
+    values.resize(count);
+    std::fill(values.begin(), values.end(), interpolation);
+    return pxr::VtValue(values);
+}
 
 #if PXR_VERSION >= 2005
 # define lightFilterToken (pxr::HdPrimTypeTokens->lightFilter)
@@ -76,6 +199,7 @@ LightFilter::syncParams(const pxr::SdfPath& id,
             if (val.IsEmpty()) {
                 ValueConverter::setDefault(mLightFilter, *it);
             } else {
+                val = expandRampInterpolationToken(val, id, attrName, sceneDelegate);
                 ValueConverter::setAttribute(mLightFilter, *it, val);
             }
         }
