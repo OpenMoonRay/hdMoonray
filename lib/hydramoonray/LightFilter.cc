@@ -25,6 +25,7 @@ namespace {
 using scene_rdl2::logging::Logger;
 
 pxr::TfToken moonrayClassToken("moonray:class");
+pxr::TfToken infoIdToken("info:id");
 pxr::TfToken fallbackClass("DecayLightFilter");
 
 #if PXR_VERSION >= 2005
@@ -68,6 +69,10 @@ LightFilter::syncParams(const pxr::SdfPath& id,
         } else {
             pxr::TfToken moonrayName("moonray:" + attrName);
             pxr::VtValue val = sceneDelegate->GetLightParamValue(id, moonrayName);
+            if (val.IsEmpty()) {
+                pxr::TfToken inputName("inputs:" + attrName);
+                val = sceneDelegate->GetLightParamValue(id, inputName);
+            }
             if (val.IsEmpty()) {
                 ValueConverter::setDefault(mLightFilter, *it);
             } else {
@@ -212,9 +217,14 @@ LightFilter::getOrCreateFilter(pxr::HdSceneDelegate *sceneDelegate,
     std::lock_guard<std::mutex> lock(mCreateMutex);
     if (not mLightFilter) {
         pxr::VtValue vtClass = sceneDelegate->GetLightParamValue(id, moonrayClassToken);
+        if (vtClass.IsEmpty()) {
+            vtClass = sceneDelegate->GetLightParamValue(id, infoIdToken);
+        }
         pxr::TfToken classToken;
         if (vtClass.IsHolding<pxr::TfToken>()) {
             classToken = vtClass.UncheckedGet<pxr::TfToken>();
+        } else if (vtClass.IsHolding<std::string>()) {
+            classToken = pxr::TfToken(vtClass.UncheckedGet<std::string>());
         } else {
             classToken = fallbackClass;
             Logger::warn("hdMoonray: Unspecified LightFilter type : creating ", classToken);
@@ -284,4 +294,3 @@ LightFilter::getFilter(pxr::HdSceneDelegate* sceneDelegate,
 }
 
 }
-
