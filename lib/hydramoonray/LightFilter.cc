@@ -41,9 +41,27 @@ makeLightFilterInert(scene_rdl2::rdl2::LightFilter* lightFilter,
 
     hdMoonray::UpdateGuard guard(renderDelegate, lightFilter);
     const SceneClass& sceneClass = lightFilter->getSceneClass();
-    const Attribute* onAttr = sceneClass.getAttribute("on");
-    if (onAttr && onAttr->getType() == TYPE_BOOL) {
-        lightFilter->set(AttributeKey<Bool>(*onAttr), false);
+    try {
+        const Attribute* onAttr = sceneClass.getAttribute("on");
+        if (onAttr && onAttr->getType() == TYPE_BOOL) {
+            lightFilter->set(AttributeKey<Bool>(*onAttr), false);
+        }
+    } catch (const std::exception&) {
+        // Some future/custom LightFilter classes may not expose "on". RDL
+        // objects cannot be deleted interactively, so category release and
+        // pointer clearing still make the object inert from hdMoonray's side.
+    }
+}
+
+bool
+isMoonRayLightFilterClass(const std::string& className,
+                          hdMoonray::RenderDelegate& renderDelegate)
+{
+    try {
+        const SceneClass* sceneClass = renderDelegate.acquireSceneContext().createSceneClass(className);
+        return sceneClass && (sceneClass->getDeclaredInterface() & INTERFACE_LIGHTFILTER);
+    } catch (const std::exception&) {
+        return false;
     }
 }
 
@@ -375,6 +393,17 @@ LightFilter::getOrCreateFilter(pxr::HdSceneDelegate *sceneDelegate,
     } else {
         classToken = fallbackClass;
         Logger::warn("hdMoonray: Unspecified LightFilter type : creating ", classToken);
+    }
+
+    if (!isMoonRayLightFilterClass(classToken.GetString(), renderDelegate)) {
+        Logger::error(id, ": invalid MoonRay LightFilter class '", classToken, "'");
+        if (mLightFilter) {
+            makeLightFilterInert(mLightFilter, renderDelegate);
+            renderDelegate.releaseCategory(mLightFilter, RenderDelegate::CategoryType::FilterLink, mLightFilterCategory);
+            mLightFilter = nullptr;
+            mLightFilterCategory = pxr::TfToken();
+        }
+        return nullptr;
     }
 
     if (mLightFilter && mLightFilter->getSceneClass().getName() != classToken.GetString()) {

@@ -48,6 +48,36 @@ strings <installed-artifact> | rg "<temporary diagnostic marker>"
 
 The AOV audit showed that stale installed dylibs can invalidate an otherwise careful investigation. Remove diagnostic strings and prove they are gone before final reporting.
 
+For narrow hdMoonray testing, prefer rebuilding only the affected plugin targets
+instead of running the full OpenMoonRay install target when unrelated MoonRay
+core build issues would obscure the feature being validated:
+
+```sh
+cd /Applications/MoonRay/build
+cmake --build . --target hydramoonray --config Release -j8
+cmake --build . --target hd_moonray --config Release -j8
+cmake --build . --target hdMoonrayAdapters --config Release -j8
+```
+
+Houdini loads hdMoonray from the installed package under
+`/Applications/MoonRay/installs/openmoonray`, not directly from the build tree.
+Until the install workflow is made cleaner, manually copy the rebuilt dylibs
+when validating this narrow path:
+
+```sh
+cp /Applications/MoonRay/build/moonray/hydra/hdMoonray/lib/hydramoonray/Release/libhydramoonray.dylib \
+   /Applications/MoonRay/installs/openmoonray/lib/libhydramoonray.dylib
+
+cp /Applications/MoonRay/build/moonray/hydra/hdMoonray/plugin/hd_moonray/Release/hd_moonray.dylib \
+   /Applications/MoonRay/installs/openmoonray/plugin/hd_moonray.dylib
+
+cp /Applications/MoonRay/build/moonray/hydra/hdMoonray/plugin/adapters/Release/hdMoonrayAdapters.dylib \
+   /Applications/MoonRay/installs/openmoonray/plugin/hdMoonrayAdapters.dylib
+```
+
+This manual copy step is temporary testing workflow, not the desired long-term
+install solution.
+
 For Houdini DCC/DS work, also prove the installed package path. Source-path HOM
 validation can find a new DS file that artists do not actually load. In the
 native Camera controls pass, a source `HOUDINI_PATH` found

@@ -439,10 +439,11 @@ Light::syncFilterList(const pxr::SdfPath& id,
                       RenderDelegate& renderDelegate)
 {
     pxr::VtValue val = sceneDelegate->GetLightParamValue(id, pxr::TfToken(pxr::HdTokens->filters));
+    scene_rdl2::rdl2::SceneObjectVector filters;
     if (!val.IsHolding<pxr::SdfPathVector>()) {
+        mLight->set(scene_rdl2::rdl2::Light::sLightFiltersKey, filters);
         return;
     }
-    scene_rdl2::rdl2::SceneObjectVector filters;
     const pxr::SdfPathVector& paths = val.UncheckedGet<pxr::SdfPathVector>();
     for (const pxr::SdfPath& path : paths) {
         scene_rdl2::rdl2::LightFilter* filter = LightFilter::getFilter(sceneDelegate,renderDelegate,path);
