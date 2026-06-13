@@ -43,7 +43,7 @@ Evidence:
 - DomeLight support uses canonical type handling for `DomeLight_1` / `UsdLuxDomeLight_1` and maps to MoonRay `EnvLight`.
 - SpotLight UI commit `9bf4945` adds an explicit native MoonRay SpotLight helper instead of making all shaped USD lights native MoonRay SpotLights through UI defaults.
 - RectLight shaping commit `4396439` preserves RectLight semantics and maps shaping to `spread`.
-- Render Settings LOP WIP authors standard USD RenderSettings/Product/RenderVar prims instead of inventing a MoonRay-only render contract.
+- Render Settings LOP WIP authors standard USD RenderSettings/Product prims, with RenderVar authoring only for explicit experimental/debug paths, instead of inventing a MoonRay-only render contract.
 
 Why it worked:
 
@@ -175,6 +175,37 @@ Future work should avoid:
 
 - Creating class-suffixed replacement objects without cleanup.
 - Assuming SceneObjects can be deleted from RDL2 during interactive Hydra updates without source proof.
+
+## Pattern 6A: Separate DCC Cleanup From Backend Forensics
+
+Rule: when a feature has both UI/USD authoring problems and runtime/backend symptoms, split the evidence into separate tracks.
+
+Track A covers DCC/UI/USD-contract work: generators, HDAs, validation scripts, docs, and installed/runtime source alignment.
+
+Track B covers backend forensic work: source tracing, logs, temporary diagnostics, render proof, EXR stats, viewport/IPR lifecycle proof, and runtime symptom proof.
+
+Track A and Track B may run in parallel when the UI/USD contract and backend runtime behavior are coupled. Parallel work is allowed. Unsupported blending is not.
+
+Reports must keep DCC/USD evidence separate from backend/runtime evidence. A UI/export result can prove authoring; it cannot prove render-buffer behavior. A backend log can prove runtime behavior; it cannot by itself prove the artist-facing UI contract.
+
+For Render Settings/AOV work, Track B may inspect or instrument:
+
+- `RenderBuffer.cc`
+- `ArrasRenderer.cc`
+- `RenderPass.cc`
+- `RenderDelegate.cc`
+- `UsdRenderers.json`
+- Beauty/AOV binding lifecycle
+- render settings dirtying/versioning
+- viewport/IPR refresh behavior
+
+Prefer separate commits for Track A cleanup/docs and Track B backend fixes. Use one mixed commit only if the backend root cause is proven, the fix is narrow, and the diff explains why UI/USD and backend behavior must change together.
+
+Do not ship UI-only cleanup as a substitute for backend/runtime proof.
+
+Do not flip broad renderer capability flags, such as `aovsupport`, because they appear related. Prove the minimal targeted change first.
+
+Do not restart `cameraDepth` or broaden non-beauty AOV transport during Render Settings cleanup unless that is the reviewed task.
 
 ## Pattern 7: Prove With RDLA, Render, And UI Evidence
 

@@ -2,6 +2,47 @@
 
 This workflow records the validation levels that actually caught or proved recent hdMoonray changes. Use it before promoting a feature from WIP to stable.
 
+## Evidence-Gated Investigation Rules
+
+Use these rules before planning, implementing, or promoting any Render Settings, AOV, viewport/IPR, render-buffer, or backend lifecycle change.
+
+Every important claim must be classified as one of:
+
+- `PROVEN`: backed by source path plus command/output, exported USD/RDLA, logs, render output, EXR stats, or installed-runtime proof.
+- `OBSERVED`: directly seen in Houdini/runtime behavior, but not yet fully explained.
+- `HYPOTHESIS`: plausible explanation with a named test that can prove or disprove it.
+- `UNKNOWN`: not enough evidence yet.
+- `OUT OF SCOPE`: intentionally not part of the current task.
+
+Rules:
+
+1. No claim without evidence.
+2. No recommendation without a reproducer, source-path proof, exported USD proof, log proof, RDLA proof, render proof, or EXR proof.
+3. Do not call a feature working because a UI folder, parameter, channel, RenderVar, or scene object exists.
+4. A black render is a functional failure until render proof shows otherwise.
+5. Authored USD alone is not render proof.
+6. RDLA/RenderOutput declaration alone is not image-buffer proof.
+7. Debug renderer success is not production renderer success.
+8. Do not use Houdini 21 evidence to prove Houdini 20.5 behavior.
+9. UI cleanup must not hide backend lifecycle, dirtying, render-buffer, AOV binding, or viewport/IPR refresh bugs.
+10. Do not modify backend behavior without source-path proof, exported USD proof, log proof, and render/EXR or runtime symptom proof.
+11. If evidence conflicts, report the conflict instead of choosing the convenient explanation.
+
+Primary source-of-truth hierarchy:
+
+1. Local runtime behavior in the target Houdini version, currently H20.5 for this work.
+2. Exported USD from the exact scene state being tested.
+3. Installed hdMoonray source and binaries currently loaded by Houdini.
+4. MoonRay native metadata, especially `/Applications/MoonRay/installs/openmoonray/coredata/SceneVariables.json` and `/Applications/MoonRay/installs/openmoonray/coredata/RenderOutput.json`.
+5. MoonRay docs and source.
+6. OpenUSD RenderSettings/Product/Var schemas.
+7. SideFX Houdini/HDK docs and local Houdini headers.
+8. Local project docs and prior audit notes.
+
+For every `PROVEN` claim, record the exact evidence: file path, function/class/name, commit hash if relevant, command run, output excerpt, exported USDA/RDLA path if relevant, and render/EXR proof if relevant.
+
+For every `HYPOTHESIS`, record the exact test that would prove or disprove it.
+
 ## Validation Layers
 
 | Layer | What it proves | Tools / evidence | Required for |
@@ -215,6 +256,18 @@ Deferred camera work:
 
 ## Render Settings Validation
 
+Track A / Track B rule for current Render Settings work:
+
+- Track A is DCC/UI/USD-contract work. It may change the custom Render Settings LOP generator, regenerated HDA, validation scripts, docs, and installed/runtime source alignment.
+- Track B is backend forensic work. It may inspect or temporarily instrument `RenderBuffer.cc`, `ArrasRenderer.cc`, `RenderPass.cc`, `RenderDelegate.cc`, `UsdRenderers.json`, Beauty/AOV binding lifecycle, render settings dirtying/versioning, and viewport/IPR refresh behavior.
+- Track A and Track B may run in parallel when UI/USD authoring and backend runtime behavior are coupled.
+- Parallel work is allowed. Unsupported blending is not.
+- Keep DCC/USD evidence separate from backend/runtime evidence in reports.
+- Prefer separate commits for DCC cleanup/docs and backend fixes.
+- Do not mix Track A cleanup and Track B backend behavior changes in one commit unless the backend root cause is proven, the fix is narrow, and the diff explains why UI/USD and backend behavior must change together.
+- Backend files are not out of scope, but behavioral backend changes require evidence before implementation: source-path proof, exported USD proof, log proof, and render/EXR or runtime symptom proof.
+- Do not flip `aovsupport`, restart `cameraDepth`, or broaden non-beauty AOV transport without targeted proof.
+
 Render Settings LOP is partial/WIP. Use this workflow before declaring any part stable:
 
 1. Confirm the generation script is source of truth.
@@ -233,8 +286,15 @@ Render Settings LOP is partial/WIP. Use this workflow before declaring any part 
    - `moonray:sceneVariable:*` attrs.
 6. Render via direct husk or USD Render ROP.
 7. Confirm output path and resolution.
+8. For the custom MoonRay Render Settings LOP default, confirm `aov_beauty=0`, no authored Beauty RenderVar, `RenderProduct` exists, `productName` exists, `productType = "raster"`, and `orderedVars` is empty.
+9. For the debug Beauty path, confirm `aov_beauty=1` authors a Beauty RenderVar with `sourceName = "color"`, `sourceType = "raw"`, and `orderedVars` targeting the Beauty RenderVar.
+10. For generic Houdini Render Settings, do not claim functional MoonRay rendering from the MoonRay folder alone. The folder is UI integration evidence only. Export flattened USDA and confirm whether `products` has targets and whether `RenderProduct`, `productName`, `productType`, and `orderedVars` exist. If the flattened USDA has empty `rel products` and no RenderProduct/productName/productType, generic Render Settings alone is not a complete MoonRay output setup.
+11. For viewport/IPR behavior, record fresh H20.5 UI proof separately from Hython/export proof.
+12. For USD Render ROP/husk behavior, require output path proof and image/EXR proof before calling the render path filled or production-working.
 
 Do not validate viewport/IPR resolution with offline RenderSettings assumptions. Viewport/IPR framing is viewport-driven unless a supported Houdini/Hydra mechanism proves otherwise.
+
+Normal beauty currently defaults to no authored Beauty RenderVar. The Beauty RenderVar path is experimental/debug because it can force Hydra AOV/RenderBuffer lifecycle behavior. Do not recommend always authoring a Beauty RenderVar unless fresh viewport/IPR, USD Render ROP/husk, and filled image/EXR output prove it is required and stable.
 
 ## AOV Validation
 
@@ -253,6 +313,7 @@ Do not promote an AOV based only on:
 
 - EXR metadata.
 - Channel names.
+- Authored RenderVars.
 - Debug renderer success.
 - RDLA RenderOutput declaration.
 - Local PackTiles probes.

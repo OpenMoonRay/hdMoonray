@@ -48,6 +48,46 @@ Pick the owning repo before editing.
 
 Do not solve a backend problem with a UI-only change. Do not solve a UI authoring problem by changing renderer semantics unless the backend contract is actually wrong.
 
+For Render Settings and AOV work, split evidence into Track A and Track B. Track A covers DCC/UI/USD-contract work such as the custom Render Settings LOP generator, regenerated HDA, validation scripts, docs, and install/runtime source alignment. Track B covers backend forensic work such as source tracing, temporary diagnostics, logs, render proof, EXR stats, viewport/IPR lifecycle proof, and runtime symptom proof.
+
+Track A and Track B may run in parallel when UI/USD authoring and backend runtime behavior are coupled. Parallel work is allowed; unsupported blending is not. Reports must keep DCC/USD evidence separate from backend/runtime evidence. Prefer separate commits for DCC cleanup/docs and backend fixes. Use one mixed commit only when the backend root cause is proven, the fix is narrow, and the diff explains why both sides must change together.
+
+Backend files such as `RenderBuffer.cc`, `ArrasRenderer.cc`, `RenderPass.cc`, `RenderDelegate.cc`, and `UsdRenderers.json` may be inspected or temporarily instrumented when runtime evidence points there. They must not receive behavioral changes without source-path proof, exported USD proof, log proof, and render/EXR or runtime symptom proof.
+
+## Evidence Gates And Claim Discipline
+
+Before accepting a plan or implementation, classify important statements as `PROVEN`, `OBSERVED`, `HYPOTHESIS`, `UNKNOWN`, or `OUT OF SCOPE`.
+
+A `PROVEN` claim must include exact evidence, such as a source path/function, commit hash, command output, exported USD/RDLA, installed-runtime checksum, render output, or EXR stats.
+
+A `HYPOTHESIS` must include the exact test that would prove or disprove it.
+
+Do not promote a claim from `HYPOTHESIS` to `PROVEN` because it sounds plausible or matches generic renderer intuition. Use MoonRay metadata/source, OpenUSD schemas, SideFX/Houdini evidence, exported USD, RDLA, logs, render output, and EXR stats.
+
+Current hard rules:
+
+- No claim without evidence.
+- No recommendation without a reproducer, source-path proof, exported USD proof, log proof, RDLA proof, render proof, or EXR proof.
+- UI visibility is not functional proof.
+- Authored USD is not render proof.
+- RDLA declaration is not image-buffer proof.
+- Debug renderer success is not production renderer success.
+- Houdini 21 behavior does not prove Houdini 20.5 behavior.
+- Black render output means the path is functionally broken until render proof says otherwise.
+- UI cleanup must not be used to hide backend lifecycle, dirtying, render-buffer, or AOV transport bugs.
+- If evidence conflicts, report the conflict instead of choosing the convenient explanation.
+
+Primary source-of-truth hierarchy:
+
+1. Local runtime behavior in the target Houdini version, currently H20.5.
+2. Exported USD from the exact scene state being tested.
+3. Installed hdMoonray source and binaries currently loaded by Houdini.
+4. MoonRay native metadata, especially `/Applications/MoonRay/installs/openmoonray/coredata/SceneVariables.json` and `/Applications/MoonRay/installs/openmoonray/coredata/RenderOutput.json`.
+5. MoonRay docs and source.
+6. OpenUSD RenderSettings/Product/Var schemas.
+7. SideFX Houdini/HDK docs and local Houdini headers.
+8. Local project docs and prior audit notes.
+
 ## Baseline Before Feature Work
 
 Before implementing:
@@ -194,6 +234,13 @@ Partial/WIP patterns:
 - Render Settings LOP.
 - Beauty buffer support.
 - Unit scale policy.
+
+Render Settings and AOV caveats:
+
+- The current custom Render Settings LOP default is `aov_beauty = 0`: no authored Beauty RenderVar, `RenderProduct` with `productName`, `productType = raster`, and empty `orderedVars`.
+- The `aov_beauty` parm name is preserved for compatibility, but the UI label is `Experimental Beauty RenderVar / AOV Path` under Advanced / Debug.
+- Generic Houdini Render Settings with a MoonRay folder is UI integration evidence only. If flattened USDA has empty `rel products` and no RenderProduct/productName/productType, it is not a complete MoonRay output setup.
+- Do not claim AOV support from authored RenderVars, metadata, EXR channels, RDLA RenderOutput declarations, or debug renderer success alone.
 
 Failure/process contrast:
 

@@ -311,22 +311,42 @@ What worked:
 - Source-generated HDA workflow.
 - Owned USD Render ROP lifecycle policy.
 - Curated SceneVariable authoring.
+- Current Track A default: `aov_beauty = 0`, no authored Beauty RenderVar, `UsdRender.Settings`, `UsdRender.Product`, `settings.products`, `settings.camera`, `settings.resolution`, `productName`, `productType = "raster"`, empty `orderedVars`, and curated `moonray:sceneVariable:*`.
+- The internal `aov_beauty` parm name is preserved for compatibility, but the UI label is `Experimental Beauty RenderVar / AOV Path` under Advanced / Debug or Experimental AOVs.
 
 What remains WIP:
 
 - Final UI cadence.
 - AOV integration.
 - Renderer buffer/image-buffer behavior.
+- Generic Houdini Render Settings with a MoonRay folder is UI integration evidence only; it is not complete render proof and is not a complete MoonRay output setup if flattened USDA has empty `rel products` and no RenderProduct/productName/productType.
 
 Copy this:
 
 - Keep generation source and HDA in sync.
 - Keep standard USD render contracts valid.
+- Keep normal beauty on the no-Beauty-RenderVar path until fresh viewport/IPR, USD Render ROP/husk, and filled image/EXR proof justify another default.
 
 Avoid this:
 
 - Do not hand-edit only the HDA.
 - Do not expose unsupported AOV controls.
+- Do not recommend always authoring a Beauty RenderVar without render proof; it can force Hydra AOV/RenderBuffer lifecycle behavior.
+- Do not claim AOV support from authored RenderVars, metadata, EXR channels, RDLA RenderOutput declarations, or debug renderer success alone.
+
+## Render Settings / AOV Track Discipline
+
+Status: process rule.
+
+Track A and Track B may run in parallel when UI/USD authoring and backend runtime behavior are coupled. Parallel work is allowed; unsupported blending is not.
+
+Track A covers DCC/UI/USD-contract work: the custom Render Settings LOP generator, regenerated HDA, validation scripts, docs, and installed/runtime source alignment.
+
+Track B covers backend forensic work: `RenderBuffer.cc`, `ArrasRenderer.cc`, `RenderPass.cc`, `RenderDelegate.cc`, `UsdRenderers.json`, Beauty/AOV binding lifecycle, render settings dirtying/versioning, viewport/IPR refresh behavior, logs, render proof, and EXR stats.
+
+Reports must keep DCC/USD evidence separate from backend/runtime evidence. Commits should stay separate unless a proven narrow fix requires both sides and the diff explains why.
+
+Do not flip `aovsupport`, restart `cameraDepth`, broaden non-beauty AOV transport, or hide backend lifecycle bugs with UI cleanup.
 
 ## AOV / cameraDepth Investigation
 
