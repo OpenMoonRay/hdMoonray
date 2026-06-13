@@ -2,13 +2,13 @@
 
 ## Purpose
 
-This document tracks the current hdMoonray AOV support model and the H20.5 production cameraDepth investigation.
+This document tracks the current hdMoonray AOV support model, the H20.5 production cameraDepth investigation, and the 2026 native AOV baseline.
 
 MoonRay `RenderOutput` scene objects are the native MoonRay AOV mechanism. Solaris/USD `RenderVar` prims are the USD/Hydra request mechanism that asks hdMoonray for image buffers. hdMoonray bridges these two worlds by translating Hydra AOV bindings into MoonRay `RenderOutput` objects and then resolving the renderer payload back into Hydra render buffers.
 
-The current key blocker for non-beauty AOVs is production Arras/mcrt payload delivery. USD authoring, Hydra RenderVar parsing, hdMoonray RenderBuffer allocation, and MoonRay RenderOutput declaration are far enough along to create active outputs, but production payloads for simple non-beauty AOVs can arrive as zero-filled buffers.
+The current key blocker for non-beauty AOVs is production Arras/mcrt payload delivery. USD authoring, Hydra RenderVar parsing, hdMoonray RenderBuffer allocation, and MoonRay RenderOutput declaration are far enough along to create active outputs, but production payloads for simple non-beauty AOVs arrive as zero-filled buffers in H20.5.584.
 
-`cameraDepth` was used as a diagnostic target because it is one channel, renderer-generated, simple to validate, and the debug renderer proves MoonRay can produce it. It is not a preferred product AOV target and should not be the first target in the next AOV pass. Production `cameraDepth` is not fixed.
+`cameraDepth` was used as a diagnostic target because it is one channel, renderer-generated, simple to validate, and the debug renderer proves MoonRay can produce it. It is not a preferred product AOV target. The native 2026 baseline generalized the same failure class to `alpha`, `depth`, `Z`, `N`, `Ng`, `P`, `Wp`, `St`, and `weight`: mapped and declared, meaningful in the debug renderer, but zero-filled in the production Arras renderer.
 
 ## References
 
@@ -41,20 +41,57 @@ The current key blocker for non-beauty AOVs is production Arras/mcrt payload del
   - `/tmp/moonray_aov_audit/cameraDepth_docpass_debug.exr`
   - `/tmp/moonray_aov_audit/packtiles_roundtrip/packtiles_camera_depth_roundtrip.cc`
   - `/tmp/moonray_aov_audit/packtiles_roundtrip/packtiles_camera_depth_roundtrip.results.txt`
+  - `/tmp/pre_aov_parent.diff`
+  - `/tmp/pre_aov_hdmoonray.diff`
+  - `/tmp/pre_aov_dcc.diff`
+  - `/tmp/moonray_native_aov/*.usda`
+  - `/tmp/native_aov_*.exr`
+
+## 2026 Native AOV Baseline
+
+This baseline was run after the proven Render Settings / Beauty repair stack and before any new AOV transport work. No repository source changed during the native AOV audit; `/tmp/pre_aov_parent.diff`, `/tmp/pre_aov_hdmoonray.diff`, and `/tmp/pre_aov_dcc.diff` still matched the dirty repair stack after the audit.
+
+Protected baseline smoke tests still passed in fresh H20.5.584 production `husk`:
+
+| Path | Result |
+|---|---|
+| Direct camera/default color | production `HdMoonrayRendererPlugin` wrote `/tmp/pre_aov_direct.exr`; RGB nonzero and `Constant: No` |
+| Custom MoonRay Render Settings LOP default | production `HdMoonrayRendererPlugin` wrote `/tmp/pre_aov_custom.exr`; RGB nonzero and `Constant: No` |
+| Generic Render Settings + built-in RenderProduct/RenderVar | production `HdMoonrayRendererPlugin` wrote `/tmp/pre_aov_generic.exr`; RGB nonzero and `Constant: No` |
+
+Native AOV production test matrix, one explicit RenderProduct/RenderVar per file:
+
+| AOV | RenderBuffer/MoonRay mapping | Production `HdMoonrayRendererPlugin` | Debug `HdMoonrayRendererDebugPlugin` | Classification |
+|---|---|---|---|---|
+| color | beauty framebuffer path | nonzero, nonconstant | control not needed | production working |
+| alpha | `RESULT_ALPHA` | channel exists, constant zero | nonzero, nonconstant | production zero-filled |
+| depth | `RESULT_DEPTH` | channel exists, constant zero | nonzero, nonconstant | production zero-filled |
+| Z | `RESULT_STATE_VARIABLE`, `depth` | channel exists, constant zero | nonzero, nonconstant | production zero-filled |
+| N | `STATE_VARIABLE_N` | channels exist, constant zero | nonzero, nonconstant | production zero-filled |
+| Ng | `STATE_VARIABLE_NG` | channels exist, constant zero | nonzero, nonconstant | production zero-filled |
+| P | `STATE_VARIABLE_P` | channels exist, constant zero | nonzero, nonconstant | production zero-filled |
+| Wp | `STATE_VARIABLE_WP` | channels exist, constant zero | nonzero, nonconstant | production zero-filled |
+| St | `STATE_VARIABLE_ST` | channels exist, constant zero | nonzero, nonconstant | production zero-filled |
+| weight | `RESULT_WEIGHT` | channel exists, constant zero | constant nonzero `4.0` | production zero-filled |
+
+RDLA declaration proof for the production `N` test:
+
+```text
+RenderOutput("/_outputs/N") {
+    ["result"] = "state variable",
+    ["file_name"] = "/tmp/scene.exr",
+}
+```
+
+Conclusion: the previous `cameraDepth` result is not contradicted; it is generalized. Native non-beauty AOVs are correctly mapped far enough to create files, channels, and RenderOutput declarations, and the debug renderer can produce meaningful values. The production Arras renderer still delivers or applies zero-filled non-beauty RenderOutput payloads. Future work should focus on production RenderOutput transport/decode/application, not USD authoring, RenderVar metadata, or RenderBuffer lookup for these baseline targets.
+
+Do not expose non-beauty AOV UI from this evidence. Non-beauty AOV controls remain hidden/deferred until production `HdMoonrayRendererPlugin` returns filled H20.5 EXRs.
 
 ## cameraDepth Diagnostic Target Status
 
 `cameraDepth` was an invented/diagnostic target for this investigation, not the preferred product-facing first AOV. It was still useful because current hdMoonray maps `HdAovTokens->cameraDepth` to MoonRay `RenderOutput::RESULT_DEPTH`, and RDLA output confirmed it reached MoonRay as a native `RenderOutput` with `["result"] = "depth"`.
 
-Do not start the next AOV pass with `cameraDepth`. It served its purpose as a transport probe and produced too many custom-path hypotheses. The next baseline should start from the existing/native mappings in `RenderBuffer.cc`:
-
-1. `depth`
-2. `Z`
-3. `N`
-4. `P`
-5. `Ng`
-
-Those targets should be validated without code changes first. Only production H20.5 EXR stats may promote an AOV from “mapped” to “working”.
+Do not start future work with another cameraDepth-specific path. It served its purpose as a transport probe and produced too many custom-path hypotheses. The native baseline has now tested the existing/native mappings in `RenderBuffer.cc`; all non-beauty production outputs reproduced the same zero-filled failure class.
 
 ## Source, Build, Install, And Load Mapping
 
@@ -73,7 +110,7 @@ Those targets should be validated without code changes first. Only production H2
 | edited live-debug file from previous pass | `moonray/lib/grid/engine_tool/McrtFbSender.cc` | restored to clean git state after failed diagnostic |
 | target expected to compile it | `grid_engine_tool` | built dylib path `build/moonray/moonray/lib/grid/engine_tool/Release/libgrid_engine_tool.dylib` |
 | installed dylib path | `/Applications/MoonRay/installs/openmoonray/lib/libgrid_engine_tool.dylib` | shasum matches rebuilt clean build product: `ed15d845d2b22cf5da841ade62ae0d8dd43a86a6` |
-| final diagnostic strings removed | yes | `strings ... | rg "HDMR_CAMDEPTH|cameraDepth temporary|cameraDepth sender|cameraDepth receiver|cameraDepth merger"` returns no matches |
+| final diagnostic strings removed | yes | diagnostic marker string scan returned no matches |
 | isolated PackTiles test binary | `/tmp/moonray_aov_audit/packtiles_roundtrip/packtiles_camera_depth_roundtrip` | shasum `2cc68f0be91ae622e59cc9224837dd57b9a1c7a5` |
 | isolated test linked dylibs | `/Applications/MoonRay/installs/openmoonray/lib` and `/Applications/MoonRay/installs/lib` | `otool -L` and `LC_RPATH` show installed MoonRay libraries |
 
@@ -122,17 +159,17 @@ Important conclusions:
 
 | Stage | Current evidence | Remaining unknown |
 |---|---|---|
-| USD/Hydra RenderVar/AOV | Scratch USDA authored a `cameraDepth` RenderVar with raw sourceName/sourceType and float dataType. hdMoonray `aovNameFromSettings()` uses raw `sourceName`. | Whether native `depth`, `Z`, `N`, `P`, and `Ng` requests behave the same in production is not yet baseline-tested. |
-| hdMoonray RenderBuffer mapping | `RenderBuffer.cc` maps `cameraDepth` to `HdFormatFloat32` and MoonRay `RESULT_DEPTH`; `Z` maps to `STATE_VARIABLE_DEPTH`; `N`, `P`, `Ng` map to state-variable outputs. | Whether product-facing names should prefer Hydra tokens, MoonRay names, or USD RenderVar conventions needs later UI work after production payloads work. |
+| USD/Hydra RenderVar/AOV | Scratch USDA authored `cameraDepth`, and the native baseline authored raw `alpha`, `depth`, `Z`, `N`, `Ng`, `P`, `Wp`, `St`, and `weight` RenderVars. hdMoonray `aovNameFromSettings()` uses raw `sourceName`. | Product-facing naming remains deferred until production payloads work. |
+| hdMoonray RenderBuffer mapping | `RenderBuffer.cc` maps `cameraDepth` to `HdFormatFloat32` and MoonRay `RESULT_DEPTH`; `depth`, `Z`, `N`, `P`, `Ng`, `Wp`, `St`, `alpha`, and `weight` also map to native RenderOutput result/state-variable paths. | Mapping is not the leading blocker for the native baseline; production payload delivery/decode is. |
 | MoonRay RenderOutput declaration | RDLA declared `RenderOutput("/_outputs/cameraDepth")` with `["result"] = "depth"` and `["math_filter"] = "min"`. | The exact best `channel_format`, channel naming, and product metadata for final USD/Husk AOV UX remain deferred. |
 | `RenderContext::snapshotDeltaRenderOutput` / `snapshotDeltaAov` | Source shows `snapshotDeltaRenderOutput()` dispatches to `snapshotDeltaAov()` for regular AOVs; transcripts recorded sender-side finite depth values after this snapshot path. | The exact live value/active/weight contract at the input to PackTiles remains unresolved. |
 | `McrtFbSender::addRenderOutputToProgressiveFrame` | Source sends render-output buffers through `PackTiles::encodeRenderOutput()`. Diagnostics showed the path was reached and emitted nonzero-sized packets. | Which live active/weight/value combinations produce the zero decoded payload is still not proven safely. |
 | `PackTiles::encodeRenderOutput` | Isolated roundtrip proved zero weights can zero finite depth values, and unit/active weights can preserve them in isolation. | The isolated result did not translate to a production fix, so the live contract differs from the simplified probe or another downstream step still clears data. |
 | `PackTiles::decodeRenderOutput` | Receiver-side diagnostics saw decode complete with non-empty active masks, but values were already zero after decode. | Whether the zeroing is encode-side, decode-side, packet semantic, or receiver-application semantic remains open. |
 | `ClientReceiverFb` decode/application | Diagnostics found `ClientReceiverFb` had the output and returned a one-channel 64x64 payload, but values were zero. | The exact point inside receiver framebuffer application where non-radiance AOVs should bypass weight semantics is still unknown. |
-| `ClientReceiverFb::getRenderOutputMTSafe` | hdMoonray production lookup by full path, leaf name, then id returned a payload; closest-filter extraction did not recover data. | Whether native `depth`/`Z` use different extraction behavior remains untested. |
-| hdMoonray `ArrasRenderer::resolve` | Source currently asks receiver for full path, leaf, then matched id and copies payload into render buffers. This is less suspicious after receiver diagnostics found zero before final resolve. | Final resolve should still be checked for native AOVs, but it is not the leading cameraDepth blocker. |
-| `RenderBuffer::Resolve` -> EXR output | Beauty writes filled pixels; production `cameraDepth/Pz` writes metadata/channel/subimage but constant zero pixels. | Filled non-beauty production output is unproven. |
+| `ClientReceiverFb::getRenderOutputMTSafe` | hdMoonray production lookup by full path, leaf name, then id returned a payload; closest-filter extraction did not recover data for cameraDepth. Native baseline output files/channels exist but are zero-filled. | Exact receiver application semantics remain unresolved. |
+| hdMoonray `ArrasRenderer::resolve` | Source currently asks receiver for full path, leaf, then matched id and copies payload into render buffers. This is less suspicious after receiver diagnostics found zero before final resolve. | Final resolve can still be instrumented for a representative native AOV, but it is not the leading blocker. |
+| `RenderBuffer::Resolve` -> EXR output | Beauty writes filled pixels; production `cameraDepth/Pz` and native non-beauty AOVs write metadata/channel/subimage but constant zero pixels. | Filled non-beauty production output is unproven. |
 
 ## Sender-Side Findings
 
@@ -213,8 +250,8 @@ Important conclusions:
 | result enum/value | Meaning | Required extra attributes | Simple/direct output? | Requires material/shader/light setup? | Safe hdMoonray target? | Notes |
 |---|---|---|---|---|---|---|
 | RESULT_BEAUTY / 0 / beauty | full RGB render | none | yes | no | yes | Production works. |
-| RESULT_ALPHA / 1 / alpha | alpha | none | yes | no | mapped, unvalidated | Reference/skip path in sender. |
-| RESULT_DEPTH / 2 / depth | z distance from camera | usually `math_filter=min`, float channel | yes | no | target after transport fix | hdMoonray `cameraDepth` maps here. |
+| RESULT_ALPHA / 1 / alpha | alpha | none | yes | no | debug works, production zero | Reference/skip path in sender. |
+| RESULT_DEPTH / 2 / depth | z distance from camera | usually `math_filter=min`, float channel | yes | no | debug works, production zero | hdMoonray `cameraDepth` and native `depth` map here. |
 | RESULT_STATE_VARIABLE / 3 / state variable | built-in state variable | `state_variable` | yes | no | debug only today | Production payload delivery is broken for tested state AOVs. |
 | RESULT_PRIMITIVE_ATTRIBUTE / 4 / primitive attribute | procedural/prim attr | `primitive_attribute`, `primitive_attribute_type` | no | requires attr | later | Needs USD primvar/attribute validation. |
 | RESULT_HEAT_MAP / 5 / time per pixel | diagnostic timing | none | yes | no | mapped but untested | Sender special reference path. |
@@ -222,7 +259,7 @@ Important conclusions:
 | RESULT_MATERIAL_AOV / 7 / material aov | material expression | `material_aov` | no | material labels/closures | later | Mapped by `shader:` prefix. |
 | RESULT_LIGHT_AOV / 8 / light aov | LPE | `lpe` | no | scene/light setup | later | Mapped by `lpe:` prefix. |
 | RESULT_VISIBILITY_AOV / 9 / visibility aov | light visibility ratio | `visibility_aov` | no | light/path setup | later | Deferred. |
-| RESULT_WEIGHT / 11 / weight | sample weight | none | yes | no | mapped but untested | Sender special reference path. |
+| RESULT_WEIGHT / 11 / weight | sample weight | none | yes | no | debug constant nonzero, production zero | Sender special reference path. |
 | RESULT_BEAUTY_AUX / 12 / beauty aux | adaptive auxiliary | none | yes | no | mapped but untested | Sender special reference path. |
 | RESULT_CRYPTOMATTE / 13 / cryptomatte | ID mattes | cryptomatte attrs and ID setup | no | cryptomatte setup | deferred | Complex, not first target. |
 | RESULT_ALPHA_AUX / 14 / alpha aux | adaptive alpha auxiliary | none | yes | no | mapped but untested | Sender special reference path. |
@@ -232,10 +269,10 @@ Important conclusions:
 
 | state_variable enum/value | Meaning | Channels | Expected MoonRay type/format | Expected Hydra HdFormat | Expected USD RenderVar dataType | Safe first target? | Notes |
 |---|---|---:|---|---|---|---|---|
-| P / 0 | position | 3 | VEC3F/RGB-like | Float32Vec3 | vector3f/color3f | after transport fix | Mapped. |
-| Ng / 1 | geometric normal | 3 | VEC3F | Float32Vec3 | normal3f/vector3f | after transport fix | Mapped. |
+| P / 0 | position | 3 | VEC3F/RGB-like | Float32Vec3 | vector3f/color3f | after transport fix | Debug works; production zero observed. |
+| Ng / 1 | geometric normal | 3 | VEC3F | Float32Vec3 | normal3f/vector3f | after transport fix | Debug works; production zero observed. |
 | N / 2 | shading normal | 3 | VEC3F | Float32Vec3 | normal3f/vector3f | after transport fix | Debug works; production zero observed. |
-| St / 3 | texture coordinates | 2 | VEC2F | Float32Vec2 | float2 | later | Mapped as `St` and `primvars:st`. |
+| St / 3 | texture coordinates | 2 | VEC2F | Float32Vec2 | float2 | after transport fix | Debug works; production zero observed. |
 | dPds / 4 | derivative of P wrt S | 3 | VEC3F | Float32Vec3 | vector3f | later | Mapped. |
 | dPdt / 5 | derivative of P wrt T | 3 | VEC3F | Float32Vec3 | vector3f | later | Mapped. |
 | dSdx / 6 | s derivative wrt x | 1 | FLOAT | Float32 | float | later | Mapped. |
@@ -315,27 +352,27 @@ Answers:
 | Hydra/RenderBuffer AOV name | MoonRay RenderOutput result | Extra MoonRay attr | math_filter | channel_format | channel_name | HdFormat | channel count | USD RenderVar dataType | Debug plugin payload | Production plugin payload | Current status | Missing work |
 |---|---|---|---|---|---|---|---:|---|---|---|---|---|
 | color | beauty special case | none | default | n/a | n/a | Float32Vec4 | 4 | color4f | works | works | works production | none for beauty |
-| beauty | beauty | none | default | default | default | Float32Vec3 | 3 | color3f | untested | untested | mapped but untested | validate |
-| alpha | alpha | none | default | default | default | Float32 | 1 | float | untested | untested | mapped but untested | validate |
-| depth | depth | none | min | default | default | Float32 | 1 | float | untested | untested | mapped but untested | note clip-space remap path |
+| beauty | beauty | none | default | default | default | Float32Vec3 | 3 | color3f | equivalent to color path when routed as `color` | production working through current Beauty RenderVar contract | works production | keep scoped to beauty |
+| alpha | alpha | none | default | default | default | Float32 | 1 | float | works | zero | declared but zero in production | transport/decode fix |
+| depth | depth | none | min | default | default | Float32 | 1 | float | works | zero | declared but zero in production | transport/decode fix |
 | cameraDepth | depth | none | min | default | default | Float32 | 1 | float | works | zero | declared but zero in production | transport/decode fix |
 | heat_map | time per pixel | none | default | default | default | Float32 | 1 | float | untested | untested | mapped but untested | validate |
 | wireframe | wireframe | none | default | default | default | Float32Vec3 | 3 | color3f | untested | untested | unsafe | code comment says crashes |
-| weight | weight | none | default | default | default | Float32 | 1 | float | untested | untested | mapped but untested | validate |
+| weight | weight | none | default | default | default | Float32 | 1 | float | constant nonzero | zero | declared but zero in production | transport/decode fix |
 | beauty_aux | beauty aux | none | default | default | default | Float32Vec3 | 3 | color3f | untested | untested | mapped but untested | adaptive validation |
 | alpha_aux | alpha aux | none | default | default | default | Float32 | 1 | float | untested | untested | mapped but untested | adaptive validation |
-| P | state variable | P | default | default | default | Float32Vec3 | 3 | vector3f | untested | untested | mapped but untested | transport fix first |
-| Ng | state variable | Ng | default | default | default | Float32Vec3 | 3 | normal3f/vector3f | untested | likely zero if tested | mapped but untested | transport fix first |
-| N / normal | state variable | N | default | default | default | Float32Vec3 | 3 | normal3f | works debug | zero observed | declared but zero in production | transport fix first |
-| St / primvars:st | state variable | St | default | default | default | Float32Vec2 | 2 | float2 | untested | untested | mapped but untested | validate |
+| P | state variable | P | default | default | default | Float32Vec3 | 3 | vector3f | works | zero | declared but zero in production | transport/decode fix |
+| Ng | state variable | Ng | default | default | default | Float32Vec3 | 3 | normal3f/vector3f | works | zero | declared but zero in production | transport/decode fix |
+| N / normal | state variable | N | default | default | default | Float32Vec3 | 3 | normal3f | works | zero observed | declared but zero in production | transport/decode fix |
+| St / primvars:st | state variable | St | default | default | default | Float32Vec2 | 2 | float2 | works | zero | declared but zero in production | transport/decode fix |
 | dPds | state variable | dPds | default | default | default | Float32Vec3 | 3 | vector3f | untested | untested | mapped but untested | validate |
 | dPdt | state variable | dPdt | default | default | default | Float32Vec3 | 3 | vector3f | untested | untested | mapped but untested | validate |
 | dSdx | state variable | dSdx | default | default | default | Float32 | 1 | float | untested | untested | mapped but untested | validate |
 | dSdy | state variable | dSdy | default | default | default | Float32 | 1 | float | untested | untested | mapped but untested | validate |
 | dTdx | state variable | dTdx | default | default | default | Float32 | 1 | float | untested | untested | mapped but untested | validate |
 | dTdy | state variable | dTdy | default | default | default | Float32 | 1 | float | untested | untested | mapped but untested | validate |
-| Wp | state variable | Wp | default | default | default | Float32Vec3 | 3 | vector3f | untested | untested | mapped but untested | validate |
-| Z | state variable | depth | default | default | default | Float32 | 1 | float | untested | explicit test did not fix cameraDepth | mapped but untested | separate validation |
+| Wp | state variable | Wp | default | default | default | Float32Vec3 | 3 | vector3f | works | zero | declared but zero in production | transport/decode fix |
+| Z | state variable | depth | default | default | default | Float32 | 1 | float | works | zero | declared but zero in production | transport/decode fix |
 | motionvec | state variable | motionvec | default | default | default | Float32Vec2 | 2 | float2 | not tested here | not tested here | mapped but untested | later |
 | primvars:* | primitive attribute | primitive_attribute/type | varies | default | default | guessed | varies | varies | untested | untested | mapped but requires primitive attr setup | later |
 | lpe:* | light aov | lpe | default | default | default | Float32Vec3 default | 3 | color3f | untested | untested | mapped but requires LPE/light setup | later |
@@ -348,7 +385,7 @@ Answers:
 | Tier | AOV family | Examples | Current hdMoonray status | First validation target | Blocker |
 |---|---|---|---|---|---|
 | 0 | beauty/color only | color/beauty | production-working | done | none |
-| 1 | simple renderer/state outputs | cameraDepth/depth, N, Ng, P, motionvec | mapped; debug works for cameraDepth/N; production zero for tested outputs | cameraDepth | production transport/decode |
+| 1 | simple renderer/state outputs | cameraDepth/depth, Z, N, Ng, P, Wp, St, alpha, weight | mapped; debug works for native baseline; production zero for non-beauty tested outputs | native baseline complete | production transport/decode |
 | 2 | material/diagnostic outputs | albedo, roughness, normal, emission, pbr_validity | prefix mapped but unvalidated | albedo after Tier 1 | material AOV model and payload transport |
 | 3 | primitive attribute/primvar outputs | primvars:st, IDs, custom attrs | prefix mapped but unvalidated | simple float primvar | USD primvar source and type mapping |
 | 4 | LPE/light/visibility outputs | diffuse, glossy, emission, visibility | LPE prefix mapped; visibility not exposed | simple LPE after transport | scene/light setup and output semantics |
@@ -373,6 +410,29 @@ In that controlled environment, `husk --list-renderers` lists `HdMoonrayRenderer
 | HdMoonrayRendererPlugin | beauty/C | yes | 0 | 12744.106445 | no | yes | black background/alpha | pass |
 | HdMoonrayRendererPlugin | cameraDepth/Pz | yes | 0 | 0 | yes | no | zero-filled | fail |
 | HdMoonrayRendererDebugPlugin | cameraDepth/Pz | yes | 5.123846 | 5.973000 | no | yes | `inf` no-hit background, InfCount 2458 | pass |
+
+The 2026 native baseline extends this validation with explicit RenderVars for `alpha`, `depth`, `Z`, `N`, `Ng`, `P`, `Wp`, `St`, and `weight`. Debug renderer output was meaningful for all except `weight`, which was expectedly constant nonzero in the test scene. Production output was zero-filled for all non-beauty native AOVs.
+
+## Arras Shutdown Socket Error
+
+Production H20.5 `husk` renders that successfully write filled Beauty EXRs can still log:
+
+```text
+{dispatcherExit} Message Dispatcher [libcomputation_progmcrt.dylib] : exiting : reason is 'socket was disconnected'
+{clientSocketError} SocketPeer::receive: Bad file descriptor
+```
+
+Observed ordering in `/tmp/pre_aov_direct_stdout.log` and `/tmp/pre_aov_generic_stdout.log`:
+
+1. mcrt launches and reaches `stage shading complete`.
+2. Render timing is printed.
+3. `{trace:comp} stop` is printed.
+4. stderr reports dispatcher exit / socket disconnected / bad file descriptor.
+5. Output EXRs exist and are nonconstant.
+
+Source path: `arras/arras4_core/arras4_client/lib/client/api/Client.cc::threadProc()` suppresses a closed socket only when the client is already in `STATE_DISCONNECTING`; otherwise it reports `{clientSocketError}` and marks a connection error.
+
+Classification: this is not proven harmless teardown noise, and it may still relate to IPR disconnect behavior. It is also not evidence for, or a fix for, the non-beauty AOV zero-filled production payload bug. Do not suppress or mask this log without source proof that the disconnect is expected in this lifecycle.
 
 ## 2026-06-06 Production Transport Attempts
 
@@ -463,42 +523,38 @@ Do not apply a broad PackTiles fix yet. The next production fix should first pro
 - Debug renderer cameraDepth works and can produce plausible finite depth values.
 - Production `cameraDepth/Pz` remains zero-filled and constant.
 - `cameraDepth` reached MoonRay as `RESULT_DEPTH`, which made it useful for probing native depth transport, but it was an invented diagnostic target and no production product AOV should be based on it yet.
+- The 2026 native baseline shows `alpha`, `depth`, `Z`, `N`, `Ng`, `P`, `Wp`, `St`, and `weight` reproduce the production zero-filled failure while the debug renderer returns meaningful payloads.
 - No production cameraDepth fix was proven.
 - All source attempts were reverted.
 - The installed H20.5 runtime was cleaned of temporary cameraDepth diagnostic markers.
-- The remaining blocker is after mcrt has real render-output depth values but before hdMoonray receives usable decoded values.
+- The remaining blocker is after mcrt/debug can produce real RenderOutput values but before hdMoonray receives usable decoded production values.
 - The exact live contract among `RenderContext::snapshotDeltaRenderOutput`, `McrtFbSender::addRenderOutputToProgressiveFrame`, `PackTiles::encodeRenderOutput`, and `ClientReceiverFb` decode/application remains unresolved.
-- Further cameraDepth work is not recommended until native mapped AOVs are baseline-validated.
+- Further cameraDepth-specific work is not recommended. Future work should investigate production RenderOutput transport/decode/application using a representative native AOV such as `N` or `depth`, not a custom cameraDepth-only path.
 - Non-beauty AOV UI must remain hidden/deferred.
 
 ## Next AOV Pass Rules
 
-Do not repeat the custom cameraDepth-first path.
+Do not repeat the custom cameraDepth-first path. The native baseline has already generalized the failure.
 
-Rules for the next AOV pass:
+Rules for the next AOV transport pass:
 
 1. Do not start with `cameraDepth`.
 2. Do not invent AOV names.
 3. Treat `RenderBuffer.cc` mappings as the source of truth.
-4. First baseline validation targets are `depth`, `Z`, `N`, `P`, and `Ng`.
-5. Baseline first means:
-   - inspect the `RenderBuffer.cc` mapping;
-   - inspect RDLA `RenderOutput` declarations;
-   - render production H20.5 EXRs;
-   - compare debug renderer output only as a control;
-   - classify each AOV with image stats.
-6. No code changes before baseline.
-7. No PackTiles changes before baseline.
+4. Use the native baseline evidence before changing transport code.
+5. Prefer `N` or `depth` as representative native failures because both have debug payloads and production zero-filled EXRs.
+6. No PackTiles, mcrt, receiver, or transport change without source-path proof, log proof, and H20.5 production EXR proof.
+7. No UI exposure before production-filled payloads.
 8. No `moonray_dcc_plugins` or UI changes before production payloads are proven.
 9. No material AOVs, LPEs, primvars, Cryptomatte, denoiser outputs, or light AOVs in the baseline pass.
 10. No support claim without H20.5 production EXR stats proving nonzero/nonconstant finite payloads where expected.
 
 ## Open Questions
 
-- Does native `depth` fail the same way as diagnostic `cameraDepth`?
-- Does `Z` use a different `RESULT_STATE_VARIABLE` path that bypasses or reproduces the `RESULT_DEPTH` issue?
-- Do vec3 state variables `N`, `P`, and `Ng` fail at declaration, transport, decode, or final resolve?
-- Are production AOV failures shared across all RenderOutput types, or specific to `RESULT_DEPTH` / depth-like outputs?
+- Native `depth` fails the same way as diagnostic `cameraDepth`: production zero-filled, debug meaningful.
+- `Z` uses a different `RESULT_STATE_VARIABLE` path and still reproduces the production zero-filled failure.
+- Vec3 state variables `N`, `P`, `Ng`, and `Wp` fail after declaration; debug renderer values prove the scene and mapping can produce payloads.
+- Production AOV failures are shared across the tested native non-beauty RenderOutput types, not specific to `RESULT_DEPTH`.
 - Can the full live render-output encode/decode contract be reproduced in an isolated test without crashing mcrt?
 - Is the issue in PackTiles encode, PackTiles decode, direct-to-client packet semantics, or receiver application?
-- Which exact native AOVs are already production-working, if any?
+- The only production-working AOV path currently proven is color/beauty.

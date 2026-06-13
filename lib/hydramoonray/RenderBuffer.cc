@@ -146,6 +146,10 @@ tokenFromValue(const pxr::VtValue& value)
 pxr::TfToken
 aovNameFromSettings(const pxr::HdRenderPassAovBinding& aovBinding)
 {
+    if (aovBinding.aovName == pxr::HdAovTokens->color) {
+        return pxr::HdAovTokens->color;
+    }
+
     auto sourceNameIt = aovBinding.aovSettings.find(pxr::TfToken("sourceName"));
     pxr::TfToken sourceName = sourceNameIt == aovBinding.aovSettings.end() ?
         pxr::TfToken() : tokenFromValue(sourceNameIt->second);

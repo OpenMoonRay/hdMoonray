@@ -311,8 +311,8 @@ What worked:
 - Source-generated HDA workflow.
 - Owned USD Render ROP lifecycle policy.
 - Curated SceneVariable authoring.
-- Current Track A default: `aov_beauty = 0`, no authored Beauty RenderVar, `UsdRender.Settings`, `UsdRender.Product`, `settings.products`, `settings.camera`, `settings.resolution`, `productName`, `productType = "raster"`, empty `orderedVars`, and curated `moonray:sceneVariable:*`.
-- The internal `aov_beauty` parm name is preserved for compatibility, but the UI label is `Experimental Beauty RenderVar / AOV Path` under Advanced / Debug or Experimental AOVs.
+- Current H20.5 disk-output default: `aov_beauty = 1`, `UsdRender.Settings`, `UsdRender.Product`, `settings.products`, `settings.camera`, `settings.resolution`, `productName`, `productType = "raster"`, `orderedVars` targeting the Beauty RenderVar, and curated `moonray:sceneVariable:*`.
+- The internal `aov_beauty` parm name is preserved for compatibility, but the UI label is `Beauty RenderVar / Disk Output Path`. Disabling it is diagnostic only.
 
 What remains WIP:
 
@@ -325,13 +325,13 @@ Copy this:
 
 - Keep generation source and HDA in sync.
 - Keep standard USD render contracts valid.
-- Keep normal beauty on the no-Beauty-RenderVar path until fresh viewport/IPR, USD Render ROP/husk, and filled image/EXR proof justify another default.
+- Keep the H20.5 disk-output Beauty RenderVar path unless fresh viewport/IPR, USD Render ROP/husk, and filled image/EXR proof justify another contract.
 
 Avoid this:
 
 - Do not hand-edit only the HDA.
 - Do not expose unsupported AOV controls.
-- Do not recommend always authoring a Beauty RenderVar without render proof; it can force Hydra AOV/RenderBuffer lifecycle behavior.
+- Do not use the proven Beauty RenderVar path as evidence that non-beauty AOVs work.
 - Do not claim AOV support from authored RenderVars, metadata, EXR channels, RDLA RenderOutput declarations, or debug renderer success alone.
 
 ## Render Settings / AOV Track Discipline
@@ -374,12 +374,14 @@ What failed:
 
 - `cameraDepth` was a diagnostic name, not the ideal product baseline.
 - Production `cameraDepth/Pz` remained constant zero.
+- Native `alpha`, `depth`, `Z`, `N`, `Ng`, `P`, `Wp`, `St`, and `weight` generalized the same production failure: mapped and declared, meaningful in the debug renderer, but zero-filled in production H20.5 `HdMoonrayRendererPlugin`.
 - Debug/local evidence did not prove production support.
 
 Copy this:
 
 - Keep detailed source/build/install/run evidence.
 - Use EXR stats as the support gate.
+- Keep non-beauty AOV UI hidden until production-filled payloads are proven.
 
 Avoid this:
 

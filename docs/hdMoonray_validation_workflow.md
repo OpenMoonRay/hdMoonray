@@ -286,15 +286,15 @@ Render Settings LOP is partial/WIP. Use this workflow before declaring any part 
    - `moonray:sceneVariable:*` attrs.
 6. Render via direct husk or USD Render ROP.
 7. Confirm output path and resolution.
-8. For the custom MoonRay Render Settings LOP default, confirm `aov_beauty=0`, no authored Beauty RenderVar, `RenderProduct` exists, `productName` exists, `productType = "raster"`, and `orderedVars` is empty.
-9. For the debug Beauty path, confirm `aov_beauty=1` authors a Beauty RenderVar with `sourceName = "color"`, `sourceType = "raw"`, and `orderedVars` targeting the Beauty RenderVar.
+8. For the custom MoonRay Render Settings LOP default, confirm `aov_beauty=1`, `RenderProduct` exists, `productName` exists, `productType = "raster"`, Beauty RenderVar exists, and `orderedVars` targets the Beauty RenderVar.
+9. For the diagnostic no-Beauty path, confirm `aov_beauty=0` removes the Beauty RenderVar and leaves `orderedVars` empty; do not treat this as the H20.5 disk-output production default unless render proof changes.
 10. For generic Houdini Render Settings, do not claim functional MoonRay rendering from the MoonRay folder alone. The folder is UI integration evidence only. Export flattened USDA and confirm whether `products` has targets and whether `RenderProduct`, `productName`, `productType`, and `orderedVars` exist. If the flattened USDA has empty `rel products` and no RenderProduct/productName/productType, generic Render Settings alone is not a complete MoonRay output setup.
 11. For viewport/IPR behavior, record fresh H20.5 UI proof separately from Hython/export proof.
 12. For USD Render ROP/husk behavior, require output path proof and image/EXR proof before calling the render path filled or production-working.
 
 Do not validate viewport/IPR resolution with offline RenderSettings assumptions. Viewport/IPR framing is viewport-driven unless a supported Houdini/Hydra mechanism proves otherwise.
 
-Normal beauty currently defaults to no authored Beauty RenderVar. The Beauty RenderVar path is experimental/debug because it can force Hydra AOV/RenderBuffer lifecycle behavior. Do not recommend always authoring a Beauty RenderVar unless fresh viewport/IPR, USD Render ROP/husk, and filled image/EXR output prove it is required and stable.
+Normal custom-LOP disk output currently defaults to an authored Beauty RenderVar because H20.5 production `husk` rejected the empty-`orderedVars` custom product and the Beauty RenderVar path produced filled EXRs. This evidence is scoped to beauty. Do not promote non-beauty AOVs without production Arras/H20.5 filled EXR proof.
 
 ## AOV Validation
 
@@ -322,9 +322,11 @@ Known WIP/failure contrast:
 
 - `cameraDepth` debug path works.
 - Production `cameraDepth/Pz` has existed but been constant zero.
-- Sender-side mcrt had finite depth values.
-- Transport/weight/decode semantics remain unresolved.
-- The next AOV baseline should start with native mapped targets such as `depth`, `Z`, `N`, `P`, and `Ng`, not diagnostic `cameraDepth`.
+- Native `alpha`, `depth`, `Z`, `N`, `Ng`, `P`, `Wp`, `St`, and `weight` are mapped and declared, and the debug renderer produces meaningful payloads.
+- Production H20.5 `HdMoonrayRendererPlugin` writes those native non-beauty channels but returns zero-filled payloads.
+- Sender-side mcrt had finite depth values in the historical cameraDepth diagnostics.
+- Transport/weight/decode/application semantics remain unresolved.
+- Future AOV work should focus on production RenderOutput transport/decode with native representative AOVs such as `N` or `depth`, not USD authoring, UI exposure, or cameraDepth-specific paths.
 
 ## Unit / Scale Validation
 

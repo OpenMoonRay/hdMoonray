@@ -237,8 +237,9 @@ Partial/WIP patterns:
 
 Render Settings and AOV caveats:
 
-- The current custom Render Settings LOP default is `aov_beauty = 0`: no authored Beauty RenderVar, `RenderProduct` with `productName`, `productType = raster`, and empty `orderedVars`.
-- The `aov_beauty` parm name is preserved for compatibility, but the UI label is `Experimental Beauty RenderVar / AOV Path` under Advanced / Debug.
+- The current custom Render Settings LOP default is `aov_beauty = 1`: it authors `RenderProduct` with `productName`, `productType = raster`, and `orderedVars` targeting the Beauty RenderVar for H20.5 USD Render ROP / `husk` disk output.
+- The `aov_beauty` parm name is preserved for compatibility, but the UI label is `Beauty RenderVar / Disk Output Path`. Disabling it is a diagnostic viewport/default-framebuffer test path, not the production disk-output default.
+- H20.5 direct camera/default color output depends on mapping `HdAovTokens->color` to MoonRay beauty before interpreting Houdini's `sourceName/sourceType` AOV settings. Do not regress this path by routing default color through an LPE RenderOutput.
 - Generic Houdini Render Settings with a MoonRay folder is UI integration evidence only. If flattened USDA has empty `rel products` and no RenderProduct/productName/productType, it is not a complete MoonRay output setup.
 - Do not claim AOV support from authored RenderVars, metadata, EXR channels, RDLA RenderOutput declarations, or debug renderer success alone.
 
