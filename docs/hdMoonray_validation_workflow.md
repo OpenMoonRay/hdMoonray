@@ -365,15 +365,14 @@ Do not promote an AOV based only on:
 - RDLA RenderOutput declaration.
 - Local PackTiles probes.
 
-Known WIP/failure contrast:
+Known AOV repair evidence:
 
-- `cameraDepth` debug path works.
-- Production `cameraDepth/Pz` has existed but been constant zero.
-- Native `alpha`, `depth`, `Z`, `N`, `Ng`, `P`, `Wp`, `St`, and `weight` are mapped and declared, and the debug renderer produces meaningful payloads.
-- Production H20.5 `HdMoonrayRendererPlugin` writes those native non-beauty channels but returns zero-filled payloads.
-- Sender-side mcrt had finite depth values in the historical cameraDepth diagnostics.
-- Transport/weight/decode/application semantics remain unresolved.
-- Future AOV work should focus on production RenderOutput transport/decode with native representative AOVs such as `N` or `depth`, not USD authoring, UI exposure, or cameraDepth-specific paths.
+- `cameraDepth` was a useful diagnostic path, but not the preferred product-facing first AOV name.
+- Native `alpha`, `depth`, `cameraDepth`, `Z`, `N`, `Ng`, `P`, `Wp`, `St`, and `weight` are mapped and declared, and the debug renderer produces meaningful payloads or expected constant payloads.
+- The first production zero-fill failure was proven in Apple Silicon half-packet conversion: mcrt had finite AOV values before encode, but H16 packets decoded as zero.
+- `scene_rdl2::grid_util::PackTiles` now uses scalar `__fp16` plus `std::memcpy` on ARM, and production H20.5 `HdMoonrayRendererPlugin` writes filled EXRs for the explicit single-RenderVar native baseline.
+- `weight` can be constant nonzero in the simple fixture; classify expected constants separately from zero-filled failures.
+- Future AOV work should focus on product semantics, multi-AOV products, UI exposure, and untested families such as material AOVs, LPE/light AOVs, primitive attributes, visibility AOVs, Cryptomatte, and motion vectors.
 
 ## Unit / Scale Validation
 

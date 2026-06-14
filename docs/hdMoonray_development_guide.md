@@ -242,10 +242,11 @@ Render Settings and AOV caveats:
 - H20.5 direct camera/default color output depends on mapping `HdAovTokens->color` to MoonRay beauty before interpreting Houdini's `sourceName/sourceType` AOV settings. Do not regress this path by routing default color through an LPE RenderOutput.
 - Generic Houdini Render Settings with a MoonRay folder is UI integration evidence only. If flattened USDA has empty `rel products` and no RenderProduct/productName/productType, it is not a complete MoonRay output setup.
 - Do not claim AOV support from authored RenderVars, metadata, EXR channels, RDLA RenderOutput declarations, or debug renderer success alone.
+- Explicit production H20.5 RenderVar tests now prove filled native baseline AOVs after the Apple Silicon half-packing repair: `alpha`, `depth`, `cameraDepth`, `Z`, `N`, `Ng`, `P`, `Wp`, and `St`; `weight` is constant nonzero in the simple fixture.
 
-Failure/process contrast:
+Remaining AOV WIP:
 
-- Non-beauty AOVs and `cameraDepth` transport.
+- Product-facing AOV UI, multi-AOV products, material AOVs, LPE/light AOVs, visibility AOVs, primitive attributes, Cryptomatte, motion vectors, and viewport/IPR UX still require separate production proof.
 
 ## OCIO / renderingColorSpace Working-Space Support
 

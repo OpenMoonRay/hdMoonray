@@ -322,12 +322,18 @@ ArrasRenderer::statusHandler(const std::string& msg)
 bool
 ArrasRenderer::allocate(scene_rdl2::rdl2::RenderOutput* ro, PixelData& pd, const PixelSize& request)
 {
-    if (not pd.mData) { // don't reallocate until resolve() so display does not blink
-        pd.mChannels = isBeauty(ro) ? 4 : request.mChannels;
+    const unsigned channels = request.mChannels;
+    if (not pd.mData ||
+        pd.mWidth != request.mWidth ||
+        pd.mHeight != request.mHeight ||
+        pd.mChannels != channels)
+    {
+        pd.mChannels = channels;
         pd.mWidth = request.mWidth;
         pd.mHeight = request.mHeight;
-        pd.vec.resize(pd.mWidth * pd.mHeight * pd.mChannels);
+        pd.vec.assign(pd.mWidth * pd.mHeight * pd.mChannels, 0.0f);
         pd.mData = pd.vec.data();
+        pd.filmActivity = ~0u;
     }
     return true;
 }

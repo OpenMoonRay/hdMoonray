@@ -350,12 +350,13 @@ Do not flip `aovsupport`, restart `cameraDepth`, broaden non-beauty AOV transpor
 
 ## AOV / cameraDepth Investigation
 
-Status: experimental / failure contrast.
+Status: explicit native baseline repaired; broader AOV UI still WIP.
 
 Evidence:
 
 - `hdMoonray_aov_audit.md`.
 - hdMoonray `2eb0808` for beauty buffer support.
+- Apple Silicon half-packing repair in `scene_rdl2::grid_util::PackTiles`.
 - Scratch artifacts under `/tmp/moonray_aov_audit`.
 
 Native contract:
@@ -368,20 +369,28 @@ What was useful:
 
 - Beauty support progressed.
 - The audit mapped RenderVar -> RenderBuffer -> RenderOutput -> transport -> EXR.
-- It identified production transport/weight hazards.
+- It identified production transport/packet hazards.
 
-What failed:
+What failed before the repair:
 
 - `cameraDepth` was a diagnostic name, not the ideal product baseline.
 - Production `cameraDepth/Pz` remained constant zero.
 - Native `alpha`, `depth`, `Z`, `N`, `Ng`, `P`, `Wp`, `St`, and `weight` generalized the same production failure: mapped and declared, meaningful in the debug renderer, but zero-filled in production H20.5 `HdMoonrayRendererPlugin`.
 - Debug/local evidence did not prove production support.
 
+What fixed the first native set:
+
+- Diagnostics proved mcrt had real AOV values before encode.
+- Sender packet self-decode and receiver decode showed values were already zero in the H16 packet path.
+- A standalone half-conversion probe reproduced the Apple Silicon bug.
+- The retained fix replaced the ARM scalar float/half conversion in PackTiles with scalar `__fp16` plus `std::memcpy`.
+- H20.5 production EXR stats now prove filled explicit RenderVars for `alpha`, `depth`, `cameraDepth`, `Z`, `N`, `Ng`, `P`, `Wp`, and `St`; `weight` is constant nonzero in the simple fixture.
+
 Copy this:
 
 - Keep detailed source/build/install/run evidence.
 - Use EXR stats as the support gate.
-- Keep non-beauty AOV UI hidden until production-filled payloads are proven.
+- Keep non-beauty AOV UI hidden until the exact product controls, multi-AOV output, and target AOV family have production-filled proof.
 
 Avoid this:
 
