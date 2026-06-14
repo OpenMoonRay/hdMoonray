@@ -296,6 +296,53 @@ Do not validate viewport/IPR resolution with offline RenderSettings assumptions.
 
 Normal custom-LOP disk output currently defaults to an authored Beauty RenderVar because H20.5 production `husk` rejected the empty-`orderedVars` custom product and the Beauty RenderVar path produced filled EXRs. This evidence is scoped to beauty. Do not promote non-beauty AOVs without production Arras/H20.5 filled EXR proof.
 
+## OCIO / Color Management Validation
+
+Color-management claims require value proof, not just metadata proof.
+
+Current implemented scope:
+
+- `RenderSettings.renderingColorSpace` is implemented for authored typed color
+  values that pass through materials, lights, light filters, and generic
+  RGB/RGBA `ValueConverter` paths.
+- Constant-color tests for no color space, Linear Rec.709, ACEScg, and Linear
+  Rec.2020 must prove that generated RDLA values differ when the requested
+  renderer working space differs.
+- OIIO/EXR metadata or `husk` output behavior alone is still not proof that
+  MoonRay rendered internally in the named color space.
+
+When validating color behavior, record all of these separately:
+
+1. Authored USD `RenderSettings.renderingColorSpace`.
+2. Authored USD texture metadata such as `UsdUVTexture.sourceColorSpace` and any
+   MaterialX color-space attributes.
+3. Generated RDLA/RDL material and map nodes, including `UsdUVTexture`,
+   `ImageMap`, texture file path, `sourceColorSpace`, and `gamma`.
+4. Production `husk` EXR sampled pixel values.
+5. EXR metadata from `oiiotool --info -v`.
+6. Viewport/IPR display behavior, separately from disk EXR values.
+
+Use TX textures for production texture color probes. The 2026 audit showed that
+TX `sourceColorSpace = auto` and `sRGB` follow MoonRay's 8-bit gamma behavior,
+while `sourceColorSpace = raw` differs as expected. Direct PNG/JPG/BMP and
+non-tiled source files can render or fail in ways that are not clean production
+texture-color probes for hdMoonray. Texture destination gamut conversion into
+ACEScg, Linear Rec.2020, or other non-native renderer working spaces remains
+unimplemented until a MoonRay-supported map or texture conversion path is proven.
+
+MaterialX image color-space behavior remains `UNKNOWN` until a concrete
+MaterialX image network is exported to USD, converted to RDLA, rendered, and
+measured.
+
+Do not broaden OCIO support without separate proof for:
+
+- USD color constants beyond the currently proven material/light/light-filter
+  typed color paths.
+- `UsdUVTexture.sourceColorSpace` destination working-space conversion.
+- MaterialX image color spaces.
+- Output EXR pixels and metadata.
+- Viewport/IPR display.
+
 ## AOV Validation
 
 AOVs require the strictest validation.

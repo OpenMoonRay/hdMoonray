@@ -38,7 +38,21 @@ Public PRs are useful anchors, but local submodule history is the source of trut
 | Render Settings LOP | Partial / WIP | `moonray_dcc_plugins` `8c995f8` through current local repair | `moonray_render_settings.py`, generated HDA, `moonray_render_settings_lop_audit.md`, validation script | Source-generated HDA, USD RenderSettings/Product foundation, default Beauty RenderVar for H20.5 disk output, and owned USD Render ROP lifecycle are useful. Non-beauty AOV integration and final viewport/IPR UX remain unsettled. | Good process evidence for source-of-truth HDA generation; not yet a stable renderer-settings pattern. Current default authors `RenderProduct` with `productName`, `productType = raster`, and `orderedVars` targeting the Beauty RenderVar because empty `orderedVars` failed in H20.5 production `husk`. Disabling `aov_beauty` is diagnostic only. |
 | Beauty buffer / USD Render ROP support | Partial / WIP | hdMoonray `2eb0808` plus current local `RenderBuffer.cc` repair | `RenderBuffer.cc`, `ArrasRenderer.cc`, `UsdRenderers.json` | Beauty path now has production H20.5 `husk` EXR proof for direct camera/default color, custom LOP default, and generic Render Settings plus built-in RenderProduct/RenderVar. Non-beauty AOVs remain blocked/deferred. | Do not claim full image-buffer/AOV support from this. The narrow proven backend fix maps Houdini's default `HdAovTokens->color` binding to MoonRay beauty before interpreting `sourceName/sourceType`; it does not prove non-beauty AOV transport. |
 | AOV / native non-beauty investigation | Experimental / failure contrast | `docs/hdMoonray_aov_audit.md` plus scratch artifacts | `RenderBuffer.cc`, `RenderPass.cc`, `ArrasRenderer.cc`, MoonRay transport source, audit doc | `cameraDepth` and native `alpha`, `depth`, `Z`, `N`, `Ng`, `P`, `Wp`, `St`, and `weight` are mapped/declared; debug renderer produces meaningful payloads; production payloads are zero-filled. | Use as a process warning: authoring metadata, RDLA creation, channel existence, and debug renderer success are not enough. Production H20.5 filled EXR stats are required before exposing non-beauty AOV UI. |
+| OCIO / renderingColorSpace | Partial / WIP | 2026 H20.5 OCIO/color audit and working-space repair | `ColorManagement.cc`, `RenderDelegate.cc`, `ValueConverter.cc`, `Material.cc`, `Light.cc`, `LightFilter.cc`, MoonRay `UsdUVTexture`, `ImageMap`, scratch USD/RDLA/EXR probes | `RenderSettings.renderingColorSpace` is consumed for authored typed color values before MoonRay/RDL assignment. Constant-color RDLA values now differ for ACEScg and Linear Rec.2020. TX source-color behavior is separate and partially proven. | Do not claim complete texture destination gamut conversion, MaterialX image color management, AOV color management, or viewport/IPR match yet. Do not claim support from OIIO metadata or `husk` output alone. |
 | Unit policy / normalized lights / SSS scale | WIP / deferred | `8d1ded4` | `docs/units-and-scale-notes.md` | Documents that `metersPerUnit` is ignored, `nonrayscene_scale` behavior is unresolved, and SSS distances pass raw. | Do not fix during render settings or AOV work without a dedicated unit-policy pass. |
+
+OCIO / renderingColorSpace status notes:
+
+- Before the repair, constant-color tests produced identical RDLA for no color
+  space, Linear Rec.709, ACEScg, and Linear Rec.2020, while `husk` EXR pixels
+  differed.
+- After the repair, constant-color tests produce different RDLA material values
+  for ACEScg and Linear Rec.2020, and direct MoonRay renders follow those values.
+- TX tests proved `UsdUVTexture.sourceColorSpace = auto/sRGB` follows MoonRay
+  8-bit gamma behavior and `raw` differs.
+- Use TX textures, treat source texture color explicitly, and keep MaterialX
+  image color-space behavior unknown until measured. Texture destination gamut
+  conversion remains unimplemented.
 
 ## What Is Safe To Use As A Pattern
 

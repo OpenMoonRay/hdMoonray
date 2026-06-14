@@ -3,6 +3,7 @@
 
 #pragma once
 
+#include "ColorManagement.h"
 #include "RenderSettings.h"
 
 #include <pxr/pxr.h>
@@ -303,6 +304,8 @@ public:
     std::string  getDeepIdAttrName() {return mDeepIdAttrName;}
 
     const RenderSettings& renderSettings() const { return mRenderSettings; }
+    const ColorManagement& colorManagement() const { return mColorManagement; }
+    void setRenderingColorSpace(const pxr::TfToken& token);
 
     void markAllRprimsDirty(pxr::HdDirtyBits bits);
 
@@ -319,9 +322,12 @@ private:
     } renderParam;
 
     void _constructor();
+    void syncRenderingColorSpaceFromSettings();
+    void markColorDependentSprimsDirty();
 
     Renderer* mRenderer = nullptr;
     RenderSettings mRenderSettings;
+    ColorManagement mColorManagement;
     unsigned mPreviousRenderSettings = ~0u;
     pxr::HdRenderSettingDescriptorList mRenderSettingDescriptors;
 
@@ -367,6 +373,7 @@ private:
     pxr::HdRenderIndex *mRenderIndex = nullptr; // stored by CreateRenderPass
 
     std::set<pxr::HdSprim*> mLights;
+    std::set<pxr::HdSprim*> mMaterials;
     std::set<pxr::HdRprim*> mProcedurals;
     std::set<pxr::HdRprim*> mVolumes;
     void setDefaultLight(bool);

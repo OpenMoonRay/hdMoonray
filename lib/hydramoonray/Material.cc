@@ -157,7 +157,9 @@ makeMoonrayShader(
                 } else {
                     auto valIt = node.parameters.find(pxr::TfToken(attrName));
                     if (valIt != node.parameters.end()) {
-                        hdMoonray::ValueConverter::setAttribute(shaderObj, attribute, valIt->second);
+                        hdMoonray::ValueConverter::setAttribute(
+                            shaderObj, attribute, valIt->second,
+                            &renderDelegate.colorManagement());
                     } else {
                         hdMoonray::ValueConverter::setDefault(shaderObj, attribute);
                     }
@@ -531,4 +533,3 @@ Material::get(
 }
 
 }
-

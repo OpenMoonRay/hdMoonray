@@ -14,6 +14,7 @@ target_sources(${component}
     PRIVATE
         BasisCurves.cc
         Camera.cc
+        ColorManagement.cc
         CoordSys.cc
         GeometryMixin.cc
         HdmLog.cc
@@ -40,6 +41,7 @@ set_property(TARGET ${component}
     PROPERTY PUBLIC_HEADER
         BasisCurves.h
         Camera.h
+        ColorManagement.h
         CoordSys.h
         GeometryMixin.h
         HdmLog.h
@@ -102,6 +104,7 @@ target_link_libraries(${component}
         TBB::tbb
         hd   # pxr imaging
         usdImaging
+        OpenColorIO::OpenColorIO
         Python::Module
         ${PlatformSpecificLibs}
 )

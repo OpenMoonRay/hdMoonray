@@ -40,6 +40,7 @@ endif()
 find_package(OpenGL REQUIRED)
 
 find_package(JPEG REQUIRED)
+find_package(OpenColorIO REQUIRED)
 find_package(OpenImageIO REQUIRED)
 
 # Our USD config doesn't specify TBB or Boost dependencies,

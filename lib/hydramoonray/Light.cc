@@ -319,7 +319,7 @@ Light::syncParams(const pxr::SdfPath& id,
         std::string moonrayName = "moonray:"+attrName;
         pxr::VtValue val = sceneDelegate->GetLightParamValue(id, pxr::TfToken(moonrayName));
         if (!val.IsEmpty()) {
-            ValueConverter::setAttribute(mLight, *it, val);
+            ValueConverter::setAttribute(mLight, *it, val, &renderDelegate.colorManagement());
             continue;
         }
 
@@ -411,7 +411,9 @@ Light::syncParams(const pxr::SdfPath& id,
                         color[2] *= tempRgb[2];
                     }
                 }
-                mLight->set(AttributeKey<scene_rdl2::rdl2::Rgb>(**it), reinterpret_cast<scene_rdl2::rdl2::Rgb&>(color));
+                color = renderDelegate.colorManagement().toWorkingSpace(color);
+                mLight->set(AttributeKey<scene_rdl2::rdl2::Rgb>(**it),
+                            scene_rdl2::rdl2::Rgb(color[0], color[1], color[2]));
                 continue;
 
             } else {
@@ -422,7 +424,7 @@ Light::syncParams(const pxr::SdfPath& id,
                 // schema will cause correct default to be returned
                 val = sceneDelegate->GetLightParamValue(id, luxName);
                 if (!val.IsEmpty()) {
-                    ValueConverter::setAttribute(mLight, *it, val);
+                    ValueConverter::setAttribute(mLight, *it, val, &renderDelegate.colorManagement());
                     continue;
                 }
             }

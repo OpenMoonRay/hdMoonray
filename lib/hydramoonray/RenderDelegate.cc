@@ -19,6 +19,8 @@
 #include "Volume.h"
 
 #include <pxr/imaging/hd/extComputation.h>
+#include <pxr/imaging/hd/material.h>
+#include <pxr/imaging/hd/tokens.h>
 #include <pxr/base/gf/vec2f.h>
 #include <pxr/usdImaging/usdImaging/delegate.h>
 
@@ -78,6 +80,8 @@ namespace hdMoonray {
 
 using scene_rdl2::logging::Logger;
 
+static const pxr::TfToken renderingColorSpaceToken("renderingColorSpace");
+
 RenderDelegate::RenderDelegate(Renderer* renderer)
     : HdRenderDelegate(),
       mRenderer(renderer),
@@ -100,6 +104,7 @@ RenderDelegate::_constructor()
     mRenderSettings.addDescriptors(mRenderSettingDescriptors);
     mRenderer->addDescriptors(mRenderSettingDescriptors);
     _PopulateDefaultSettings(mRenderSettingDescriptors);
+    syncRenderingColorSpaceFromSettings();
     renderParam.This = this;
     initializeSceneContext();
 }
@@ -221,6 +226,11 @@ RenderDelegate::SetRenderSetting(pxr::TfToken const& key, pxr::VtValue const& va
 {
     pxr::HdRenderDelegate::SetRenderSetting(key, value);
 
+    if (key == renderingColorSpaceToken) {
+        syncRenderingColorSpaceFromSettings();
+        return;
+    }
+
     static const pxr::TfToken renderPauseToken("houdini:render_pause");
     if (key == renderPauseToken && value.IsHolding<bool>()) {
         if (value.UncheckedGet<bool>()) {
@@ -228,6 +238,52 @@ RenderDelegate::SetRenderSetting(pxr::TfToken const& key, pxr::VtValue const& va
         } else {
             Resume();
         }
+    }
+}
+
+static pxr::TfToken
+renderingColorSpaceTokenFromValue(const pxr::VtValue& value)
+{
+    if (value.IsHolding<pxr::TfToken>()) {
+        return value.UncheckedGet<pxr::TfToken>();
+    }
+    if (value.IsHolding<std::string>()) {
+        return pxr::TfToken(value.UncheckedGet<std::string>());
+    }
+    return pxr::TfToken();
+}
+
+void
+RenderDelegate::syncRenderingColorSpaceFromSettings()
+{
+    setRenderingColorSpace(
+            renderingColorSpaceTokenFromValue(
+            GetRenderSetting(renderingColorSpaceToken)));
+}
+
+void
+RenderDelegate::setRenderingColorSpace(const pxr::TfToken& token)
+{
+    if (mColorManagement.setRenderingColorSpace(token)) {
+        markColorDependentSprimsDirty();
+        markAllRprimsDirty(pxr::HdChangeTracker::DirtyMaterialId);
+    }
+}
+
+void
+RenderDelegate::markColorDependentSprimsDirty()
+{
+    if (!mRenderIndex) {
+        return;
+    }
+
+    for (auto* material : mMaterials) {
+        mRenderIndex->GetChangeTracker().MarkSprimDirty(
+            material->GetId(), pxr::HdMaterial::AllDirty);
+    }
+    for (auto* light : mLights) {
+        mRenderIndex->GetChangeTracker().MarkSprimDirty(
+            light->GetId(), pxr::HdLight::DirtyBits::AllDirty);
     }
 }
 
@@ -345,7 +401,10 @@ RenderDelegate::CreateSprim(pxr::TfToken const& typeId,
     if (type == pxr::HdPrimTypeTokens->camera) {
         return new Camera(sprimId);
     } else  if (type == pxr::HdPrimTypeTokens->material) {
-        return new Material(sprimId);
+        auto p = new Material(sprimId);
+        if (not sprimId.IsEmpty())
+            mMaterials.insert(p);
+        return p;
     } else  if (type == pxr::HdPrimTypeTokens->coordSys) {
         return new CoordSys(sprimId);
     } else if (type == pxr::HdPrimTypeTokens->extComputation) {
@@ -373,6 +432,7 @@ void
 RenderDelegate::DestroySprim(pxr::HdSprim *sPrim)
 {
     mLights.erase(sPrim);
+    mMaterials.erase(sPrim);
     delete sPrim;
 }
 
@@ -750,10 +810,15 @@ void RenderDelegate::setDisableLighting(bool v)
 {
     if (v != mDisableLighting) {
         mDisableLighting = v;
+        if (!mRenderIndex) {
+            return;
+        }
         // dirty all the lights, which will cause them to call add/removeLight and
         // that will turn the default light on/off
-        for (auto& p : mLights)
-            mRenderIndex->GetChangeTracker().MarkSprimDirty(p->GetId(), pxr::HdLight::DirtyBits::AllDirty);
+        for (auto& p : mLights) {
+            mRenderIndex->GetChangeTracker().MarkSprimDirty(
+                p->GetId(), pxr::HdLight::DirtyBits::AllDirty);
+        }
     }
 }
 

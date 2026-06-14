@@ -240,7 +240,8 @@ LightFilter::syncParams(const pxr::SdfPath& id,
                 ValueConverter::setDefault(mLightFilter, *it);
             } else {
                 val = expandRampInterpolationToken(val, id, attrName, sceneDelegate);
-                ValueConverter::setAttribute(mLightFilter, *it, val);
+                ValueConverter::setAttribute(mLightFilter, *it, val,
+                                             &renderDelegate.colorManagement());
             }
         }
     }

@@ -247,6 +247,80 @@ Failure/process contrast:
 
 - Non-beauty AOVs and `cameraDepth` transport.
 
+## OCIO / renderingColorSpace Working-Space Support
+
+The 2026 H20.5 OCIO/color-management audit found a concrete limitation:
+`UsdRender.Settings.renderingColorSpace` originally changed final `husk` EXR
+pixels without changing the generated RDLA scene values. That meant `husk`
+could apply output color behavior downstream as if MoonRay had rendered in the
+requested working space, while MoonRay received unchanged native scene values.
+
+The first implemented fix is intentionally scoped:
+
+- hdMoonray consumes `RenderSettings.renderingColorSpace` through
+  `RenderDelegate::SetRenderSetting()`. Houdini 20.5.584 headers do not expose
+  `HdRenderSettingsTokens->renderingColorSpace`, so the implementation uses the
+  schema token name via `TfToken("renderingColorSpace")`.
+- `hydramoonray` links directly against OpenColorIO.
+- Authored typed color values are converted before MoonRay/RDL assignment for
+  material parameters, light parameters, light-filter parameters, and generic
+  `ValueConverter` RGB/RGBA typed paths.
+- Non-color data remains raw: vectors, normals, positions, scalar masks,
+  roughness/metallic-style values, and other non-color attributes are not
+  transformed.
+
+Validation evidence:
+
+- Constant emissive color `(0.5, 0.25, 0.125)` now produces different RDLA
+  values when `renderingColorSpace` changes:
+  - no color space / Linear Rec.709: `Rgb(0.5, 0.25, 0.125)`
+  - ACEScg: `Rgb(0.39735195, 0.265866846, 0.146427065)`
+  - Linear Rec.2020: `Rgb(0.401436865, 0.265854001, 0.142148465)`
+- With `husk --ocio 0`, sampled EXR pixels expose the different raw renderer
+  working-space values.
+- With normal `husk` OCIO output, ACEScg and Linear Rec.2020 map back to the
+  same visual class as no color space / Linear Rec.709 for the constant-color
+  probe.
+- Direct `moonray -in generated.rdla` renders follow the changed RDLA values,
+  proving that the change is not metadata-only.
+
+Do not treat OIIO/EXR metadata, `husk` output behavior, or a Solaris Rendering
+Color Space menu value alone as proof that MoonRay rendered internally in that
+color space. The proof must include generated RDLA values and sampled pixels.
+
+Texture-source behavior is separate from renderer working space. MoonRay's
+native `UsdUVTexture.sourceColorSpace` and `ImageMap.gamma` controls still
+matter for texture decoding. The audit's clean TX texture probes showed:
+
+- `UsdUVTexture.sourceColorSpace = auto` and `sRGB` follow MoonRay's 8-bit
+  gamma behavior.
+- `UsdUVTexture.sourceColorSpace = raw` produces different values, as expected.
+- Direct PNG/JPG/BMP/non-tiled source textures are not clean production probes
+  for hdMoonray texture color behavior. Use TX textures for measurement.
+
+Texture destination gamut conversion into arbitrary renderer working spaces is
+not solved by this implementation. Local MoonRay `UsdUVTexture` metadata exposes
+source decode controls, not a destination working-space conversion control.
+
+MaterialX image color-space behavior remains `UNKNOWN` until a concrete
+MaterialX image network is exported, converted to RDLA, rendered, and measured.
+Do not infer MaterialX behavior from USD Preview Surface or native MoonRay map
+tests.
+
+Current recommended pipeline:
+
+- Use TX textures for render-ready texture inputs.
+- Treat basecolor/source texture color space explicitly through
+  `UsdUVTexture.sourceColorSpace`.
+- Use `RenderSettings.renderingColorSpace` for authored typed color constants
+  only within the proven scope above.
+- Do not claim complete texture, MaterialX image, AOV, or viewport/IPR
+  color-management support until those paths have separate value proof.
+
+No broader OCIO work should be attempted without separate proof for
+`UsdUVTexture` destination gamut conversion, MaterialX image color spaces, output
+EXR pixels and metadata, and viewport/IPR display behavior.
+
 ## What Future Work Should Avoid
 
 Avoid these patterns:
