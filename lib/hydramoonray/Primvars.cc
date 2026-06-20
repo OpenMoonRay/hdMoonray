@@ -65,6 +65,62 @@ namespace {
                          " requires a Vec3f array, got ", values.GetTypeName());
         }
     }
+
+    template <typename T>
+    bool extractSingleElementArray(const VtValue& value, VtValue* out)
+    {
+        if (!value.IsHolding<VtArray<T>>()) {
+            return false;
+        }
+
+        const VtArray<T>& array = value.UncheckedGet<VtArray<T>>();
+        if (array.size() != 1) {
+            return false;
+        }
+
+        *out = VtValue(array[0]);
+        return true;
+    }
+
+    bool unwrapScalarPrimvarOverride(const Attribute* attribute,
+                                     const VtValue& value,
+                                     VtValue* out)
+    {
+        switch (attribute->getType()) {
+        case TYPE_BOOL:
+            return extractSingleElementArray<bool>(value, out) ||
+                   extractSingleElementArray<int>(value, out) ||
+                   extractSingleElementArray<long>(value, out) ||
+                   extractSingleElementArray<long long>(value, out);
+        case TYPE_INT:
+            return extractSingleElementArray<int>(value, out) ||
+                   extractSingleElementArray<long>(value, out) ||
+                   extractSingleElementArray<long long>(value, out) ||
+                   extractSingleElementArray<TfToken>(value, out) ||
+                   extractSingleElementArray<std::string>(value, out);
+        case TYPE_LONG:
+            return extractSingleElementArray<long>(value, out) ||
+                   extractSingleElementArray<int>(value, out) ||
+                   extractSingleElementArray<long long>(value, out);
+        case TYPE_FLOAT:
+            return extractSingleElementArray<float>(value, out) ||
+                   extractSingleElementArray<double>(value, out) ||
+                   extractSingleElementArray<int>(value, out) ||
+                   extractSingleElementArray<long>(value, out) ||
+                   extractSingleElementArray<long long>(value, out);
+        case TYPE_DOUBLE:
+            return extractSingleElementArray<double>(value, out) ||
+                   extractSingleElementArray<float>(value, out) ||
+                   extractSingleElementArray<int>(value, out) ||
+                   extractSingleElementArray<long>(value, out) ||
+                   extractSingleElementArray<long long>(value, out);
+        case TYPE_STRING:
+            return extractSingleElementArray<std::string>(value, out) ||
+                   extractSingleElementArray<TfToken>(value, out);
+        default:
+            return false;
+        }
+    }
 }
 
 namespace hdMoonray {
@@ -217,7 +273,12 @@ GeometryMixin::primvarAttributeOverride(const std::string& name, const VtValue& 
         if (value.IsEmpty()) {
             ValueConverter::setDefault(mGeometry, attribute);
         } else {
-            ValueConverter::setAttribute(mGeometry, attribute, value);
+            VtValue convertedValue;
+            if (unwrapScalarPrimvarOverride(attribute, value, &convertedValue)) {
+                ValueConverter::setAttribute(mGeometry, attribute, convertedValue);
+            } else {
+                ValueConverter::setAttribute(mGeometry, attribute, value);
+            }
         }    
     } catch (const std::exception& e) {
         // name wasn't a valid RDL attribute

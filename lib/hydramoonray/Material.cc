@@ -24,6 +24,7 @@
 #include <scene_rdl2/scene/rdl2/VolumeShader.h>
 
 #include <scene_rdl2/render/logging/logging.h>
+#include <cmath>
 #include <iostream>
 
 using namespace scene_rdl2::rdl2;
@@ -40,6 +41,87 @@ using scene_rdl2::logging::Logger;
 
 const pxr::TfToken projectorToken("projector");
 const pxr::TfToken proj_camToken("proj_cam");
+
+namespace {
+
+bool
+isZeroNumericValue(const pxr::VtValue& value)
+{
+    if (value.IsHolding<float>()) {
+        return std::abs(value.UncheckedGet<float>()) <= 1.0e-8f;
+    }
+    if (value.IsHolding<double>()) {
+        return std::abs(value.UncheckedGet<double>()) <= 1.0e-8;
+    }
+    if (value.IsHolding<int>()) {
+        return value.UncheckedGet<int>() == 0;
+    }
+    return false;
+}
+
+bool
+hasInputConnection(const pxr::HdMaterialNetwork& network,
+                   const pxr::SdfPath& nodePath,
+                   const pxr::TfToken& inputName)
+{
+    for (const pxr::HdMaterialRelationship& rel : network.relationships) {
+        if (rel.outputId == nodePath && rel.outputName == inputName) {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool
+isTerminalNode(const pxr::HdMaterialNetwork& network, const pxr::SdfPath& nodePath)
+{
+    for (const pxr::HdMaterialRelationship& rel : network.relationships) {
+        if (rel.inputId == nodePath) {
+            return false;
+        }
+    }
+    return true;
+}
+
+bool
+isNoOpNormalDisplacementTerminal(const pxr::HdMaterialNetwork& network)
+{
+    static const pxr::TfToken normalDisplacementToken("NormalDisplacement");
+    static const pxr::TfToken heightToken("height");
+    static const pxr::TfToken heightMultiplierToken("height_multiplier");
+
+    const pxr::HdMaterialNode* terminalNode = nullptr;
+    for (const pxr::HdMaterialNode& node : network.nodes) {
+        if (!isTerminalNode(network, node.path)) {
+            continue;
+        }
+        if (terminalNode) {
+            return false;
+        }
+        terminalNode = &node;
+    }
+
+    if (!terminalNode || terminalNode->identifier != normalDisplacementToken) {
+        return false;
+    }
+
+    if (hasInputConnection(network, terminalNode->path, heightToken) ||
+        hasInputConnection(network, terminalNode->path, heightMultiplierToken)) {
+        return false;
+    }
+
+    const auto heightIt = terminalNode->parameters.find(heightToken);
+    const auto multiplierIt = terminalNode->parameters.find(heightMultiplierToken);
+    if (heightIt == terminalNode->parameters.end() ||
+        multiplierIt == terminalNode->parameters.end()) {
+        return false;
+    }
+
+    return isZeroNumericValue(heightIt->second) &&
+           isZeroNumericValue(multiplierIt->second);
+}
+
+}
 
 UNUSED
 void
@@ -240,6 +322,10 @@ Material::updateTerminal(pxr::TfToken terminalName,
     // dumpMaterialNetworkMap(networkmap);
 
     const pxr::HdMaterialNetwork& network = i->second;
+    if (terminalName == pxr::HdMaterialTerminalTokens->displacement &&
+        isNoOpNormalDisplacementTerminal(network)) {
+        return nullptr;
+    }
 
     // Get a mapping of nodes to their output channels.
     // When creating the nodes below, create one node
