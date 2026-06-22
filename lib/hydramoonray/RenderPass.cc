@@ -6,15 +6,108 @@
 #include "RenderDelegate.h"
 #include "Camera.h"
 
+#include <pxr/imaging/cameraUtil/framing.h>
 #include <pxr/imaging/hd/renderPassState.h>
 #include <pxr/usdImaging/usdImaging/delegate.h>
+#include <scene_rdl2/render/logging/logging.h>
 #include <scene_rdl2/scene/rdl2/Utils.h>
 
 #include <iostream>
 #include <chrono>
+#include <cstdlib>
+#include <sstream>
 
 //#define DEBUG_MSG
 
+namespace {
+
+bool
+cameraFramingDiagEnabled()
+{
+    static const bool enabled = std::getenv("HDMR_CAMERA_FRAMING_DIAG") != nullptr;
+    return enabled;
+}
+
+template <typename T>
+std::string
+diagString(const T& value)
+{
+    std::ostringstream out;
+    out << value;
+    return out.str();
+}
+
+std::string
+tokenListString(const pxr::TfTokenVector& tokens)
+{
+    std::ostringstream out;
+    out << "[";
+    for (size_t i = 0; i < tokens.size(); ++i) {
+        if (i) {
+            out << ", ";
+        }
+        out << tokens[i].GetString();
+    }
+    out << "]";
+    return out.str();
+}
+
+void
+logRenderPassFraming(const pxr::HdRenderPassStateSharedPtr& renderPassState,
+                     const pxr::TfTokenVector& renderTags,
+                     size_t aovBindingCount,
+                     const pxr::SdfPath& cameraId,
+                     int width,
+                     int height)
+{
+    if (!cameraFramingDiagEnabled()) {
+        return;
+    }
+
+#if PXR_VERSION >= 2102
+    const pxr::CameraUtilFraming& framing = renderPassState->GetFraming();
+    std::cerr << "[HDMR_CAMERA_FRAMING_DIAG] RenderPass._Execute"
+              << " viewport=" << diagString(renderPassState->GetViewport())
+              << " framingValid=" << (framing.IsValid() ? "1" : "0")
+              << " displayWindow=" << diagString(framing.displayWindow)
+              << " dataWindow=" << diagString(framing.dataWindow)
+              << " pixelAspectRatio=" << framing.pixelAspectRatio
+              << " computedWidth=" << width
+              << " computedHeight=" << height
+              << " computedAspect=" << (height ? double(width) / double(height) : 0.0)
+              << " cameraId=" << cameraId
+              << " renderTags=" << tokenListString(renderTags)
+              << " aovBindingCount=" << aovBindingCount
+              << std::endl;
+#else
+    std::cerr << "[HDMR_CAMERA_FRAMING_DIAG] RenderPass._Execute"
+              << " viewport=" << diagString(renderPassState->GetViewport())
+              << " framingValid=0"
+              << " computedWidth=" << width
+              << " computedHeight=" << height
+              << " computedAspect=" << (height ? double(width) / double(height) : 0.0)
+              << " cameraId=" << cameraId
+              << " renderTags=" << tokenListString(renderTags)
+              << " aovBindingCount=" << aovBindingCount
+              << std::endl;
+#endif
+}
+
+void
+logSceneVariableFraming(int width, int height, float frame)
+{
+    if (!cameraFramingDiagEnabled()) {
+        return;
+    }
+
+    std::cerr << "[HDMR_CAMERA_FRAMING_DIAG] RenderPass.SceneVariables"
+              << " image_width=" << width
+              << " image_height=" << height
+              << " frame=" << frame
+              << std::endl;
+}
+
+}
 
 namespace hdMoonray
 {
@@ -35,7 +128,14 @@ RenderPass::IsConverged() const
     if (mDeferIsConverged) {
         return true;
     } else {
-        mDeferIsConverged = renderDelegate.renderer().isFrameComplete();
+        const bool frameComplete = renderDelegate.renderer().isFrameComplete();
+        const bool terminalError = renderDelegate.renderer().hasTerminalError();
+        if (terminalError && !mTerminalErrorLogged) {
+            Logger::error("Renderer reached a terminal error state; unblocking Hydra without "
+                          "marking the frame as successfully completed.");
+            mTerminalErrorLogged = true;
+        }
+        mDeferIsConverged = frameComplete || terminalError;
         return false;
     }
 }
@@ -54,6 +154,8 @@ void
 RenderPass::_Execute(const pxr::HdRenderPassStateSharedPtr& renderPassState,
                      const pxr::TfTokenVector& renderTags)
 {
+    renderDelegate.noteRenderPassExecuted();
+
     // Update for any changes in render settings, may create a new renderer
     renderDelegate.getRendererApplySettings();
 
@@ -77,6 +179,13 @@ RenderPass::_Execute(const pxr::HdRenderPassStateSharedPtr& renderPassState,
     }
 
     const Camera* camera(dynamic_cast<const Camera*>(renderPassState->GetCamera()));
+    const pxr::HdRenderPassAovBindingVector& aovBindings = renderPassState->GetAovBindings();
+    logRenderPassFraming(renderPassState,
+                         renderTags,
+                         aovBindings.size(),
+                         camera ? camera->GetId() : pxr::SdfPath(),
+                         w,
+                         h);
     if (not camera) {
         Logger::error("RenderPassState without camera is unsupported");
         // It could the view+proj matricies below and update a fake Camera. But
@@ -122,13 +231,13 @@ RenderPass::_Execute(const pxr::HdRenderPassStateSharedPtr& renderPassState,
         wsv.set(sv.sImageWidth, w);
         wsv.set(sv.sImageHeight, h);
     }
+    logSceneVariableFraming(w, h, frame);
 
     // const pxr::GfMatrix4d& view = renderPassState->GetWorldToViewMatrix(); // same as camera->GetViewMatrix()
     // // This matrix contains info that is *not* in the Camera, to make the pixels square in the viewport:
     // const pxr::GfMatrix4d& proj = renderPassState->GetProjectionMatrix();
 
     // tell renderer about any new bindings
-    const pxr::HdRenderPassAovBindingVector& aovBindings = renderPassState->GetAovBindings();
     for (const pxr::HdRenderPassAovBinding& aovBinding : aovBindings) {
         RenderBuffer* buffer = reinterpret_cast<RenderBuffer*>(aovBinding.renderBuffer);
         buffer->bind(aovBinding, camera);      
@@ -136,6 +245,7 @@ RenderPass::_Execute(const pxr::HdRenderPassStateSharedPtr& renderPassState,
 
     if (renderDelegate.renderer().isUpdateActive()) {      
         mDeferIsConverged = false;
+        mTerminalErrorLogged = false;
     }
     renderDelegate.renderer().endUpdate();
 

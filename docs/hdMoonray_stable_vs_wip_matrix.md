@@ -38,8 +38,8 @@ Public PRs are useful anchors, but local submodule history is the source of trut
 | Render Settings LOP | Partial / WIP | `moonray_dcc_plugins` `8c995f8` through current local repair | `moonray_render_settings.py`, generated HDA, `moonray_render_settings_lop_audit.md`, validation script | Source-generated HDA, USD RenderSettings/Product foundation, default Beauty RenderVar for H20.5 disk output, and owned USD Render ROP lifecycle are useful. Non-beauty AOV integration and final viewport/IPR UX remain unsettled. | Good process evidence for source-of-truth HDA generation; not yet a stable renderer-settings pattern. Current default authors `RenderProduct` with `productName`, `productType = raster`, and `orderedVars` targeting the Beauty RenderVar because empty `orderedVars` failed in H20.5 production `husk`. Disabling `aov_beauty` is diagnostic only. |
 | Beauty buffer / USD Render ROP support | Partial / WIP | hdMoonray `2eb0808` plus current local `RenderBuffer.cc` repair | `RenderBuffer.cc`, `ArrasRenderer.cc`, `UsdRenderers.json` | Beauty path has production H20.5 `husk` EXR proof for direct camera/default color, custom LOP default, and generic Render Settings plus built-in RenderProduct/RenderVar. | Do not regress the narrow default-color fix: Houdini's default `HdAovTokens->color` binding must map to MoonRay beauty before interpreting `sourceName/sourceType`. |
 | AOV / native non-beauty investigation | Partial / WIP | `docs/hdMoonray_aov_audit.md` plus local Apple Silicon half-packing repair | `RenderBuffer.cc`, `ArrasRenderer.cc`, `PackTiles.cc`, `RenderOutputWriter.cc`, MoonRay transport source, audit doc | Explicit production H20.5 RenderVar tests now produce filled `alpha`, `depth`, `cameraDepth`, `Z`, `N`, `Ng`, `P`, `Wp`, and `St`; `weight` is constant nonzero in the simple fixture. | Still do not expose broad AOV UI from this alone. Product semantics, multi-AOV products, material/LPE/visibility/primvar/Cryptomatte families, and viewport/IPR UX need separate proof. |
-| OCIO / renderingColorSpace | Partial / WIP | 2026 H20.5 OCIO/color audit and working-space repair | `ColorManagement.cc`, `RenderDelegate.cc`, `ValueConverter.cc`, `Material.cc`, `Light.cc`, `LightFilter.cc`, MoonRay `UsdUVTexture`, `ImageMap`, scratch USD/RDLA/EXR probes | `RenderSettings.renderingColorSpace` is consumed for authored typed color values before MoonRay/RDL assignment. Constant-color RDLA values now differ for ACEScg and Linear Rec.2020. TX source-color behavior is separate and partially proven. | Do not claim complete texture destination gamut conversion, MaterialX image color management, AOV color management, or viewport/IPR match yet. Do not claim support from OIIO metadata or `husk` output alone. |
-| Unit policy / normalized lights / SSS scale | WIP / deferred | `8d1ded4` | `docs/units-and-scale-notes.md` | Documents that `metersPerUnit` is ignored, `nonrayscene_scale` behavior is unresolved, and SSS distances pass raw. | Do not fix during render settings or AOV work without a dedicated unit-policy pass. |
+| OCIO / ARRI renderingColorSpace and native texture source color | Partial / stronger WIP | 2026 H20.5 OCIO/color audit plus ARRI OCIO 2.3 support pass | `ColorManagement.cc`, `RenderDelegate.cc`, native `ImageMap`/`UsdUVTexture`, shared `BasicTexture`/`UdimTexture`, Houdini Render Settings LOP, ImageMap DS, OCIO docs | Houdini-facing hdMoonray links SideFX OCIO 2.3.0; MoonRay native texture runtime links bundled standard OCIO 2.3.0. ARRI config resolves `scene_linear`/`rendering` to `Linear ARRI Wide Gamut 4`. RDLA proves `ImageMap.source_color_space` and `UsdUVTexture.source_color_space` reach RDL; tiny `hd_render -translate-only` and `husk` validate runtime diagnostics and EXR write. | Viewport/IPR GUI proof, MaterialX image networks, AOV color behavior, display/view transforms, and full artistic look matching remain separate. |
+| Unit policy / scene scale bridge / normalized lights / SSS scale | Partial / active bridge | Current local scene-scale pass | `docs/units-and-scale-notes.md`, `SceneVariables.cc`, `RenderSettings.cc`, `hd_render.cc`, `hd_usd2rdl.cc`, generic Global `.ds` files | MoonRay `SceneVariables.scene_scale` default is now `1.0`; hdMoonRay bridges USD `UsdGeomGetStageMetersPerUnit(stage)` to `scene_scale`; explicit authored `moonray:sceneVariable:scene_scale` wins; raw radii, widths, lens radius, and material distances remain unscaled in RDLA. | Viewport/IPR scene-scale parity still needs manual validation. Do not add per-light radius scaling unless a focused fixture proves a radius/diameter or width/half-width mismatch. |
 
 OCIO / renderingColorSpace status notes:
 
@@ -48,11 +48,14 @@ OCIO / renderingColorSpace status notes:
   differed.
 - After the repair, constant-color tests produce different RDLA material values
   for ACEScg and Linear Rec.2020, and direct MoonRay renders follow those values.
-- TX tests proved `UsdUVTexture.sourceColorSpace = auto/sRGB` follows MoonRay
-  8-bit gamma behavior and `raw` differs.
-- Use TX textures, treat source texture color explicitly, and keep MaterialX
-  image color-space behavior unknown until measured. Texture destination gamut
-  conversion remains unimplemented.
+- Native texture-source color is now explicit for MoonRay maps:
+  `ImageMap.source_color_space = auto` uses OCIO file rules; `raw/data`
+  bypass conversion; explicit names are honored; `UsdUVTexture.sourceColorSpace`
+  remains `raw/sRGB/auto`; `UsdUVTexture.source_color_space` can override it.
+- Legacy gamma remains available for old scenes, but is bypassed when an OCIO
+  source transform is active.
+- MaterialX image color-space behavior, AOV color behavior, and viewport/IPR
+  color parity remain unknown until measured.
 
 ## What Is Safe To Use As A Pattern
 

@@ -25,6 +25,9 @@ public:
     const pxr::TfToken& renderingColorSpaceToken() const;
     const std::string& workingColorSpace() const;
     bool hasWorkingColorTransform() const;
+    std::string diagnosticSummary() const;
+    bool diagnosticNeedsWarning() const;
+    bool ocioEnvUnset() const;
 
     scene_rdl2::rdl2::Rgb toWorkingSpace(const scene_rdl2::rdl2::Rgb& color) const;
     scene_rdl2::rdl2::Rgba toWorkingSpace(const scene_rdl2::rdl2::Rgba& color) const;

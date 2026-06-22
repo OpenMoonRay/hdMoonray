@@ -9,6 +9,9 @@
 #include <pxr/pxr.h>
 #include <pxr/imaging/hd/renderDelegate.h>
 
+#include <memory>
+#include <string>
+
 namespace scene_rdl2 {namespace rdl2 {
 class Camera;
 class Geometry;
@@ -210,6 +213,7 @@ public:
     /// Create or update the renderer to match current settings. This is fast
     /// if no settings have changed. You must call this before renderer().
     Renderer& getRendererApplySettings();
+    void noteRenderPassExecuted() { mRenderPassHasExecuted = true; }
 
     // Fix for Pixar bug https://github.com/PixarAnimationStudios/USD/issues/801
     bool setRenderTags(pxr::HdRenderIndex* index, const pxr::TfTokenVector&);
@@ -324,10 +328,13 @@ private:
     void _constructor();
     void syncRenderingColorSpaceFromSettings();
     void markColorDependentSprimsDirty();
+    void applyLiveRenderSettingsIfReady();
+    void logColorManagementState(const char* reason, bool force = false);
 
-    Renderer* mRenderer = nullptr;
+    std::unique_ptr<Renderer> mRenderer;
     RenderSettings mRenderSettings;
     ColorManagement mColorManagement;
+    std::string mLastColorManagementDiagnostic;
     unsigned mPreviousRenderSettings = ~0u;
     pxr::HdRenderSettingDescriptorList mRenderSettingDescriptors;
 
@@ -371,6 +378,7 @@ private:
     std::string mRdlOutput;
     pxr::TfTokenVector mRenderTags;
     pxr::HdRenderIndex *mRenderIndex = nullptr; // stored by CreateRenderPass
+    bool mRenderPassHasExecuted = false;
 
     std::set<pxr::HdSprim*> mLights;
     std::set<pxr::HdSprim*> mMaterials;

@@ -20,6 +20,7 @@
 
 #include <pxr/imaging/hd/extComputation.h>
 #include <pxr/imaging/hd/material.h>
+#include <pxr/imaging/hd/renderSettings.h>
 #include <pxr/imaging/hd/tokens.h>
 #include <pxr/base/gf/vec2f.h>
 #include <pxr/usdImaging/usdImaging/delegate.h>
@@ -41,7 +42,9 @@
 #include <scene_rdl2/render/logging/logging.h>
 
 #include <iostream>
+#include <algorithm>
 #include <cstdlib>
+#include <sstream>
 
 //#define DEBUG_MSG
 
@@ -75,12 +78,127 @@ namespace {
             hash += repeatableStringHash(obj->getName());
         return hash;
     }
+
+    const pxr::TfToken usdRenderSettingsToken("RenderSettings", pxr::TfToken::Immortal);
+    const pxr::TfToken hdRenderSettingsToken("renderSettings", pxr::TfToken::Immortal);
+    bool primTypeDiagEnabled()
+    {
+        static const bool enabled = std::getenv("HDMR_PRIMTYPE_DIAG") != nullptr;
+        return enabled;
+    }
+
+    bool primDiagContainsToken(const pxr::TfTokenVector& types, const pxr::TfToken& token)
+    {
+        return std::find(types.begin(), types.end(), token) != types.end();
+    }
+
+    std::string tokenListString(const pxr::TfTokenVector& tokens)
+    {
+        std::ostringstream out;
+        out << "[";
+        for (size_t i = 0; i < tokens.size(); ++i) {
+            if (i) {
+                out << ", ";
+            }
+            out << tokens[i].GetString();
+        }
+        out << "]";
+        return out.str();
+    }
+
+    std::string renderSchemaFlags(const pxr::TfToken& token)
+    {
+        return std::string("isUsdRenderSettings=") + (token == usdRenderSettingsToken ? "1" : "0") +
+               " isHdRenderSettings=" + (token == hdRenderSettingsToken ? "1" : "0");
+    }
+
+    void logSupportedTypes(const char* functionName, const pxr::TfTokenVector& types)
+    {
+        if (!primTypeDiagEnabled()) {
+            return;
+        }
+        std::cerr << "[HDMR_PRIMTYPE_DIAG] "
+                  << functionName
+                  << " supported=" << tokenListString(types)
+                  << std::endl;
+    }
+
+    void logPrimTypeQuery(const char* functionName,
+                          const pxr::TfToken& input,
+                          const pxr::TfToken& canonical,
+                          bool supported,
+                          const pxr::SdfPath& path)
+    {
+        if (!primTypeDiagEnabled()) {
+            return;
+        }
+        std::cerr << "[HDMR_PRIMTYPE_DIAG] "
+                  << functionName
+                  << " path=" << path
+                  << " input=" << input
+                  << " canonical=" << canonical
+                  << " supported=" << (supported ? "1" : "0")
+                  << " inputFlags={" << renderSchemaFlags(input) << "}"
+                  << " canonicalFlags={" << renderSchemaFlags(canonical) << "}"
+                  << std::endl;
+    }
+
+    void logPrimDestroy(const char* functionName, const pxr::SdfPath& path)
+    {
+        if (!primTypeDiagEnabled()) {
+            return;
+        }
+        std::cerr << "[HDMR_PRIMTYPE_DIAG] "
+                  << functionName
+                  << " path=" << path
+                  << std::endl;
+    }
 }
 namespace hdMoonray {
 
 using scene_rdl2::logging::Logger;
 
 static const pxr::TfToken renderingColorSpaceToken("renderingColorSpace");
+static const std::string moonraySceneVariablePrefix("moonray:sceneVariable:");
+static const std::string houdiniSceneVariablePrefix("sceneVariable_");
+
+static bool
+isMoonRaySceneVariableSetting(const pxr::TfToken& key)
+{
+    const std::string& name = key.GetString();
+    return name.rfind(moonraySceneVariablePrefix, 0) == 0 ||
+           name.rfind(houdiniSceneVariablePrefix, 0) == 0;
+}
+
+class RenderSettingsPrim final : public pxr::HdRenderSettings
+{
+public:
+    explicit RenderSettingsPrim(const pxr::SdfPath& id) : pxr::HdRenderSettings(id) {}
+
+private:
+    void _Sync(pxr::HdSceneDelegate* sceneDelegate,
+               pxr::HdRenderParam* renderParam,
+               const pxr::HdDirtyBits* dirtyBits) override
+    {
+        pxr::HdRenderSettings::_Sync(sceneDelegate, renderParam, dirtyBits);
+
+        RenderDelegate& renderDelegate = RenderDelegate::get(renderParam);
+
+        if ((*dirtyBits) & pxr::HdRenderSettings::DirtyRenderingColorSpace) {
+            const pxr::TfToken& renderingColorSpace = GetRenderingColorSpace();
+            if (!renderingColorSpace.IsEmpty()) {
+                renderDelegate.SetRenderSetting(
+                        renderingColorSpaceToken, pxr::VtValue(renderingColorSpace));
+            }
+        }
+
+        if ((*dirtyBits) & pxr::HdRenderSettings::DirtyNamespacedSettings) {
+            for (const auto& item : GetNamespacedSettings()) {
+                renderDelegate.SetRenderSetting(pxr::TfToken(item.first), item.second);
+            }
+        }
+    }
+};
 
 RenderDelegate::RenderDelegate(Renderer* renderer)
     : HdRenderDelegate(),
@@ -105,13 +223,21 @@ RenderDelegate::_constructor()
     mRenderer->addDescriptors(mRenderSettingDescriptors);
     _PopulateDefaultSettings(mRenderSettingDescriptors);
     syncRenderingColorSpaceFromSettings();
+    logColorManagementState("delegate construction", true);
     renderParam.This = this;
     initializeSceneContext();
 }
 
 RenderDelegate::~RenderDelegate()
 {
-    delete mRenderer;
+    // These sets only track non-owned Hydra prim pointers for later dirtying.
+    // Command-line conversion tools can tear down the delegate after the render
+    // index has already released prims; clear the tracking state before the
+    // renderer destroys the MoonRay scene context.
+    mLights.clear();
+    mMaterials.clear();
+    mProcedurals.clear();
+    mVolumes.clear();
 }
 
 void
@@ -163,6 +289,7 @@ RenderDelegate::GetSupportedRprimTypes() const
         pxr::HdPrimTypeTokens->volume,
         proceduralToken
     };
+    logSupportedTypes("GetSupportedRprimTypes", SUPPORTED_RPRIM_TYPES);
     return SUPPORTED_RPRIM_TYPES;
 }
 
@@ -193,6 +320,7 @@ RenderDelegate::GetSupportedSprimTypes() const
         return true;
     }();
     (void)aliasesAdded;
+    logSupportedTypes("GetSupportedSprimTypes", SUPPORTED_SPRIM_TYPES);
     return SUPPORTED_SPRIM_TYPES;
 }
 
@@ -201,6 +329,7 @@ RenderDelegate::GetSupportedBprimTypes() const
 {
     static pxr::TfTokenVector SUPPORTED_BPRIM_TYPES = {
         pxr::HdPrimTypeTokens->renderBuffer,
+        pxr::HdPrimTypeTokens->renderSettings,
         openvdbAssetToken,
     };
     static const bool aliasesAdded = []() {
@@ -210,6 +339,7 @@ RenderDelegate::GetSupportedBprimTypes() const
         return true;
     }();
     (void)aliasesAdded;
+    logSupportedTypes("GetSupportedBprimTypes", SUPPORTED_BPRIM_TYPES);
     return SUPPORTED_BPRIM_TYPES;
 }
 
@@ -239,6 +369,10 @@ RenderDelegate::SetRenderSetting(pxr::TfToken const& key, pxr::VtValue const& va
             Resume();
         }
     }
+
+    if (isMoonRaySceneVariableSetting(key)) {
+        applyLiveRenderSettingsIfReady();
+    }
 }
 
 static pxr::TfToken
@@ -265,9 +399,39 @@ void
 RenderDelegate::setRenderingColorSpace(const pxr::TfToken& token)
 {
     if (mColorManagement.setRenderingColorSpace(token)) {
+        logColorManagementState("renderingColorSpace changed", true);
         markColorDependentSprimsDirty();
         markAllRprimsDirty(pxr::HdChangeTracker::DirtyMaterialId);
     }
+}
+
+void
+RenderDelegate::logColorManagementState(const char* reason, bool force)
+{
+    const std::string diagnostic = mColorManagement.diagnosticSummary();
+    if (!force && diagnostic == mLastColorManagementDiagnostic) {
+        return;
+    }
+    mLastColorManagementDiagnostic = diagnostic;
+
+    if (mColorManagement.ocioEnvUnset()) {
+        const std::string message =
+            "hdMoonray: OCIO is unset in this render process; color conversion is disabled. "
+            "Launch through the Houdini package environment or source setupHoudini.sh "
+            "before standalone husk/hd_usd2rdl. Runtime state: " + diagnostic;
+        Logger::warn(message);
+        std::cerr << message << std::endl;
+        return;
+    }
+
+    std::ostringstream message;
+    message << "hdMoonray OCIO runtime state (" << reason << "): " << diagnostic;
+    if (mColorManagement.diagnosticNeedsWarning()) {
+        Logger::warn(message.str());
+    } else {
+        Logger::info(message.str());
+    }
+    std::cerr << message.str() << std::endl;
 }
 
 void
@@ -287,6 +451,23 @@ RenderDelegate::markColorDependentSprimsDirty()
     }
 }
 
+void
+RenderDelegate::applyLiveRenderSettingsIfReady()
+{
+    if (!mRenderPassHasExecuted) {
+        return;
+    }
+
+    if (GetRenderSettingsVersion() == mPreviousRenderSettings) {
+        return;
+    }
+
+    getRendererApplySettings();
+    if (mRenderer->isUpdateActive()) {
+        mRenderer->endUpdate();
+    }
+}
+
 // Result of this is passed to RenderBuffer::Allocate
 pxr::HdAovDescriptor
 RenderDelegate::GetDefaultAovDescriptor(pxr::TfToken const& name) const
@@ -298,8 +479,18 @@ pxr::VtDictionary
 RenderDelegate::GetRenderStats() const
 {
     pxr::VtDictionary stats;
-    if (mRenderer && !mRenderer->isFrameComplete()) {
-        auto progress = mRenderer->getProgress();
+    if (mRenderer) {
+        float progress = 0.0f;
+        if (mRenderer->hasTerminalError()) {
+            progress = 0.0f;
+        } else if (mRenderer->isFrameComplete()) {
+            progress = 1.0f;
+        } else {
+            progress = mRenderer->getProgress();
+        }
+        if (progress < 0.0f) {
+            progress = 0.0f;
+        }
         // This is the only value usdview reads, you have to turn on "View/Heads-Up Display/GPU Stats" to see it
         stats[pxr::HdPerfTokens->numCompletedSamples] = int(progress * 100000);
         // Values used by Houdini:
@@ -310,7 +501,11 @@ RenderDelegate::GetRenderStats() const
         stats[totalClockTime] = mRenderer->getElapsedSeconds();
         static const pxr::TfToken rpAnn("renderProgressAnnotation");
         const std::string& status = mRenderer->getStatusString();
-        if (!status.empty()) {
+        if (mRenderer->hasTerminalError()) {
+            stats[rpAnn] = status.empty() ? std::string("Render Error") : status;
+        } else if (mRenderer->isFrameComplete()) {
+            stats[rpAnn] = status.empty() ? std::string("Complete") : status;
+        } else if (!status.empty()) {
             stats[rpAnn] = status;
         }
     }
@@ -362,6 +557,11 @@ pxr::HdRprim*
 RenderDelegate::CreateRprim(pxr::TfToken const& typeId,
                             pxr::SdfPath const& rprimId)
 {
+    logPrimTypeQuery("CreateRprim",
+                     typeId,
+                     typeId,
+                     primDiagContainsToken(GetSupportedRprimTypes(), typeId),
+                     rprimId);
     if (typeId == pxr::HdPrimTypeTokens->mesh) {
         return new Mesh(rprimId);
     } else if (typeId == pxr::HdPrimTypeTokens->basisCurves) {
@@ -387,6 +587,7 @@ RenderDelegate::CreateRprim(pxr::TfToken const& typeId,
 void
 RenderDelegate::DestroyRprim(pxr::HdRprim *rPrim)
 {
+    logPrimDestroy("DestroyRprim", rPrim ? rPrim->GetId() : pxr::SdfPath());
     mProcedurals.erase(rPrim);
     mVolumes.erase(rPrim);
 
@@ -398,6 +599,12 @@ RenderDelegate::CreateSprim(pxr::TfToken const& typeId,
                             pxr::SdfPath const& sprimId)
 {
     const pxr::TfToken type = canonicalSprimType(typeId);
+    logPrimTypeQuery("CreateSprim",
+                     typeId,
+                     type,
+                     primDiagContainsToken(GetSupportedSprimTypes(), typeId) ||
+                     primDiagContainsToken(GetSupportedSprimTypes(), type),
+                     sprimId);
     if (type == pxr::HdPrimTypeTokens->camera) {
         return new Camera(sprimId);
     } else  if (type == pxr::HdPrimTypeTokens->material) {
@@ -431,6 +638,7 @@ RenderDelegate::CreateFallbackSprim(pxr::TfToken const& typeId)
 void
 RenderDelegate::DestroySprim(pxr::HdSprim *sPrim)
 {
+    logPrimDestroy("DestroySprim", sPrim ? sPrim->GetId() : pxr::SdfPath());
     mLights.erase(sPrim);
     mMaterials.erase(sPrim);
     delete sPrim;
@@ -441,8 +649,16 @@ RenderDelegate::CreateBprim(pxr::TfToken const& typeId,
                             pxr::SdfPath const& bprimId)
 {
     const pxr::TfToken type = canonicalBprimType(typeId);
+    logPrimTypeQuery("CreateBprim",
+                     typeId,
+                     type,
+                     primDiagContainsToken(GetSupportedBprimTypes(), typeId) ||
+                     primDiagContainsToken(GetSupportedBprimTypes(), type),
+                     bprimId);
     if (type == pxr::HdPrimTypeTokens->renderBuffer) {
         return new RenderBuffer(bprimId);
+    } else if (type == pxr::HdPrimTypeTokens->renderSettings) {
+        return new RenderSettingsPrim(bprimId);
     } else if (type == openvdbAssetToken) {
         return new OpenVdbAsset(bprimId);
     } else {
@@ -461,6 +677,7 @@ RenderDelegate::CreateFallbackBprim(pxr::TfToken const& typeId)
 void
 RenderDelegate::DestroyBprim(pxr::HdBprim *bPrim)
 {
+    logPrimDestroy("DestroyBprim", bPrim ? bPrim->GetId() : pxr::SdfPath());
     delete bPrim;
 }
 
@@ -483,6 +700,7 @@ RenderDelegate::getRendererApplySettings()
         mRenderSettings.apply(); // cannot be called before renderer exists
         mRenderer->applySettings(mRenderSettings);
         mRenderer->setIsHoudini(isHoudini());
+        logColorManagementState("render settings applied");
     }
     return *mRenderer;
 }

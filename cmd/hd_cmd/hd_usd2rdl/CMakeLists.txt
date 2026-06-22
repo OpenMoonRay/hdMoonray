@@ -47,6 +47,15 @@ target_link_libraries(${target}
         ${MKL}
 )
 
+if (APPLE AND Python_ROOT_DIR)
+    target_include_directories(${target} SYSTEM PRIVATE
+        "${Python_ROOT_DIR}/include/python3.11")
+    set_property(TARGET ${target} APPEND PROPERTY
+        BUILD_RPATH "${Python_ROOT_DIR}")
+    set_property(TARGET ${target} APPEND PROPERTY
+        INSTALL_RPATH "${Python_ROOT_DIR}")
+endif()
+
 # Set standard compile/link options
 HdMoonray_cxx_compile_definitions(${target})
 HdMoonray_cxx_compile_features(${target})

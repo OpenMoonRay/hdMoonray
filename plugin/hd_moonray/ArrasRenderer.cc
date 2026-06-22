@@ -11,6 +11,7 @@
 #include <mcrt_messages/CreditUpdate.h>
 #include <mcrt_messages/RenderMessages.h>
 
+#include <cstdlib>
 #include <iostream>
 
 namespace hdMoonray {
@@ -35,6 +36,26 @@ namesMatch(const std::string& requested, const std::string& leaf, const std::str
     return available == requested ||
            available == leaf ||
            requested == "/_outputs/" + available;
+}
+
+bool
+arrasLifecycleDiagEnabled()
+{
+    static const bool enabled = std::getenv("HDMR_ARRAS_LIFECYCLE_DIAG") != nullptr;
+    return enabled;
+}
+
+const char*
+frameStatusName(mcrt::BaseFrame::Status status)
+{
+    switch (status) {
+    case mcrt::BaseFrame::STARTED: return "STARTED";
+    case mcrt::BaseFrame::RENDERING: return "RENDERING";
+    case mcrt::BaseFrame::FINISHED: return "FINISHED";
+    case mcrt::BaseFrame::CANCELLED: return "CANCELLED";
+    case mcrt::BaseFrame::ERROR: return "ERROR";
+    }
+    return "UNKNOWN";
 }
 
 }
@@ -102,7 +123,9 @@ ArrasRenderer::restartRenderer()
 }
 
 ArrasRenderer::~ArrasRenderer()
-{ 
+{
+    shutdownArrasSession();
+
     // ensure no more messages are processed
     // (MOONRAY-5403)
     {
@@ -110,6 +133,33 @@ ArrasRenderer::~ArrasRenderer()
         mFbReceiver.reset();
     }
     delete mSceneContext;
+}
+
+void
+ArrasRenderer::shutdownArrasSession()
+{
+    if (!mSDK) {
+        return;
+    }
+
+    mShuttingDown = true;
+    try {
+        if (mSDK->isConnected()) {
+            mSDK->shutdownSession();
+            if (!mSDK->waitForDisconnect(5)) {
+                mSDK->disconnect();
+            }
+        }
+    } catch (const std::exception& e) {
+        Logger::warn("Arras session shutdown failed: ", e.what());
+        try {
+            mSDK->disconnect();
+        } catch (const std::exception& disconnectError) {
+            Logger::warn("Arras disconnect after failed shutdown also failed: ",
+                         disconnectError.what());
+        }
+    }
+    mConnected = false;
 }
 
 bool
@@ -168,6 +218,8 @@ ArrasRenderer::connect(bool resetFailureCount)
     mProgress = -1;
     mFirstMessageSent = false;
     mUpdateActive = true; // make sure endUpdate() sends a message
+    mRenderTerminated = false;
+    mShuttingDown = false;
     mConnected = true;
     hdmLogArras("endConnect");
     Logger::info("Moonray delegate created an Arras session with ID ",sessionId);
@@ -212,14 +264,48 @@ ArrasRenderer::messageHandler(const arras4::api::Message& msg)
         // we don't want to incorrectly think that this completes the most recent update)
         // Frames from older updates will have a frame id (aka sync id) less than the
         // frame id sent with the latest message.
-        bool fromLatestUpdate = mFbReceiver->getFrameId() >= mLatestUpdateFrameId;
+        const uint32_t messageFrameId = frameMsg->mHeader.mFrameId;
+        const uint32_t receiverFrameId = mFbReceiver->getFrameId();
+        const bool messageHasImage = frameMsg->getProgress() >= 0.0f;
+        bool fromLatestUpdate =
+            messageFrameId >= mLatestUpdateFrameId ||
+            receiverFrameId >= mLatestUpdateFrameId;
 
-        // does this message complete a frame?
-        bool completesFrame = mFbReceiver->getStatus() == mcrt::BaseFrame::FINISHED;
+        // A final ProgressiveFrame can be a status-only message with no image
+        // buffers. ClientReceiverFb starts with FINISHED as its default status
+        // and intentionally updates status only when image data is present, so
+        // use receiver FINISHED only for image-carrying frames.
+        const mcrt::BaseFrame::Status messageStatus = frameMsg->getStatus();
+        const mcrt::BaseFrame::Status receiverStatus = mFbReceiver->getStatus();
+        bool completesFrame =
+            messageStatus == mcrt::BaseFrame::FINISHED ||
+            (messageHasImage && receiverStatus == mcrt::BaseFrame::FINISHED);
 
-        // latest update is completely rendered if the message completes the frame and is
-        // a result of the latest update
-        mFrameComplete = completesFrame && fromLatestUpdate;
+        // A new update resets mFrameComplete in endUpdate(). Once the latest
+        // update completes, do not let a late non-final frame from the same
+        // update move the render pass back to non-converged.
+        if (completesFrame && fromLatestUpdate) {
+            mFrameComplete = true;
+            if (mFbReceiver->getProgress() >= 0.0f) {
+                mProgress = 1.0f;
+            }
+        }
+
+        if (arrasLifecycleDiagEnabled()) {
+            std::cerr << "[HDMR_ARRAS_LIFECYCLE_DIAG] ProgressiveFrame"
+                      << " messageFrameId=" << messageFrameId
+                      << " receiverFrameId=" << receiverFrameId
+                      << " latestUpdateFrameId=" << mLatestUpdateFrameId
+                      << " messageStatus=" << frameStatusName(messageStatus)
+                      << " receiverStatus=" << frameStatusName(receiverStatus)
+                      << " messageProgress=" << frameMsg->getProgress()
+                      << " receiverProgress=" << mProgress
+                      << " messageHasImage=" << (messageHasImage ? "1" : "0")
+                      << " fromLatestUpdate=" << (fromLatestUpdate ? "1" : "0")
+                      << " completesFrame=" << (completesFrame ? "1" : "0")
+                      << " frameComplete=" << (mFrameComplete ? "1" : "0")
+                      << std::endl;
+        }
 
         updateStatusString(mFbReceiver->getBackendStat(), mFbReceiver->getRenderPrepProgress());
 
@@ -289,6 +375,15 @@ ArrasRenderer::resume()
 void
 ArrasRenderer::exceptionHandler(const std::exception& e)
 {
+    const std::string what = e.what();
+    if (mShuttingDown) {
+        if (what.find("Bad file descriptor") != std::string::npos ||
+            what.find("socket was disconnected") != std::string::npos) {
+            return;
+        }
+    }
+    mRenderTerminated = true;
+    mStatusString = "Render Error: " + what;
     Logger::error(e.what());
 }
 
@@ -304,10 +399,15 @@ ArrasRenderer::statusHandler(const std::string& msg)
             std::string status = execStatus.asString();
             if (status == "stopped" || status == "stopping") {
                 Json::Value stopReason = root.get("execStoppedReason", Json::Value());
-                Logger::error("Arras session stopped, ",
-                              (stopReason.isString() ? stopReason.asString() : msg));
+                if (!mShuttingDown) {
+                    const std::string reason = stopReason.isString() ? stopReason.asString() : msg;
+                    Logger::error("Arras session stopped, ", reason);
+                    mRenderTerminated = true;
+                    mStatusString = "Render Error: " + reason;
+                } else {
+                    mStatusString = "Disconnected";
+                }
                 mConnected = false;
-                mStatusString = "Disconnected";
                 return;
             }
         }
@@ -348,7 +448,9 @@ ArrasRenderer::resolve(scene_rdl2::rdl2::RenderOutput* ro, PixelData& pd)
     // see if no change since last time
     const unsigned activity = mFbReceiver->getFbActivityCounter();
     const std::string roName = isBeauty(ro) ? std::string("beauty") : ro->getName();
+    if (activity == 0) return false;
     if (activity == pd.filmActivity) return false;
+    if (mFbReceiver->getWidth() == 0 || mFbReceiver->getHeight() == 0) return false;
 
     if (isBeauty(ro)) {
         mFbReceiver->getBeautyMTSafe(pd.vec, pd.mWidth, pd.mHeight);
@@ -471,6 +573,7 @@ ArrasRenderer::endUpdate()
         }
         mFirstMessageSent = true; // we've now sent the first message
         mFrameComplete = false;   // we don't have a complete render of the last update...
+        mRenderTerminated = false;
 
         mUpdateActive = false;
         hdmLogArras("endSendUpdate");

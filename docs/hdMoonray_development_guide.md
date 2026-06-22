@@ -289,19 +289,22 @@ Do not treat OIIO/EXR metadata, `husk` output behavior, or a Solaris Rendering
 Color Space menu value alone as proof that MoonRay rendered internally in that
 color space. The proof must include generated RDLA values and sampled pixels.
 
-Texture-source behavior is separate from renderer working space. MoonRay's
-native `UsdUVTexture.sourceColorSpace` and `ImageMap.gamma` controls still
-matter for texture decoding. The audit's clean TX texture probes showed:
+Texture-source behavior is separate from renderer working space and now has a
+native MoonRay OCIO path:
 
-- `UsdUVTexture.sourceColorSpace = auto` and `sRGB` follow MoonRay's 8-bit
-  gamma behavior.
-- `UsdUVTexture.sourceColorSpace = raw` produces different values, as expected.
-- Direct PNG/JPG/BMP/non-tiled source textures are not clean production probes
-  for hdMoonray texture color behavior. Use TX textures for measurement.
+- `ImageMap.source_color_space = auto` uses OCIO file rules from the active
+  config.
+- `ImageMap.source_color_space = raw/data` bypasses source conversion.
+- explicit source names such as `ARRI LogC4`, `Linear ARRI Wide Gamut 4`, and
+  `Gamma 2.4 Rec.709 - Texture` are honored when present in the config.
+- `UsdUVTexture.sourceColorSpace = raw/sRGB/auto` is preserved; the optional
+  `UsdUVTexture.source_color_space` override can force `auto`, `raw`, `data`,
+  or an explicit OCIO color space.
+- legacy gamma remains available for old scenes, but is bypassed when an OCIO
+  source transform is active.
 
-Texture destination gamut conversion into arbitrary renderer working spaces is
-not solved by this implementation. Local MoonRay `UsdUVTexture` metadata exposes
-source decode controls, not a destination working-space conversion control.
+Native normal/utility texture paths pass `raw`. Native color projection and
+triplanar paths use `auto`.
 
 MaterialX image color-space behavior remains `UNKNOWN` until a concrete
 MaterialX image network is exported, converted to RDLA, rendered, and measured.
@@ -312,9 +315,10 @@ Current recommended pipeline:
 
 - Use TX textures for render-ready texture inputs.
 - Treat basecolor/source texture color space explicitly through
-  `UsdUVTexture.sourceColorSpace`.
+  `ImageMap.source_color_space`, `UsdUVTexture.sourceColorSpace`, or
+  `UsdUVTexture.source_color_space`.
 - Use `RenderSettings.renderingColorSpace` for authored typed color constants
-  only within the proven scope above.
+  and renderer working-space selection.
 - Do not claim complete texture, MaterialX image, AOV, or viewport/IPR
   color-management support until those paths have separate value proof.
 

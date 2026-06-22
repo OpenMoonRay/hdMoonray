@@ -23,6 +23,7 @@ const char * const RenderOptions::sInputSceneFile = "scene.usd";
 const char * const RenderOptions::sOutputExrFile = "scene.exr";
 
 const char * const RenderOptions::sCamera = "";
+const char * const RenderOptions::sRenderSettingsPath = "";
 
 const char * const RenderOptions::sSamplingCamera = "";
 
@@ -51,8 +52,10 @@ RenderOptions::RenderOptions(int argc, char *argv[]):
     mInputSceneFile(sInputSceneFile),
     mOutputExrFile(sOutputExrFile),
     mCamera(sCamera),
+    mRenderSettingsPath(sRenderSettingsPath),
     mWidth(sWidth),
     mHeight(sHeight),
+    mSizeSpecified(false),
     mRes(sRes),
     mRefineLevel(sRefineLevel),
     mTimeType(sTimeType),
@@ -95,6 +98,11 @@ RenderOptions::RenderOptions(int argc, char *argv[]):
     validFlags.push_back("-camera");
     if (args.getFlagValues("-camera", 1, values) >= 0) {
         mCamera = values[0];
+    }
+
+    validFlags.push_back("-settings");
+    if (args.getFlagValues("-settings", 1, values) >= 0) {
+        mRenderSettingsPath = values[0];
     }
 
     validFlags.push_back("-delta_in");
@@ -182,6 +190,7 @@ RenderOptions::RenderOptions(int argc, char *argv[]):
     if (args.getFlagValues("-size", 2, values) >= 0) {
         mWidth = atoi(values[0].c_str());
         mHeight = atoi(values[1].c_str());
+        mSizeSpecified = true;
     }
 
     validFlags.push_back("-trace");
@@ -233,8 +242,14 @@ RenderOptions::usage(const char *argv0) const
                        "    Name or aov (color, depth, normal, etc...)\n"
                        "\n"
                        "-camera <CAMERA_NAME>\n"
-                       "    Name of the rendering camera.  If not specified, a default\n"
-                       "    camera is created that frames the scene geometry.\n"
+                       "    Name or USD path of the rendering camera. If not specified,\n"
+                       "    the selected RenderSettings camera is used when available;\n"
+                       "    otherwise a default camera frames the scene geometry.\n"
+                       "\n"
+                       "-settings <RENDER_SETTINGS_PATH>\n"
+                       "    USD RenderSettings prim to use for camera and resolution defaults.\n"
+                       "    If not specified, /Render/rendersettings or the first RenderSettings\n"
+                       "    prim on the stage is used when available.\n"
                        "\n"
                        "-sampling_camera <CAMERA_NAME>\n"
                        "     Use this camera's shutter:open and shutter:close to\n"
@@ -302,4 +317,3 @@ RenderOptions::usage(const char *argv0) const
 }
 
 } // namespace hd_render
-

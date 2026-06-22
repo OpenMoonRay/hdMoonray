@@ -65,6 +65,13 @@ set_property(TARGET ${component}
         Volume.h
 )
 
+if (HDMOONRAY_HOUDINI_OCIO_INCLUDE_DIR)
+    target_include_directories(${component}
+        BEFORE PRIVATE
+            ${HDMOONRAY_HOUDINI_OCIO_INCLUDE_DIR}
+    )
+endif()
+
 target_include_directories(${component}
     PUBLIC
         $<BUILD_INTERFACE:${buildIncludeDir}>
@@ -104,7 +111,7 @@ target_link_libraries(${component}
         TBB::tbb
         hd   # pxr imaging
         usdImaging
-        OpenColorIO::OpenColorIO
+        ${HDMOONRAY_HOUDINI_OCIO_TARGET}
         Python::Module
         ${PlatformSpecificLibs}
 )

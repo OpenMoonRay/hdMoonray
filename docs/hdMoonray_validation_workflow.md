@@ -376,18 +376,26 @@ Known AOV repair evidence:
 
 ## Unit / Scale Validation
 
-Unit behavior is deferred. Do not mix it into unrelated feature work.
+Unit behavior now has a narrow global bridge. Do not mix further unit work into
+unrelated feature work.
 
 Known facts from `units-and-scale-notes.md`:
 
 - Houdini Solaris defaults to `metersPerUnit = 1.0`.
 - Houdini `unitlength` changes authored USD `metersPerUnit`.
-- hdMoonRay currently does not read/apply `metersPerUnit`.
-- `metersPerUnit` changes alone produced identical RDL values and EXR stats.
-- SSS/material distance attrs are passed raw.
+- hdMoonRay reads/applies `metersPerUnit` only through
+  `SceneVariables.scene_scale`.
+- MoonRay `SceneVariables.scene_scale` default is `1.0`.
+- `metersPerUnit = 1.0` may be default-elided in RDLA; `metersPerUnit = 0.01`
+  and unauthored USD fallback should write `scene_scale = 0.01`.
+- Explicit `moonray:sceneVariable:scene_scale` must win over automatic stage
+  metadata.
+- Raw light radii, RectLight width/height, SpotLight lens radius, and
+  SSS/material distance attrs are passed raw.
 - Houdini `nonrayscene_scale` / Apply Scene Scale for normalized lights remains unresolved.
 
-Future unit work must use controlled fixtures and compare Houdini/Karma expectations against hdMoonRay/MoonRay behavior.
+Future unit work must use controlled fixtures and compare Houdini/Karma
+expectations against hdMoonRay/MoonRay behavior.
 
 ## Reporting Template
 

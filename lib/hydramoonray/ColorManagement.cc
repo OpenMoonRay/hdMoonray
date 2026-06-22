@@ -7,98 +7,32 @@
 
 #include <scene_rdl2/render/logging/logging.h>
 
-#include <algorithm>
 #include <array>
-#include <cctype>
 #include <cstdlib>
-#include <vector>
+#include <sstream>
+#include <sys/stat.h>
 
 namespace OCIO = OCIO_NAMESPACE;
 
 namespace {
 
-std::string
-normalize(std::string value)
-{
-    std::transform(value.begin(), value.end(), value.begin(),
-                   [](unsigned char c) {
-                       if (c == '-' || c == ' ' || c == '.') return '_';
-                       return static_cast<char>(std::tolower(c));
-                   });
-    return value;
-}
-
 bool
 isNoneToken(const pxr::TfToken& token)
 {
     return token.IsEmpty() || token == pxr::TfToken("none") ||
-           token == pxr::TfToken("raw");
+           token == pxr::TfToken("raw") ||
+           token == pxr::TfToken("data") ||
+           token == pxr::TfToken("auto");
 }
 
-std::vector<std::string>
-candidateNamesForToken(const pxr::TfToken& token)
+bool
+pathExists(const std::string& path)
 {
-    const std::string text = token.GetString();
-    const std::string key = normalize(text);
-
-    if (key == "lin_rec709_scene" || key == "srgb_rec709_scene" ||
-        key == "linear_rec709" || key == "linear_rec709_srgb" ||
-        key == "scene_linear") {
-        return {
-            text,
-            "lin_rec709_scene",
-            "srgb_rec709_scene",
-            "Linear Rec.709 (sRGB)",
-            "Linear Rec.709",
-            "scene_linear"
-        };
+    if (path.empty()) {
+        return false;
     }
-    if (key == "lin_ap1_scene" || key == "acescg" ||
-        key == "acescg_scene_linear") {
-        return {
-            text,
-            "lin_ap1_scene",
-            "ACEScg",
-            "ACES - ACEScg",
-            "ACEScg - ACEScg"
-        };
-    }
-    if (key == "lin_rec2020_scene" || key == "linear_rec2020" ||
-        key == "rec2020_linear") {
-        return {
-            text,
-            "lin_rec2020_scene",
-            "Linear Rec.2020",
-            "Linear Rec.2020 (Rec.2020)",
-            "Rec.2020"
-        };
-    }
-    return {text};
-}
-
-std::string
-firstExistingColorSpace(const OCIO::ConstConfigRcPtr& config,
-                        const std::vector<std::string>& candidates)
-{
-    for (const std::string& candidate : candidates) {
-        if (candidate.empty()) {
-            continue;
-        }
-        try {
-            if (config->getColorSpace(candidate.c_str())) {
-                return candidate;
-            }
-            // OCIO accepts roles in places where color space names are accepted.
-            // Some configs do not expose the role as a named ColorSpace, so test
-            // processor construction as the compatibility fallback.
-            if (config->getProcessor(candidate.c_str(), candidate.c_str())) {
-                return candidate;
-            }
-        } catch (const OCIO::Exception&) {
-            continue;
-        }
-    }
-    return {};
+    struct stat st;
+    return stat(path.c_str(), &st) == 0;
 }
 
 std::string
@@ -113,11 +47,56 @@ getColorSpaceName(const OCIO::ConstColorSpaceRcPtr& colorSpace)
     return {};
 }
 
-OCIO::ConstConfigRcPtr
+struct ResolvedColorSpace
+{
+    std::string name;
+    std::string method;
+};
+
+ResolvedColorSpace
+resolveConfigColorSpace(const OCIO::ConstConfigRcPtr& config,
+                        const std::string& token,
+                        const std::string& method)
+{
+    if (!config || token.empty()) {
+        return {};
+    }
+
+    try {
+        const std::string name = getColorSpaceName(config->getColorSpace(token.c_str()));
+        if (!name.empty()) {
+            return {name, method};
+        }
+    } catch (const OCIO::Exception&) {
+    }
+    return {};
+}
+
+ResolvedColorSpace
+resolveRoleColorSpace(const OCIO::ConstConfigRcPtr& config,
+                      const char* role,
+                      bool allowDefaultWarning = false)
+{
+    ResolvedColorSpace resolved = resolveConfigColorSpace(
+            config, role ? role : "", std::string("role:") + (role ? role : ""));
+    if (allowDefaultWarning && !resolved.name.empty()) {
+        resolved.method += ":warning";
+    }
+    return resolved;
+}
+
+struct OcioConfigResult
+{
+    OCIO::ConstConfigRcPtr config;
+    std::string loadError;
+    bool rawFallback = false;
+};
+
+OcioConfigResult
 currentOcioConfig()
 {
     try {
-        return OCIO::GetCurrentConfig();
+        return {OCIO::GetCurrentConfig(), std::string(), false};
     } catch (const OCIO::Exception& e) {
         scene_rdl2::logging::Logger::warn(
             "Failed to load current OCIO config: ", e.what(),
@@ -125,7 +104,7 @@ currentOcioConfig()
     }
 
     try {
-        return OCIO::Config::CreateRaw();
+        return {OCIO::Config::CreateRaw(), "OCIO current config load failed", true};
     } catch (const OCIO::Exception& e) {
         scene_rdl2::logging::Logger::warn(
             "Failed to create raw OCIO fallback config: ", e.what());
@@ -133,65 +112,24 @@ currentOcioConfig()
     return {};
 }
 
-std::string
-sceneLinearColorSpaceName(const OCIO::ConstConfigRcPtr& config)
+ResolvedColorSpace
+defaultWorkingColorSpace(const OCIO::ConstConfigRcPtr& config)
 {
     if (!config) {
         return {};
     }
 
-    try {
-        std::string roleName = getColorSpaceName(config->getColorSpace(OCIO::ROLE_SCENE_LINEAR));
-        if (!roleName.empty()) {
-            return roleName;
-        }
-    } catch (const OCIO::Exception&) {
-        // Fall back to common config names below.
-    }
-
-    std::string resolved = firstExistingColorSpace(config, {
-        OCIO::ROLE_SCENE_LINEAR,
-        "scene_linear",
-        "lin_rec709_scene",
-        "srgb_rec709_scene",
-        "Linear Rec.709 (sRGB)",
-        "Linear Rec.709"
-    });
-    if (!resolved.empty()) {
-        return resolved;
-    }
-
-    return {};
-}
-
-bool
-hasNoOpProcessor(const OCIO::ConstConfigRcPtr& config,
-                 const std::string& colorSpace)
-{
-    if (!config || colorSpace.empty()) {
-        return false;
-    }
-    try {
-        return static_cast<bool>(config->getProcessor(colorSpace.c_str(),
-                                                      colorSpace.c_str()));
-    } catch (const OCIO::Exception&) {
-        return false;
-    }
-}
-
-std::string
-firstValidProcessorEndpoint(const OCIO::ConstConfigRcPtr& config,
-                            const std::vector<std::string>& candidates)
-{
-    for (const std::string& candidate : candidates) {
-        if (candidate.empty()) {
-            continue;
-        }
-        if (hasNoOpProcessor(config, candidate)) {
-            return candidate;
+    for (const char* role : {OCIO::ROLE_RENDERING,
+                             OCIO::ROLE_SCENE_LINEAR,
+                             "default_float",
+                             "reference"}) {
+        ResolvedColorSpace resolved = resolveRoleColorSpace(config, role);
+        if (!resolved.name.empty()) {
+            return resolved;
         }
     }
-    return {};
+
+    return resolveRoleColorSpace(config, OCIO::ROLE_DEFAULT, true);
 }
 
 } // namespace
@@ -202,29 +140,66 @@ using scene_rdl2::logging::Logger;
 
 struct ColorManagement::Impl
 {
-    Impl()
-        : colorConfig(currentOcioConfig())
-    {}
+    Impl();
 
-    std::string resolveColorSpace(const pxr::TfToken& token) const;
+    std::string resolveColorSpace(const pxr::TfToken& token);
+    bool hasUsableConfig() const;
     void rebuildProcessor();
     void transform(float* color, int channels) const;
+    std::string diagnosticSummary() const;
+    bool diagnosticNeedsWarning() const;
+    bool ocioEnvUnset() const { return ocioEnv.empty(); }
 
+    std::string ocioLibraryVersion;
+    std::string ocioEnv;
+    bool ocioFileExists = false;
+    std::string configLoadError;
+    bool rawFallback = false;
     pxr::TfToken renderingColorSpaceToken;
     std::string sceneLinearColorSpace;
+    std::string sceneLinearResolutionMethod;
     std::string workingColorSpace;
+    std::string workingResolutionMethod;
+    std::string renderingRoleColorSpace;
+    std::string sceneLinearRoleColorSpace;
+    bool unsupportedRequestedColorSpace = false;
+    bool defaultRoleFallbackWarning = false;
     OCIO::ConstConfigRcPtr colorConfig;
     OCIO::ConstProcessorRcPtr sceneLinearToWorking;
     OCIO::ConstCPUProcessorRcPtr sceneLinearToWorkingCpu;
 };
 
+ColorManagement::Impl::Impl()
+    : ocioLibraryVersion(OCIO::GetVersion())
+{
+    const char* env = std::getenv("OCIO");
+    if (env) {
+        ocioEnv = env;
+        ocioFileExists = pathExists(ocioEnv);
+    }
+
+    OcioConfigResult result = currentOcioConfig();
+    colorConfig = result.config;
+    configLoadError = result.loadError;
+    rawFallback = result.rawFallback;
+}
+
 ColorManagement::ColorManagement()
     : mImpl(new Impl())
 {
-    mImpl->sceneLinearColorSpace = sceneLinearColorSpaceName(mImpl->colorConfig);
+    mImpl->renderingRoleColorSpace =
+            resolveRoleColorSpace(mImpl->colorConfig, OCIO::ROLE_RENDERING).name;
+    mImpl->sceneLinearRoleColorSpace =
+            resolveRoleColorSpace(mImpl->colorConfig, OCIO::ROLE_SCENE_LINEAR).name;
+
+    const ResolvedColorSpace defaultWorking =
+            defaultWorkingColorSpace(mImpl->colorConfig);
+    mImpl->sceneLinearColorSpace = defaultWorking.name;
+    mImpl->sceneLinearResolutionMethod = defaultWorking.method;
 
     if (mImpl->sceneLinearColorSpace.empty()) {
-        Logger::warn("OCIO scene_linear role / Linear Rec.709 color space not found; "
+        Logger::warn("OCIO render/working color space could not be resolved from "
+                     "roles rendering, scene_linear, default_float, reference, or default; "
                      "hdMoonray renderingColorSpace conversion is disabled");
     }
     mImpl->workingColorSpace = mImpl->resolveColorSpace(pxr::TfToken());
@@ -265,20 +240,57 @@ ColorManagement::hasWorkingColorTransform() const
 }
 
 std::string
-ColorManagement::Impl::resolveColorSpace(const pxr::TfToken& token) const
+ColorManagement::diagnosticSummary() const
 {
-    if (isNoneToken(token)) {
+    return mImpl->diagnosticSummary();
+}
+
+bool
+ColorManagement::diagnosticNeedsWarning() const
+{
+    return mImpl->diagnosticNeedsWarning();
+}
+
+bool
+ColorManagement::ocioEnvUnset() const
+{
+    return mImpl->ocioEnvUnset();
+}
+
+bool
+ColorManagement::Impl::hasUsableConfig() const
+{
+    return colorConfig && !ocioEnv.empty() && ocioFileExists && !rawFallback;
+}
+
+std::string
+ColorManagement::Impl::resolveColorSpace(const pxr::TfToken& token)
+{
+    workingResolutionMethod.clear();
+    unsupportedRequestedColorSpace = false;
+    defaultRoleFallbackWarning = false;
+
+    if (isNoneToken(token) || !hasUsableConfig()) {
+        workingResolutionMethod = sceneLinearResolutionMethod;
+        defaultRoleFallbackWarning =
+                workingResolutionMethod.find(":warning") != std::string::npos;
         return sceneLinearColorSpace;
     }
 
-    std::string resolved = firstValidProcessorEndpoint(colorConfig, candidateNamesForToken(token));
-    if (!resolved.empty()) {
-        return resolved;
+    ResolvedColorSpace resolved = resolveConfigColorSpace(
+            colorConfig, token.GetString(), "authored");
+    if (!resolved.name.empty()) {
+        workingResolutionMethod = resolved.method;
+        return resolved.name;
     }
 
+    unsupportedRequestedColorSpace = true;
+    workingResolutionMethod = sceneLinearResolutionMethod;
+    defaultRoleFallbackWarning =
+            workingResolutionMethod.find(":warning") != std::string::npos;
     Logger::warn("Unsupported renderingColorSpace '", token,
-                 "' for current OCIO config; falling back to '",
-                 sceneLinearColorSpace, "'");
+                 "' for current OCIO config; falling back to resolved working space '",
+                 sceneLinearColorSpace, "'. No config-specific fallback names were tried.");
     return sceneLinearColorSpace;
 }
 
@@ -288,7 +300,8 @@ ColorManagement::Impl::rebuildProcessor()
     sceneLinearToWorking.reset();
     sceneLinearToWorkingCpu.reset();
 
-    if (sceneLinearColorSpace.empty() || workingColorSpace.empty() ||
+    if (!hasUsableConfig() ||
+        sceneLinearColorSpace.empty() || workingColorSpace.empty() ||
         sceneLinearColorSpace == workingColorSpace) {
         return;
     }
@@ -329,6 +342,63 @@ ColorManagement::Impl::transform(float* color, int channels) const
     } catch (const OCIO::Exception& e) {
         Logger::warn("Failed to apply OCIO renderingColorSpace transform: ", e.what());
     }
+}
+
+std::string
+ColorManagement::Impl::diagnosticSummary() const
+{
+    std::ostringstream out;
+    out << "ocioLibraryVersion=" << ocioLibraryVersion
+        << " OCIO=" << (ocioEnv.empty() ? "<unset>" : ocioEnv)
+        << " ocioFileExists=" << (ocioFileExists ? "1" : "0")
+        << " rawFallback=" << (rawFallback ? "1" : "0")
+        << " requestedRenderingColorSpace="
+        << (renderingColorSpaceToken.IsEmpty() ? "<default>" : renderingColorSpaceToken.GetString())
+        << " renderingRole="
+        << (renderingRoleColorSpace.empty() ? "<unresolved>" : renderingRoleColorSpace)
+        << " sceneLinearRole="
+        << (sceneLinearRoleColorSpace.empty() ? "<unresolved>" : sceneLinearRoleColorSpace)
+        << " sceneLinearColorSpace="
+        << (sceneLinearColorSpace.empty() ? "<unresolved>" : sceneLinearColorSpace)
+        << " resolvedRenderingColorSpace="
+        << (workingColorSpace.empty() ? "<unresolved>" : workingColorSpace)
+        << " resolvedBy="
+        << (workingResolutionMethod.empty() ? "<unresolved>" : workingResolutionMethod)
+        << " conversionEnabled=" << (sceneLinearToWorkingCpu ? "1" : "0");
+
+    if (unsupportedRequestedColorSpace) {
+        out << " fallbackUsed=1";
+    }
+    if (defaultRoleFallbackWarning) {
+        out << " defaultRoleFallbackWarning=1";
+    }
+    if (!configLoadError.empty()) {
+        out << " configLoadError=\"" << configLoadError << "\"";
+    }
+    if (ocioEnv.empty()) {
+        out << " disabledReason=\"OCIO is unset\"";
+    } else if (!ocioFileExists) {
+        out << " disabledReason=\"OCIO path does not exist\"";
+    } else if (sceneLinearColorSpace.empty()) {
+        out << " disabledReason=\"scene linear color space unresolved\"";
+    } else if (workingColorSpace.empty()) {
+        out << " disabledReason=\"rendering color space unresolved\"";
+    } else if (!sceneLinearToWorkingCpu && sceneLinearColorSpace != workingColorSpace) {
+        out << " disabledReason=\"OCIO processor unavailable\"";
+    } else if (!sceneLinearToWorkingCpu) {
+        out << " disabledReason=\"source and target color spaces match\"";
+    }
+
+    return out.str();
+}
+
+bool
+ColorManagement::Impl::diagnosticNeedsWarning() const
+{
+    return ocioEnv.empty() || !ocioFileExists || rawFallback ||
+           sceneLinearColorSpace.empty() || workingColorSpace.empty() ||
+           unsupportedRequestedColorSpace || defaultRoleFallbackWarning ||
+           (!sceneLinearToWorkingCpu && sceneLinearColorSpace != workingColorSpace);
 }
 
 scene_rdl2::rdl2::Rgb
