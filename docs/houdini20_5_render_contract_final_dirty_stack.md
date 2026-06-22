@@ -1,11 +1,24 @@
 # Houdini 20.5 Final Render Contract Dirty Stack
 
+> Historical dirty-stack ledger. This file is superseded by the pushed H20.5
+> render-contract, scene-scale, and config-driven OCIO integration stack:
+> parent `55e5e6b`, scene_rdl2 `b7aa377`, moonray `e403e80`,
+> hdMoonray `34d2d7e`, moonray_dcc_plugins `04bd9a8`, and moonshine
+> `5bec7a4`.
+>
+> Do not use this file as the current implementation contract. It is preserved
+> as forensic history from the pre-commit audit. Current contract docs are:
+> `houdini20_5_render_contract_final.md`,
+> `houdini20_5_sceneindex_render_product_contract.md`,
+> `houdini20_5_ocio_colormanagement.md`, and
+> `hdMoonray_stable_vs_wip_matrix.md`.
+
 Preserve snapshot:
 
 `/tmp/moonray_render_contract_final_20260616_162142`
 
-This ledger classifies the current mixed working tree before any final render
-contract diagnostics or behavior patches. It is not a commit plan by itself.
+This ledger classified the then-current mixed working tree before final render
+contract diagnostics or behavior patches. It was not a commit plan by itself.
 
 ## Workstream Key
 
@@ -25,9 +38,9 @@ contract diagnostics or behavior patches. It is not a commit plan by itself.
 
 | Path | Status | Workstream | Risk | Evidence / Action |
 |------|--------|------------|------|-------------------|
-| `moonray/hydra/hdMoonray` | modified submodule | A/B/C/E/G/H | investigate before commit | Parent pointer reflects dirty hdMoonray submodule. Do not pin until submodule work is split and validated. |
+| `moonray/hydra/hdMoonray` | modified submodule | A/B/C/E/G/H | historical: required investigation before commit | At the time of this audit, the parent pointer reflected a dirty hdMoonray submodule and was not ready to pin until split and validated. |
 | `moonray/hydra/moonray_sdr_plugins` | modified submodule | F | commit separately or leave | SDR parser metadata is unrelated to this render contract pass unless shader discovery warnings return. |
-| `moonray/moonray_dcc_plugins` | modified submodule | D/I | investigate before commit | DCC changes include scene-linking/ROP authority work plus HDA binary state. |
+| `moonray/moonray_dcc_plugins` | modified submodule | D/I | historical: required investigation before commit | At the time of this audit, DCC changes included scene-linking/ROP authority work plus HDA binary state. |
 
 ## hdMoonray
 
@@ -37,10 +50,10 @@ contract diagnostics or behavior patches. It is not a commit plan by itself.
 | `cmd/hd_cmd/hd_render/hd_render.cc` | E | keep if command-tool validation remains clean | Legacy `UsdImagingDelegate` command tool now excludes raw `RenderProduct`/`RenderVar` prims from population. This does not prove Solaris/IPR clean. |
 | `cmd/hd_cmd/hd_usd2rdl/CMakeLists.txt` | E | commit separately with command tools | Houdini Python framework rpath fix. Required for installed `hd_usd2rdl` launch, but not Solaris/IPR warning root. |
 | `cmd/hd_cmd/hd_usd2rdl/hd_usd2rdl.cc` | E | keep if command-tool validation remains clean | Same legacy Product/Var traversal cleanup as `hd_render`. |
-| `lib/hydramoonray/PrimTypeUtils.cc` | G/B | investigate before commit | PluginLightFilter alias belongs to light-filter compatibility. It is not the RenderSettings/Product warning fix unless prim diagnostics prove otherwise. |
-| `lib/hydramoonray/RenderDelegate.cc` | A/B/H | investigate before commit | Contains real `HdRenderSettings` Bprim sync, render stats/progress mapping, teardown/ownership changes. Also the right location for env-gated prim-type diagnostics. |
-| `lib/hydramoonray/RenderDelegate.h` | A/H | investigate before commit | Delegate ownership/teardown changes. ABI-sensitive; rebuild/install/sign with matching plugin dylibs if touched. |
-| `lib/hydramoonray/RenderPass.cc` | C/H | investigate before commit | Render pass execution hook and SceneVariables image dimensions path. Right location for env-gated camera/framing diagnostics. |
+| `lib/hydramoonray/PrimTypeUtils.cc` | G/B | historical: required investigation before commit | PluginLightFilter alias belonged to light-filter compatibility. It was not treated as the RenderSettings/Product warning fix without prim diagnostics. |
+| `lib/hydramoonray/RenderDelegate.cc` | A/B/H | historical: required investigation before commit | Contained real `HdRenderSettings` Bprim sync, render stats/progress mapping, teardown/ownership changes. Also the right location for env-gated prim-type diagnostics. |
+| `lib/hydramoonray/RenderDelegate.h` | A/H | historical: required investigation before commit | Delegate ownership/teardown changes were ABI-sensitive and required rebuild/install/sign with matching plugin dylibs. |
+| `lib/hydramoonray/RenderPass.cc` | C/H | historical: required investigation before commit | Render pass execution hook and SceneVariables image dimensions path were under audit. |
 | `docs/houdini20_5_sceneindex_dirty_stack_audit.md` | A/B/D/E | keep as evidence | Existing audit doc from prior pass. |
 | `docs/houdini20_5_sceneindex_render_product_contract.md` | A/B/E | keep as evidence | Documents Product/Var SceneIndex vs legacy delegate split and command-tool result. |
 | `docs/houdini20_5_usd_hydra_render_contract.md` | A/B/C/D/E | keep as evidence | Documents intended render contract and current runtime matrix. |
@@ -76,4 +89,3 @@ Allowed before behavior patches:
 Do not claim the Solaris/IPR warning path is fixed from command-tool validation.
 The user must run a fresh Houdini/Solaris/IPR session with diagnostics enabled
 after rebuild/install/sign if the warning is only observable in GUI/IPR.
-

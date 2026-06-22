@@ -1,5 +1,20 @@
 # Houdini 20.5 SceneIndex Dirty Stack Audit
 
+> Historical dirty-stack ledger. This file is superseded by the pushed H20.5
+> render-contract, scene-scale, and config-driven OCIO integration stack:
+> parent `55e5e6b`, scene_rdl2 `b7aa377`, moonray `e403e80`,
+> hdMoonray `34d2d7e`, moonray_dcc_plugins `04bd9a8`, and moonshine
+> `5bec7a4`.
+>
+> Do not use this file as the current implementation contract. It is preserved
+> as forensic preservation-time evidence. Old SHAs, `/tmp` paths, local project
+> paths, and observed warnings below describe the state at the time of this
+> audit, not the current pushed behavior. Current contract docs are:
+> `houdini20_5_render_contract_final.md`,
+> `houdini20_5_sceneindex_render_product_contract.md`,
+> `houdini20_5_ocio_colormanagement.md`, and
+> `hdMoonray_stable_vs_wip_matrix.md`.
+
 Date: 2026-06-15
 
 Scope: audit only. No runtime code, build files, installed payloads, generated
@@ -8,7 +23,7 @@ written.
 
 ## Preserved State
 
-Current dirty diffs were preserved before further inspection:
+Dirty diffs were preserved before further inspection at the time of this audit:
 
 ```text
 /tmp/moonray_sceneindex_audit_preserve_20260615_233253/parent.diff
@@ -37,15 +52,15 @@ evidence appears.
 | --- | --- | --- | --- | --- | --- |
 | `cmd/hd_cmd/hd_render/CMakeLists.txt` | hdMoonray | toolchain/build compatibility | command-line tools only | commit separately if retained | Adds Apple/Python rpath when `Python_ROOT_DIR` exists; intended to fix `@rpath/Python` loading for `hd_render`. |
 | `cmd/hd_cmd/hd_usd2rdl/CMakeLists.txt` | hdMoonray | toolchain/build compatibility | command-line tools only | commit separately if retained | Same rpath repair for `hd_usd2rdl`. |
-| `lib/hydramoonray/PrimTypeUtils.cc` | hdMoonray | SceneIndex / plugin light filter support | Hydra delegate support contract, RDL light filters | investigate before commit | Adds `PluginLightFilter` and `UsdLuxPluginLightFilter` aliases to canonical `lightFilter`; unrelated to camera framing. |
-| `lib/hydramoonray/RenderDelegate.cc` | hdMoonray | RenderSettings/SceneIndex runtime sync plus stats | Hydra Bprim support, SceneVariables, progress metadata | investigate before commit | Adds real `HdRenderSettings` Bprim, live scene-variable update hook, flat Houdini progress keys, and memory stats. No fake Product/Var support is present. |
-| `lib/hydramoonray/RenderDelegate.h` | hdMoonray | RenderDelegate lifetime / live setting sync | delegate ABI and renderer ownership | investigate before commit | Converts renderer pointer to `std::unique_ptr`, adds render-pass execution marker. Requires ABI-aligned install if committed. |
-| `lib/hydramoonray/RenderPass.cc` | hdMoonray | render lifecycle | render settings live-apply guard | investigate before commit | Marks render-pass execution before settings application. Not directly a framing fix. |
+| `lib/hydramoonray/PrimTypeUtils.cc` | hdMoonray | SceneIndex / plugin light filter support | Hydra delegate support contract, RDL light filters | historical: required investigation before commit | Added `PluginLightFilter` and `UsdLuxPluginLightFilter` aliases to canonical `lightFilter`; unrelated to camera framing. |
+| `lib/hydramoonray/RenderDelegate.cc` | hdMoonray | RenderSettings/SceneIndex runtime sync plus stats | Hydra Bprim support, SceneVariables, progress metadata | historical: required investigation before commit | Added real `HdRenderSettings` Bprim, live scene-variable update hook, flat Houdini progress keys, and memory stats. No fake Product/Var support was present. |
+| `lib/hydramoonray/RenderDelegate.h` | hdMoonray | RenderDelegate lifetime / live setting sync | delegate ABI and renderer ownership | historical: required investigation before commit | Converted renderer pointer to `std::unique_ptr`, added render-pass execution marker. Required ABI-aligned install if committed. |
+| `lib/hydramoonray/RenderPass.cc` | hdMoonray | render lifecycle | render settings live-apply guard | historical: required investigation before commit | Marked render-pass execution before settings application. Not directly a framing fix. |
 | `moonrayShaderParser/parserPlugin.cpp` | SDR | SDR metadata | shader discovery, USD shader metadata | commit separately if proven | Fixes vector default/type metadata, including dynamic array Sdr USD definition types. Related to `iridescence_colors`, not framing. |
-| `houdini/python3.11libs/moonray_render_settings.py` | DCC | DCC Python authoring | authored USD RenderSettings SceneVariables, UI | investigate before commit | Adds `texture_cache_size` and `texture_file_handles` SceneVariables and UI controls. Not a camera/framing fix. |
-| `houdini/otls/Lop::DW_MOONRAY::moonrayrendersettings::1.hda` | DCC | HDA binary regeneration | Houdini UI/runtime HDA | investigate before commit | Binary regenerated to match DCC Python changes. Source/install SHA currently match, but no new regeneration should happen until approved. |
-| `houdini/tests/dev_validate_moonray_render_settings_lop.py` | DCC | validation | DCC validation | investigate before commit | Updates expected SceneVariable count to 52 and checks texture cache controls. |
-| `houdini/docs/moonray_render_settings_lop_audit.md` | DCC | docs/evidence update | docs only | investigate before commit | Documents texture cache controls as exposed. |
+| `houdini/python3.11libs/moonray_render_settings.py` | DCC | DCC Python authoring | authored USD RenderSettings SceneVariables, UI | historical: required investigation before commit | Added `texture_cache_size` and `texture_file_handles` SceneVariables and UI controls. Not a camera/framing fix. |
+| `houdini/otls/Lop::DW_MOONRAY::moonrayrendersettings::1.hda` | DCC | HDA binary regeneration | Houdini UI/runtime HDA | historical: required investigation before commit | Binary regenerated to match DCC Python changes. Source/install SHA matched at the time. |
+| `houdini/tests/dev_validate_moonray_render_settings_lop.py` | DCC | validation | DCC validation | historical: required investigation before commit | Updated expected SceneVariable count to 52 and checked texture cache controls. |
+| `houdini/docs/moonray_render_settings_lop_audit.md` | DCC | docs/evidence update | docs only | historical: required investigation before commit | Documented texture cache controls as exposed. |
 | `houdini/python3.11libs/__pycache__/moonray_lightfilter_nodes.cpython-314.pyc` | DCC | generated junk deletion | source tree cleanliness | likely keep deletion, but separate hygiene | Tracked pyc deletion in source repo. Installed pyc files still exist. |
 
 No dirty file in this stack directly changes `Camera.cc`, camera aperture
@@ -326,4 +341,3 @@ Test to prove or disprove:
 No runtime patch should be made until that IPR temp USD comparison is available
 or until the user explicitly approves a targeted DCC/USD resolution-authority
 patch based on the already-proven authored conflict.
-

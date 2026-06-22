@@ -120,7 +120,7 @@ Clean H20.5.584 production `husk` validation after the repair:
 | St | `/tmp/moonray_clean_St.exr` | min `(0,0)`, max `(0.916016,0.856934)`, `Constant: No` | `PASS_FILLED` |
 | weight | `/tmp/moonray_clean_weight.exr` | min=max=avg `64`, `Constant: Yes` | `PASS_CONSTANT_EXPECTED` for the simple fixture |
 
-This proves production payload delivery for the first explicit native RenderVar set. It does not prove material AOVs, LPE/light AOVs, visibility AOVs, Cryptomatte, primitive attributes, motion vectors, multi-AOV EXR products, or a finished artist UI. Those remain separate validation work.
+This proves production payload delivery for the first explicit native RenderVar set. By itself, this transport repair did not prove material AOVs, LPE/light AOVs, visibility AOVs, Cryptomatte, primitive attributes, motion vectors, multi-AOV EXR products, or a finished artist UI. Subsequent Render Settings LOP validation documents the first exposed material/denoise AOV set in `moonray_render_settings_lop_audit.md`; the broader AOV families still remain separate validation work.
 
 ## cameraDepth Diagnostic Target Status
 
