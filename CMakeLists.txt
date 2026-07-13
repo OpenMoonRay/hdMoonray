@@ -38,6 +38,9 @@ endif()
 # * https://github.com/PixarAnimationStudios/OpenUSD/issues/3310
 # * https://github.com/PixarAnimationStudios/OpenUSD/pull/3205
 find_package(OpenGL REQUIRED)
+if(PXR_VERSION VERSION_GREATER_EQUAL 2505)
+    find_package(Vulkan REQUIRED)
+endif()
 
 find_package(JPEG REQUIRED)
 find_package(OpenImageIO REQUIRED)
