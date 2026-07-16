@@ -50,6 +50,8 @@ PTRCAST(Vec3d, pxr::GfVec3d);
 PTRCAST(Vec4f, pxr::GfVec4f);
 PTRCAST(Rgba,  pxr::GfVec4f);
 PTRCAST(Vec4d, pxr::GfVec4d);
+PTRCAST(Mat3f, pxr::GfMatrix3f);
+PTRCAST(Mat3d, pxr::GfMatrix3d);
 PTRCAST(Mat4f, pxr::GfMatrix4f);
 PTRCAST(Mat4d, pxr::GfMatrix4d);
 
@@ -107,6 +109,29 @@ struct Converter<Vec3d, pxr::GfVec3f>
 {
     static Vec3d _(const pxr::GfVec3f& v) {
         return Vec3d(v[0],v[1],v[2]);
+    }
+};
+
+template<>
+struct Converter<Mat3f, pxr::GfMatrix3d>
+{
+    static Mat3f _(const pxr::GfMatrix3d& v) {
+        const double* d = v.GetArray();
+        return Mat3f(d[0],d[1],d[2],
+                     d[3],d[4],d[5],
+                     d[6],d[7],d[8]);
+    }
+};
+
+template<>
+struct Converter<Mat4f, pxr::GfMatrix4d>
+{
+    static Mat4f _(const pxr::GfMatrix4d& v) {
+        const double* d = v.GetArray();
+        return Mat4f(d[0], d[1], d[2], d[3],
+                     d[4], d[5], d[6], d[7],
+                     d[8], d[9], d[10],d[11],
+                     d[12],d[13],d[14],d[15]);
     }
 };
 
@@ -236,6 +261,13 @@ ValueConverter::setAttribute(SceneObject* sceneObj, const Attribute* attribute, 
     case TYPE_VEC4D:
         if (_setAttributeRef<Vec4d, pxr::GfVec4d>(sceneObj, attribute, val)) return;
         break;
+    case TYPE_MAT3F:
+        if (_setAttributeRef<Mat3f, pxr::GfMatrix3f>(sceneObj, attribute, val)) return;
+        if (_setAttribute<Mat3f, pxr::GfMatrix3d>(sceneObj, attribute, val)) return;
+        break;
+    case TYPE_MAT3D:
+        if (_setAttributeRef<Mat3d, pxr::GfMatrix3d>(sceneObj, attribute, val)) return;
+        break;
     case TYPE_MAT4F:
         if (_setAttributeRef<Mat4f, pxr::GfMatrix4f>(sceneObj, attribute, val)) return;
         break;
@@ -287,6 +319,12 @@ ValueConverter::setAttribute(SceneObject* sceneObj, const Attribute* attribute, 
     case TYPE_VEC4D_VECTOR:
         if (_setAttribute<Vec4dVector, pxr::VtArray<pxr::GfVec4d>>(sceneObj, attribute, val)) return;
         break;
+    case TYPE_MAT3F_VECTOR:
+        if (_setAttribute<std::vector<Mat3f>, pxr::VtArray<pxr::GfMatrix3f>>(sceneObj, attribute, val)) return;
+        break;
+    case TYPE_MAT3D_VECTOR:
+        if (_setAttribute<std::vector<Mat3d>, pxr::VtArray<pxr::GfMatrix3d>>(sceneObj, attribute, val)) return;
+        break;
     case TYPE_MAT4F_VECTOR:
         if (_setAttribute<Mat4fVector, pxr::VtArray<pxr::GfMatrix4f>>(sceneObj, attribute, val)) return;
         break;
@@ -316,6 +354,7 @@ void _setUnit(SceneObject* sceneObj, const Attribute* attr)
      switch(attr->getType()) {
      case TYPE_BOOL:   _set(sceneObj, attr, true); break;
      case TYPE_INT:    _set(sceneObj, attr, 1); break;
+     case TYPE_STRING: _set(sceneObj, attr, String("")); break;
      case TYPE_LONG:   _set(sceneObj, attr, (long)1); break;
      case TYPE_FLOAT:  _set(sceneObj, attr, 1.0f); break;
      case TYPE_DOUBLE: _set(sceneObj, attr, 1.0);  break;
@@ -327,6 +366,10 @@ void _setUnit(SceneObject* sceneObj, const Attribute* attr)
      case TYPE_VEC3D:  _set(sceneObj, attr, Vec3d(1,1,1));break;
      case TYPE_VEC4F:  _set(sceneObj, attr, Vec4f(1,1,1,1)); break;
      case TYPE_VEC4D:  _set(sceneObj, attr, Vec4d(1,1,1,1)); break;
+     case TYPE_MAT3F:  _set(sceneObj, attr, Mat3f(1,0,0,0,1,0,0,0,1)); break;
+     case TYPE_MAT3D:  _set(sceneObj, attr, Mat3d(1,0,0,0,1,0,0,0,1)); break;
+     case TYPE_MAT4F:  _set(sceneObj, attr, Mat4f(1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1)); break;
+     case TYPE_MAT4D:  _set(sceneObj, attr, Mat4d(1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1)); break;
      default:
          Logger::error("setUnit not implemented for ", attributeTypeName(attr->getType()));
          break;
