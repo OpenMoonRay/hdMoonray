@@ -39,6 +39,7 @@ public:
     float getProgress() const override;
     float getElapsedSeconds() const override;
     bool isFrameComplete() const override;
+    bool hasTerminalError() const override { return mRenderTerminated; }
 
     bool allocate(scene_rdl2::rdl2::RenderOutput*, PixelData&, const PixelSize&) override;
     bool resolve(scene_rdl2::rdl2::RenderOutput*, PixelData&) override;
@@ -52,6 +53,7 @@ private:
 
     void initArras();
     bool connect(bool resetFailCount);
+    void shutdownArrasSession();
 
      // Called when messages are received from the renderer
     void messageHandler(const arras4::api::Message& msg);
@@ -80,6 +82,7 @@ private:
     bool mPaused = false;
 
     std::atomic<bool> mConnected{false};
+    std::atomic<bool> mShuttingDown{false};
 
     std::mutex mMutex;
 
@@ -102,6 +105,10 @@ private:
 
     // have we received a complete render of the last sent update?
     bool mFrameComplete{false};
+
+    // The current render cannot produce more frames because the Arras session
+    // stopped or the socket failed outside an intentional shutdown.
+    std::atomic<bool> mRenderTerminated{false};
 
     // number of successive connection failures
     int mFailedConnects{0};

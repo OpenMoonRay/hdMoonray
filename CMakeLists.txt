@@ -45,12 +45,46 @@ endif()
 find_package(JPEG REQUIRED)
 find_package(OpenImageIO REQUIRED)
 
+set(HDMOONRAY_HOUDINI_OCIO_TARGET "")
+set(HDMOONRAY_HOUDINI_OCIO_INCLUDE_DIR "")
+set(HDMOONRAY_HOUDINI_INSTALL_DIR "$ENV{HOUDINI_INSTALL_DIR}" CACHE PATH
+    "Houdini install root used to locate SideFX OpenColorIO for Houdini-facing hdMoonray")
+if (APPLE AND HDMOONRAY_HOUDINI_INSTALL_DIR STREQUAL "")
+    set(HDMOONRAY_HOUDINI_INSTALL_DIR "/Applications/Houdini/Houdini20.5.584")
+endif()
+
+if (APPLE AND HDMOONRAY_HOUDINI_INSTALL_DIR)
+    set(_houdiniFrameworkRoot
+        "${HDMOONRAY_HOUDINI_INSTALL_DIR}/Frameworks/Houdini.framework/Versions/Current")
+    set(_houdiniOcioInclude
+        "${_houdiniFrameworkRoot}/Resources/toolkit/include")
+    set(_houdiniOcioLibrary
+        "${_houdiniFrameworkRoot}/Libraries/libOpenColorIO_sidefx.2.3.0.dylib")
+
+    if (EXISTS "${_houdiniOcioInclude}/OpenColorIO/OpenColorIO.h" AND
+        EXISTS "${_houdiniOcioLibrary}")
+        add_library(HdMoonrayHoudiniOpenColorIO SHARED IMPORTED GLOBAL)
+        set_target_properties(HdMoonrayHoudiniOpenColorIO PROPERTIES
+            IMPORTED_LOCATION "${_houdiniOcioLibrary}"
+            INTERFACE_INCLUDE_DIRECTORIES "${_houdiniOcioInclude}")
+        set(HDMOONRAY_HOUDINI_OCIO_TARGET HdMoonrayHoudiniOpenColorIO)
+        set(HDMOONRAY_HOUDINI_OCIO_INCLUDE_DIR "${_houdiniOcioInclude}")
+        message(STATUS "hdMoonray: using Houdini SideFX OpenColorIO: ${_houdiniOcioLibrary}")
+    endif()
+endif()
+
+if (NOT HDMOONRAY_HOUDINI_OCIO_TARGET)
+    find_package(OpenColorIO REQUIRED)
+    set(HDMOONRAY_HOUDINI_OCIO_TARGET OpenColorIO::OpenColorIO)
+    message(STATUS "hdMoonray: using bundled OpenColorIO target")
+endif()
+
 # Our USD config doesn't specify TBB or Boost dependencies,
 # so we need to pull the in explicitly
 find_package(TBB REQUIRED)
 
 if (NOT DEFINED BOOST_PYTHON_COMPONENT_NAME)
-    # may need to be, e.g. python36, python39
+    # may need to be, e.g. python36, python311
     set(BOOST_PYTHON_COMPONENT_NAME python)
 endif()
 
@@ -140,4 +174,3 @@ install(
     DESTINATION .
     USE_SOURCE_PERMISSIONS
 )
-

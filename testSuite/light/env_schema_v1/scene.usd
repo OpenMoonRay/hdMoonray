@@ -1,0 +1,31 @@
+#usda 1.0
+
+def Camera "camera"
+{
+    float focalLength = 50
+    float horizontalAperture = 36
+    float verticalAperture = 20.25
+    float2 clippingRange = (0.01, 10000)
+    matrix4d xformOp:transform = ( (1, 0, 0, 0),
+                                   (0, 1, 0, 0),
+                                   (0, 0, 1, 0),
+                                   (0, 1, 6, 1) )
+    uniform token[] xformOpOrder = ["xformOp:transform"]
+}
+
+def Mesh "card"
+{
+    int[] faceVertexCounts = [4]
+    int[] faceVertexIndices = [0, 1, 3, 2]
+    point3f[] points = [(-1, -1, 0), (1, -1, 0), (-1, 1, 0), (1, 1, 0)]
+    color3f[] primvars:displayColor = [(0.8, 0.8, 0.8)] (
+        interpolation = "constant"
+    )
+}
+
+def DomeLight_1 "dome"
+{
+    color3f inputs:color = (1, 1, 1)
+    float inputs:intensity = 1
+    token inputs:visibility = "inherited"
+}

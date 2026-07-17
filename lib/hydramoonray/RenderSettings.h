@@ -37,6 +37,8 @@ public:
     }
 
     std::string getExecutionMode() const;
+    bool getHoudiniFrame(float& frame) const;
+    bool getHoudiniFps(double& fps) const;
     void setDeepIdAttributeName();
 
 private:

@@ -193,11 +193,19 @@ Mesh::syncSubdivScheme(const HdMeshTopology& topology,
     // sets the subdivision scheme, and related options
     // resolution, adaptive_error and smooth normals
 
+    static TfToken isSubdToken("moonray:is_subd");
+    static TfToken subdSchemeToken("moonray:subd_scheme");
+    static TfToken meshResolutionToken("moonray:mesh_resolution");
+    static TfToken adaptiveErrorToken("moonray:adaptive_error");
+    static TfToken smoothNormalToken("moonray:smooth_normal");
+
     TfToken subdScheme = topology.GetScheme();
     int rdlScheme = rdlSubdSchemeCatClark; // moonray default
     if (subdScheme == PxOsdOpenSubdivTokens->bilinear) rdlScheme = rdlSubdSchemeBilinear;
     // scheme "loop" is not supported by Moonray, and replaced by "catClark"
-    geometry()->set(rdlAttrSubdScheme, rdlScheme);
+    if (not isPrimvarUsed(subdSchemeToken)) {
+        geometry()->set(rdlAttrSubdScheme, rdlScheme);
+    }
 
     // This is the "complexity" menu item in usdview (low=0, medium=1, ...)
     // There is a topology.GetRefineLevel() but it appears to always be a copy of
@@ -214,15 +222,12 @@ Mesh::syncSubdivScheme(const HdMeshTopology& topology,
                        renderDelegate.getForcePolygon() ||
                        subdScheme == PxOsdOpenSubdivTokens->none;
 
-
-    geometry()->set(rdlAttrIsSubd, !disableSubd);
+    if (not isPrimvarUsed(isSubdToken)) {
+        geometry()->set(rdlAttrIsSubd, !disableSubd);
+    }
 
     // mesh resolution, adaptive error and smooth_normals can be overridden
     // by primvars, so check before overwriting
-    static TfToken meshResolutionToken("moonray:mesh_resolution");
-    static TfToken adaptiveErrorToken("moonray:adaptive_error");
-    static TfToken smoothNormalToken("moonray:smooth_normal");
-
     if (not isPrimvarUsed(meshResolutionToken)) {
         // to match Storm, use 1 << refineLevel for resolution
         float rdlResolution = 1 << refineLevel;
@@ -246,12 +251,17 @@ Mesh::syncSubdivTags(const PxOsdSubdivTags& tags)
 {
     // sets RDL attrs from subdiv tags
 
+    static TfToken subdBoundaryToken("moonray:subd_boundary");
+    static TfToken subdFvarLinearToken("moonray:subd_fvar_linear");
+
     TfToken t = tags.GetVertexInterpolationRule();
     int rdlValue;
     if (t == PxOsdOpenSubdivTokens->none)          rdlValue = rdlSubdBoundaryNone;
     else if (t == PxOsdOpenSubdivTokens->edgeOnly) rdlValue = rdlSubdBoundaryEdgeOnly;
     else                                           rdlValue = rdlSubdBoundaryEdgeAndCorner;
-    geometry()->set(rdlAttrSubdBoundary, rdlValue);
+    if (not isPrimvarUsed(subdBoundaryToken)) {
+        geometry()->set(rdlAttrSubdBoundary, rdlValue);
+    }
 
     t = tags.GetFaceVaryingInterpolationRule();
     if (t == PxOsdOpenSubdivTokens->none)              rdlValue = rdlSubdFvarLinearNone;
@@ -261,7 +271,9 @@ Mesh::syncSubdivTags(const PxOsdSubdivTags& tags)
     else if (t == PxOsdOpenSubdivTokens->boundaries)   rdlValue =  rdlSubdFvarLinearBoundaries;
     else if (t == PxOsdOpenSubdivTokens->all)          rdlValue = rdlSubdFvarLinearAll;
     else                                               rdlValue = rdlSubdFvarLinearCornersOnly;
-    geometry()->set(rdlAttrSubdFvarLinear, rdlValue);
+    if (not isPrimvarUsed(subdFvarLinearToken)) {
+        geometry()->set(rdlAttrSubdFvarLinear, rdlValue);
+    }
 
 
     VtIntArray vi = tags.GetCreaseIndices();
@@ -297,7 +309,11 @@ Mesh::syncSubdivTags(const PxOsdSubdivTags& tags)
     if (not vi.empty()) {
         geometry()->set(rdlAttrSubdCornerIndices, IntVector(&vi[0], &vi[0] + vi.size()));
         VtFloatArray vf = tags.GetCornerWeights();
-        geometry()->set(rdlAttrSubdCornerSharpnesses, FloatVector(&vf[0], &vf[0] + vf.size()));
+        if (vf.empty()) {
+            Logger::warn("Skipping empty subdivision corner sharpnesses for ", GetId());
+        } else {
+            geometry()->set(rdlAttrSubdCornerSharpnesses, FloatVector(&vf[0], &vf[0] + vf.size()));
+        }
     } else {
         // geometry()->resetToDefault("subd_corner_indices");
         // geometry()->resetToDefault("subd_corner_sharpnesses");
@@ -323,6 +339,11 @@ Mesh::primvarChanged(HdSceneDelegate *sceneDelegate, RenderDelegate& renderDeleg
             geometry()->resetToDefault(rdlAttrNormalList);
         } else if (value.IsHolding<VtVec3fArray>()) {
             const VtVec3fArray& v = value.UncheckedGet<VtVec3fArray>();
+            if (v.empty()) {
+                Logger::warn("Skipping empty mesh normal primvar '", name, "' on ", GetId());
+                geometry()->resetToDefault(rdlAttrNormalList);
+                return;
+            }
             const Vec3f* p = reinterpret_cast<const Vec3f*>(&v[0]);
             Vec3fVector out(p, p + v.size());
             geometry()->set(rdlAttrNormalList, out);
@@ -340,6 +361,11 @@ Mesh::primvarChanged(HdSceneDelegate *sceneDelegate, RenderDelegate& renderDeleg
                 }
             } else if (value.IsHolding<VtVec2fArray>()) {
                 const VtVec2fArray& v = value.UncheckedGet<VtVec2fArray>();
+                if (v.empty()) {
+                    Logger::warn("Skipping empty mesh texture-coordinate primvar '", name, "' on ", GetId());
+                    geometry()->resetToDefault(rdlAttrUvList);
+                    return;
+                }
                 const Vec2f* p = reinterpret_cast<const Vec2f*>(&v[0]);
                 out.assign(p, p + v.size());
             }
@@ -440,4 +466,3 @@ Mesh::Sync(HdSceneDelegate *sceneDelegate,
 }
  
 }
-

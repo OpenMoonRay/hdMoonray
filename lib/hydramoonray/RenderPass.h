@@ -38,7 +38,7 @@ protected:
 private:
     RenderDelegate& renderDelegate; // RenderDelegate that called constructor
     mutable bool mDeferIsConverged = false;
+    mutable bool mTerminalErrorLogged = false;
 };
 
 }
-

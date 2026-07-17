@@ -2,8 +2,15 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "ValueConverter.h"
+#include "ColorManagement.h"
 
 #include <scene_rdl2/render/logging/logging.h>
+
+#include <cstdint>
+#include <algorithm>
+#include <cctype>
+#include <limits>
+#include <string>
 
 #include <pxr/usd/sdf/assetPath.h>
 
@@ -15,6 +22,138 @@ static void _clearBinding(SceneObject* sceneObj, const Attribute* attribute)
 {
     if (attribute->isBindable())
         sceneObj->setBinding(*attribute,nullptr);
+}
+
+static bool _extractIntegral64(const pxr::VtValue& val, std::int64_t* out)
+{
+    if (val.IsHolding<int>()) {
+        *out = static_cast<std::int64_t>(val.UncheckedGet<int>());
+        return true;
+    }
+    if (val.IsHolding<long>()) {
+        *out = static_cast<std::int64_t>(val.UncheckedGet<long>());
+        return true;
+    }
+    if (val.IsHolding<long long>()) {
+        *out = static_cast<std::int64_t>(val.UncheckedGet<long long>());
+        return true;
+    }
+    return false;
+}
+
+static bool _narrowIntChecked(SceneObject* sceneObj,
+                              const Attribute* attribute,
+                              std::int64_t value,
+                              Int* out)
+{
+    constexpr std::int64_t kMin = static_cast<std::int64_t>(std::numeric_limits<Int>::min());
+    constexpr std::int64_t kMax = static_cast<std::int64_t>(std::numeric_limits<Int>::max());
+    if (value < kMin || value > kMax) {
+        Logger::error(sceneObj->getName(), '.', attribute->getName(),
+                      ": integer value ", value, " out of Int range [", kMin, ", ", kMax, "]");
+        return false;
+    }
+    *out = static_cast<Int>(value);
+    return true;
+}
+
+static bool _setFloatFromIntegral64(SceneObject* sceneObj,
+                                    const Attribute* attribute,
+                                    std::int64_t value)
+{
+    const long double fMin = -static_cast<long double>(std::numeric_limits<Float>::max());
+    const long double fMax = static_cast<long double>(std::numeric_limits<Float>::max());
+    const long double wideValue = static_cast<long double>(value);
+    if (wideValue < fMin || wideValue > fMax) {
+        Logger::error(sceneObj->getName(), '.', attribute->getName(),
+                      ": integer value ", value, " out of Float range");
+        return false;
+    }
+    sceneObj->set(AttributeKey<Float>(*attribute), static_cast<Float>(value));
+    _clearBinding(sceneObj, attribute);
+    return true;
+}
+
+static std::string _normalizedToken(const std::string& value)
+{
+    std::string result = value;
+    std::transform(result.begin(), result.end(), result.begin(),
+                   [](unsigned char c) {
+                       if (c == '-' || c == ' ') return '_';
+                       return static_cast<char>(std::tolower(c));
+                   });
+    return result;
+}
+
+static bool _rampInterpolationTokenToInt(const std::string& token, Int* out)
+{
+    const std::string key = _normalizedToken(token);
+
+    // MoonRay ramp interpolation enums are documented in the generated
+    // scene class metadata for ramp IntVector attributes:
+    // None: 0 | Linear: 1 | Exponential Up: 2 | Exponential Down: 3 |
+    // Smooth: 4 | Catmull Rom: 5 | Monotone Cubic: 6
+    if (key == "none" || key == "constant") {
+        *out = 0;
+        return true;
+    }
+    if (key == "linear") {
+        *out = 1;
+        return true;
+    }
+    if (key == "exponential_up" || key == "ease_in") {
+        *out = 2;
+        return true;
+    }
+    if (key == "exponential_down" || key == "ease_out") {
+        *out = 3;
+        return true;
+    }
+    // Houdini ramp menus can author Hermite, Bezier, and B-spline tokens.
+    // MoonRay's native ramp metadata has one smooth/cubic interpolation slot,
+    // so those Houdini spline-style bases map to Smooth.
+    if (key == "smooth" || key == "smoothstep" || key == "hermite" ||
+        key == "bezier" || key == "bspline" || key == "b_spline") {
+        *out = 4;
+        return true;
+    }
+    if (key == "catmull_rom" || key == "catmullrom") {
+        *out = 5;
+        return true;
+    }
+    if (key == "monotone_cubic" || key == "monotonecubic") {
+        *out = 6;
+        return true;
+    }
+    return false;
+}
+
+static bool _setRampInterpolationVectorFromToken(SceneObject* sceneObj,
+                                                 const Attribute* attribute,
+                                                 const std::string& token)
+{
+    const std::string attrName = attribute->getName();
+    if (attrName.find("interpolation") == std::string::npos) {
+        return false;
+    }
+
+    Int interpolation = 0;
+    if (!_rampInterpolationTokenToInt(token, &interpolation)) {
+        Logger::warn(sceneObj->getName(), '.', attrName,
+                     ": unsupported ramp interpolation token '", token,
+                     "' for IntVector attribute; keeping the MoonRay default");
+        return true;
+    }
+
+    IntVector values = attribute->getDefaultValue<IntVector>();
+    if (values.empty()) {
+        values.push_back(interpolation);
+    } else {
+        std::fill(values.begin(), values.end(), interpolation);
+    }
+    sceneObj->set(AttributeKey<IntVector>(*attribute), values);
+    _clearBinding(sceneObj, attribute);
+    return true;
 }
 
 template<typename T>
@@ -89,6 +228,7 @@ template<typename T, typename H>
 struct Converter<std::vector<T>, pxr::VtArray<H>>
 {
     static std::vector<T> _(const pxr::VtArray<H>& v) {
+        if (v.empty()) return {};
         const T* p = &(RefConverter<T,H>::_(v[0]));
         return std::vector<T>(p, p + v.size());
     }
@@ -99,6 +239,7 @@ template<>
 struct Converter<BoolVector, pxr::VtArray<bool>>
 {
     static BoolVector _(const pxr::VtArray<bool>& v) {
+        if (v.empty()) return {};
         return BoolVector(&v[0], &v[0] + v.size());
     }
 };
@@ -150,8 +291,109 @@ static bool _setAttribute(SceneObject* sceneObj, const Attribute* attribute, con
     }
 }
 
+static bool
+_setRgbAttribute(SceneObject* sceneObj,
+                 const Attribute* attribute,
+                 const pxr::VtValue& val,
+                 const ColorManagement* colorManagement)
+{
+    if (val.IsHolding<pxr::GfVec3f>()) {
+        pxr::GfVec3f color = val.UncheckedGet<pxr::GfVec3f>();
+        if (colorManagement) {
+            color = colorManagement->toWorkingSpace(color);
+        }
+        sceneObj->set(AttributeKey<Rgb>(*attribute), Rgb(color[0], color[1], color[2]));
+        _clearBinding(sceneObj, attribute);
+        return true;
+    }
+    if (val.IsHolding<pxr::GfVec4f>()) {
+        const pxr::GfVec4f rgba = val.UncheckedGet<pxr::GfVec4f>();
+        pxr::GfVec3f color(rgba[0], rgba[1], rgba[2]);
+        if (colorManagement) {
+            color = colorManagement->toWorkingSpace(color);
+        }
+        sceneObj->set(AttributeKey<Rgb>(*attribute), Rgb(color[0], color[1], color[2]));
+        _clearBinding(sceneObj, attribute);
+        return true;
+    }
+    return false;
+}
+
+static bool
+_setRgbaAttribute(SceneObject* sceneObj,
+                  const Attribute* attribute,
+                  const pxr::VtValue& val,
+                  const ColorManagement* colorManagement)
+{
+    if (val.IsHolding<pxr::GfVec4f>()) {
+        pxr::GfVec4f color = val.UncheckedGet<pxr::GfVec4f>();
+        if (colorManagement) {
+            color = colorManagement->toWorkingSpace(color);
+        }
+        sceneObj->set(AttributeKey<Rgba>(*attribute), Rgba(color[0], color[1], color[2], color[3]));
+        _clearBinding(sceneObj, attribute);
+        return true;
+    }
+    return false;
+}
+
+static bool
+_setRgbVectorAttribute(SceneObject* sceneObj,
+                       const Attribute* attribute,
+                       const pxr::VtValue& val,
+                       const ColorManagement* colorManagement)
+{
+    if (!val.IsHolding<pxr::VtArray<pxr::GfVec3f>>()) {
+        return false;
+    }
+    const pxr::VtArray<pxr::GfVec3f>& input =
+        val.UncheckedGet<pxr::VtArray<pxr::GfVec3f>>();
+    RgbVector output;
+    output.reserve(input.size());
+    for (pxr::GfVec3f color : input) {
+        if (colorManagement) {
+            color = colorManagement->toWorkingSpace(color);
+        }
+        output.emplace_back(color[0], color[1], color[2]);
+    }
+    sceneObj->set(AttributeKey<RgbVector>(*attribute), output);
+    _clearBinding(sceneObj, attribute);
+    return true;
+}
+
+static bool
+_setRgbaVectorAttribute(SceneObject* sceneObj,
+                        const Attribute* attribute,
+                        const pxr::VtValue& val,
+                        const ColorManagement* colorManagement)
+{
+    if (!val.IsHolding<pxr::VtArray<pxr::GfVec4f>>()) {
+        return false;
+    }
+    const pxr::VtArray<pxr::GfVec4f>& input =
+        val.UncheckedGet<pxr::VtArray<pxr::GfVec4f>>();
+    RgbaVector output;
+    output.reserve(input.size());
+    for (pxr::GfVec4f color : input) {
+        if (colorManagement) {
+            color = colorManagement->toWorkingSpace(color);
+        }
+        output.emplace_back(color[0], color[1], color[2], color[3]);
+    }
+    sceneObj->set(AttributeKey<RgbaVector>(*attribute), output);
+    _clearBinding(sceneObj, attribute);
+    return true;
+}
+
 void
 ValueConverter::setAttribute(SceneObject* sceneObj, const Attribute* attribute, const pxr::VtValue& val)
+{
+    setAttribute(sceneObj, attribute, val, nullptr);
+}
+
+void
+ValueConverter::setAttribute(SceneObject* sceneObj, const Attribute* attribute, const pxr::VtValue& val,
+                             const ColorManagement* colorManagement)
 {
     switch(attribute->getType()) {
     case TYPE_BOOL:
@@ -169,10 +411,15 @@ ValueConverter::setAttribute(SceneObject* sceneObj, const Attribute* attribute, 
                 key = &(val.UncheckedGet<pxr::TfToken>().GetString());
             } else if (val.IsHolding<std::string>()) {
                 key = &(val.UncheckedGet<std::string>());
-            } else if (val.IsHolding<long>() || val.IsHolding<int>()) {
-                const int intVal = val.IsHolding<long>() ?
-                                   static_cast<int>(val.UncheckedGet<long>()) :
-                                   val.UncheckedGet<int>();
+            } else {
+                std::int64_t int64Val = 0;
+                if (!_extractIntegral64(val, &int64Val)) {
+                    break; // go print normal error message
+                }
+                Int intVal = 0;
+                if (!_narrowIntChecked(sceneObj, attribute, int64Val, &intVal)) {
+                    return;
+                }
                 int index = 0;
                 for (auto it = attribute->beginEnumValues(); it != attribute->endEnumValues(); ++it) {
                     if (index == intVal) {
@@ -182,8 +429,6 @@ ValueConverter::setAttribute(SceneObject* sceneObj, const Attribute* attribute, 
                     ++index;
                 }
                 break;
-            } else {
-                break; // go print normal error message
             }
             for (auto it = attribute->beginEnumValues(); it != attribute->endEnumValues(); ++it) {
                 if (it->second == *key) {
@@ -195,10 +440,16 @@ ValueConverter::setAttribute(SceneObject* sceneObj, const Attribute* attribute, 
             Logger::error(sceneObj->getName(), '.', attribute->getName(),
                           ": Invalid enum key '", *key, "'");
             return;
-        } else  if (val.IsHolding<long>()) {
-            sceneObj->set(AttributeKey<Int>(*attribute), static_cast<int>(val.UncheckedGet<long>()));
-            return;
         } else {
+            std::int64_t int64Val = 0;
+            if (_extractIntegral64(val, &int64Val)) {
+                Int intVal = 0;
+                if (!_narrowIntChecked(sceneObj, attribute, int64Val, &intVal)) {
+                    return;
+                }
+                sceneObj->set(AttributeKey<Int>(*attribute), intVal);
+                return;
+            }
             if (_setAttributeRef<Int, int>(sceneObj, attribute, val)) return;
         }
         break;
@@ -206,20 +457,29 @@ ValueConverter::setAttribute(SceneObject* sceneObj, const Attribute* attribute, 
         if (_setAttributeRef<Long, long>(sceneObj, attribute, val)) return;
         break;
     case TYPE_FLOAT:
-        if (val.IsHolding<int>()) {
-            const float floatVal = static_cast<float>(val.UncheckedGet<int>());
-            sceneObj->set(AttributeKey<Float>(*attribute), floatVal);
-            return;
-        } else if (val.IsHolding<long>()) {
-            const float floatVal = static_cast<float>(val.UncheckedGet<long>());
-            sceneObj->set(AttributeKey<Float>(*attribute), floatVal);
-            return;
-        } else {
-            if (_setAttributeRef<Float, float>(sceneObj, attribute, val)) return;
-            if (_setAttribute<Float, double>(sceneObj, attribute, val)) return;
-            // handle incorrect types in Input bindings
-            if (_setAttributeRef<Float, pxr::GfVec3f>(sceneObj, attribute, val)) return;
+        {
+            std::int64_t int64Val = 0;
+            if (_extractIntegral64(val, &int64Val)) {
+                _setFloatFromIntegral64(sceneObj, attribute, int64Val);
+                return;
+            }
         }
+        if (val.IsHolding<unsigned long long>()) {
+            const unsigned long long ullVal = val.UncheckedGet<unsigned long long>();
+            if (static_cast<long double>(ullVal) >
+                    static_cast<long double>(std::numeric_limits<Float>::max())) {
+                Logger::error(sceneObj->getName(), '.', attribute->getName(),
+                              ": unsigned integer value ", ullVal, " out of Float range");
+                return;
+            }
+            sceneObj->set(AttributeKey<Float>(*attribute), static_cast<Float>(ullVal));
+            _clearBinding(sceneObj, attribute);
+            return;
+        }
+        if (_setAttributeRef<Float, float>(sceneObj, attribute, val)) return;
+        if (_setAttribute<Float, double>(sceneObj, attribute, val)) return;
+        // handle incorrect types in Input bindings
+        if (_setAttributeRef<Float, pxr::GfVec3f>(sceneObj, attribute, val)) return;
         break;
     case TYPE_DOUBLE:
         if (_setAttributeRef<Double, double>(sceneObj, attribute, val)) return;
@@ -236,11 +496,10 @@ ValueConverter::setAttribute(SceneObject* sceneObj, const Attribute* attribute, 
         if (_setAttributeRef<String, pxr::TfToken>(sceneObj, attribute, val)) return;
         break;
     case TYPE_RGB:
-        if (_setAttributeRef<Rgb, pxr::GfVec3f>(sceneObj, attribute, val)) return;
-        if (_setAttributeRef<Rgb, pxr::GfVec4f>(sceneObj, attribute, val)) return; // in seaside scene preview shaders
+        if (_setRgbAttribute(sceneObj, attribute, val, colorManagement)) return;
         break;
     case TYPE_RGBA:
-        if (_setAttributeRef<Rgba, pxr::GfVec4f>(sceneObj, attribute, val)) return;
+        if (_setRgbaAttribute(sceneObj, attribute, val, colorManagement)) return;
         break;
     case TYPE_VEC2F:
         if (_setAttributeRef<Vec2f, pxr::GfVec2f>(sceneObj, attribute, val)) return;
@@ -282,6 +541,22 @@ ValueConverter::setAttribute(SceneObject* sceneObj, const Attribute* attribute, 
         break;
     case TYPE_INT_VECTOR:
         if (_setAttribute<IntVector, pxr::VtArray<int>>(sceneObj, attribute, val)) return;
+        if (val.IsHolding<pxr::TfToken>()) {
+            const std::string token = val.UncheckedGet<pxr::TfToken>().GetString();
+            if (_setRampInterpolationVectorFromToken(sceneObj, attribute, token)) return;
+            Logger::warn(sceneObj->getName(), '.', attribute->getName(),
+                         ": unsupported scalar token value '", token,
+                         "' for IntVector attribute; keeping the MoonRay default");
+            return;
+        }
+        if (val.IsHolding<std::string>()) {
+            const std::string token = val.UncheckedGet<std::string>();
+            if (_setRampInterpolationVectorFromToken(sceneObj, attribute, token)) return;
+            Logger::warn(sceneObj->getName(), '.', attribute->getName(),
+                         ": unsupported scalar string value '", token,
+                         "' for IntVector attribute; keeping the MoonRay default");
+            return;
+        }
         break;
     case TYPE_LONG_VECTOR:
         if (_setAttribute<LongVector, pxr::VtArray<long>>(sceneObj, attribute, val)) return;
@@ -296,10 +571,10 @@ ValueConverter::setAttribute(SceneObject* sceneObj, const Attribute* attribute, 
         if (_setAttribute<StringVector, pxr::VtArray<std::string>>(sceneObj, attribute, val)) return;
         break;
     case TYPE_RGB_VECTOR:
-        if (_setAttribute<RgbVector, pxr::VtArray<pxr::GfVec3f>>(sceneObj, attribute, val)) return;
+        if (_setRgbVectorAttribute(sceneObj, attribute, val, colorManagement)) return;
         break;
     case TYPE_RGBA_VECTOR:
-        if (_setAttribute<RgbaVector, pxr::VtArray<pxr::GfVec4f>>(sceneObj, attribute, val)) return;
+        if (_setRgbaVectorAttribute(sceneObj, attribute, val, colorManagement)) return;
         break;
     case TYPE_VEC2F_VECTOR:
         if (_setAttribute<Vec2fVector, pxr::VtArray<pxr::GfVec2f>>(sceneObj, attribute, val)) return;
