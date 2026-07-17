@@ -5,6 +5,9 @@
 
 #include <scene_rdl2/render/logging/logging.h>
 
+#include <cstdint>
+#include <limits>
+
 #include <pxr/usd/sdf/assetPath.h>
 
 namespace hdMoonray {
@@ -15,6 +18,39 @@ static void _clearBinding(SceneObject* sceneObj, const Attribute* attribute)
 {
     if (attribute->isBindable())
         sceneObj->setBinding(*attribute,nullptr);
+}
+
+static bool _extractIntegral64(const pxr::VtValue& val, std::int64_t* out)
+{
+    if (val.IsHolding<int>()) {
+        *out = static_cast<std::int64_t>(val.UncheckedGet<int>());
+        return true;
+    }
+    if (val.IsHolding<long>()) {
+        *out = static_cast<std::int64_t>(val.UncheckedGet<long>());
+        return true;
+    }
+    if (val.IsHolding<long long>()) {
+        *out = static_cast<std::int64_t>(val.UncheckedGet<long long>());
+        return true;
+    }
+    return false;
+}
+
+static bool _narrowIntChecked(SceneObject* sceneObj,
+                              const Attribute* attribute,
+                              std::int64_t value,
+                              Int* out)
+{
+    constexpr std::int64_t kMin = static_cast<std::int64_t>(std::numeric_limits<Int>::min());
+    constexpr std::int64_t kMax = static_cast<std::int64_t>(std::numeric_limits<Int>::max());
+    if (value < kMin || value > kMax) {
+        Logger::error(sceneObj->getName(), '.', attribute->getName(),
+                      ": integer value ", value, " out of Int range [", kMin, ", ", kMax, "]");
+        return false;
+    }
+    *out = static_cast<Int>(value);
+    return true;
 }
 
 template<typename T>
@@ -169,10 +205,15 @@ ValueConverter::setAttribute(SceneObject* sceneObj, const Attribute* attribute, 
                 key = &(val.UncheckedGet<pxr::TfToken>().GetString());
             } else if (val.IsHolding<std::string>()) {
                 key = &(val.UncheckedGet<std::string>());
-            } else if (val.IsHolding<long>() || val.IsHolding<int>()) {
-                const int intVal = val.IsHolding<long>() ?
-                                   static_cast<int>(val.UncheckedGet<long>()) :
-                                   val.UncheckedGet<int>();
+            } else {
+                std::int64_t int64Val = 0;
+                if (!_extractIntegral64(val, &int64Val)) {
+                    break; // go print normal error message
+                }
+                Int intVal = 0;
+                if (!_narrowIntChecked(sceneObj, attribute, int64Val, &intVal)) {
+                    return;
+                }
                 int index = 0;
                 for (auto it = attribute->beginEnumValues(); it != attribute->endEnumValues(); ++it) {
                     if (index == intVal) {
@@ -182,8 +223,6 @@ ValueConverter::setAttribute(SceneObject* sceneObj, const Attribute* attribute, 
                     ++index;
                 }
                 break;
-            } else {
-                break; // go print normal error message
             }
             for (auto it = attribute->beginEnumValues(); it != attribute->endEnumValues(); ++it) {
                 if (it->second == *key) {
@@ -195,10 +234,16 @@ ValueConverter::setAttribute(SceneObject* sceneObj, const Attribute* attribute, 
             Logger::error(sceneObj->getName(), '.', attribute->getName(),
                           ": Invalid enum key '", *key, "'");
             return;
-        } else  if (val.IsHolding<long>()) {
-            sceneObj->set(AttributeKey<Int>(*attribute), static_cast<int>(val.UncheckedGet<long>()));
-            return;
         } else {
+            std::int64_t int64Val = 0;
+            if (_extractIntegral64(val, &int64Val)) {
+                Int intVal = 0;
+                if (!_narrowIntChecked(sceneObj, attribute, int64Val, &intVal)) {
+                    return;
+                }
+                sceneObj->set(AttributeKey<Int>(*attribute), intVal);
+                return;
+            }
             if (_setAttributeRef<Int, int>(sceneObj, attribute, val)) return;
         }
         break;
