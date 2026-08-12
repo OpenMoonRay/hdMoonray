@@ -6,7 +6,7 @@ def Xform "world"
     uniform token[] xformOpOrder = ["xformOp:rotateX"]
     float3 xformOp:rotate = (0,1,0)
 
-def Procedural "sphere"
+def Procedural "sphere" (prepend apiSchemas = ["MaterialBindingAPI"])
 {
     token procedural:class = "SphereGeometry"
     matrix4d xformOp:transform = ( (1, 0, 0, 0), (0, 1, 0, 0), (0, 0, 1, 0), (-1.5, 0, 0, 1) )
@@ -149,3 +149,6 @@ def Mesh "plane"
 
 }
 
+def DomeLight "defaultLight"
+{
+}

@@ -1,10 +1,12 @@
 SceneVariables {
-    ["camera"] = PerspectiveCamera("primaryCamera"),
-    ["layer"] = Layer("defaultLayer"),
+    ["camera"] = PerspectiveCamera("/DEFAULT/primaryCamera"),
+    ["layer"] = Layer("/DEFAULT/defaultLayer"),
+    ["image_width"] = 960,
+    ["image_height"] = 1467,
     ["enable_motion_blur"] = false,
 }
 
-ImageMap("/surfacing_floor/floorMap.out") {
+ImageMap("/surfacing_floor/floorMap") {
     ["wrap_around"] = false,
     ["texture"] = "/work/gshad/moonshine_test/rats_data/camera/perspective/clipping/misc/rgb_checker.tx",
     ["gamma"] = "on",
@@ -102,7 +104,7 @@ RdlMeshGeometry("/wallGeom/_") {
     ["primitive_attributes"] = { UserData("/wallGeom/_.primvars:primId")},
 }
 
-GeometrySet("allGeometry") {
+GeometrySet("/DEFAULT/allGeometry") {
     RdlMeshGeometry("/box0"),
     RdlMeshGeometry("/box1"),
     RdlMeshGeometry("/box2"),
@@ -115,28 +117,30 @@ GeometrySet("allGeometry") {
     RdlMeshGeometry("/wallGeom/_"),
 }
 
-Layer("defaultLayer") {
-    {RdlMeshGeometry("/box0"), "", BaseMaterial("/surfacing_box/baseMtl"), LightSet("LightSet0C05F3"), undef(), undef(), undef(), undef(), undef()},
-    {RdlMeshGeometry("/box1"), "", BaseMaterial("/surfacing_box/baseMtl"), LightSet("LightSet0C05F3"), undef(), undef(), undef(), undef(), undef()},
-    {RdlMeshGeometry("/box2"), "", BaseMaterial("/surfacing_box/baseMtl"), LightSet("LightSet0C05F3"), undef(), undef(), undef(), undef(), undef()},
-    {RdlMeshGeometry("/box3"), "", BaseMaterial("/surfacing_box/baseMtl"), LightSet("LightSet0C05F3"), undef(), undef(), undef(), undef(), undef()},
-    {RdlMeshGeometry("/box4"), "", BaseMaterial("/surfacing_box/baseMtl"), LightSet("LightSet0C05F3"), undef(), undef(), undef(), undef(), undef()},
-    {RdlMeshGeometry("/box5"), "", BaseMaterial("/surfacing_box/baseMtl"), LightSet("LightSet0C05F3"), undef(), undef(), undef(), undef(), undef()},
-    {RdlMeshGeometry("/box6"), "", BaseMaterial("/surfacing_box/baseMtl"), LightSet("LightSet0C05F3"), undef(), undef(), undef(), undef(), undef()},
-    {RdlMeshGeometry("/box7"), "", BaseMaterial("/surfacing_box/baseMtl"), LightSet("LightSet0C05F3"), undef(), undef(), undef(), undef(), undef()},
-    {RdlMeshGeometry("/floorGeom/_"), "", BaseMaterial("/surfacing_floor/baseMtl"), LightSet("LightSet0C05F3"), undef(), undef(), undef(), undef(), undef()},
-    {RdlMeshGeometry("/wallGeom/_"), "", BaseMaterial("/surfacing_floor/baseMtl"), LightSet("LightSet0C05F3"), undef(), undef(), undef(), undef(), undef()},
+Layer("/DEFAULT/defaultLayer") {
+    {RdlMeshGeometry("/box0"), "", DwaBaseMaterial("/surfacing_box/baseMtl"), LightSet("LightSet0C05F3"), undef(), undef(), LightFilterSet("/DEFAULT/emptyLightFilterSet"), undef(), undef()},
+    {RdlMeshGeometry("/box1"), "", DwaBaseMaterial("/surfacing_box/baseMtl"), LightSet("LightSet0C05F3"), undef(), undef(), LightFilterSet("/DEFAULT/emptyLightFilterSet"), undef(), undef()},
+    {RdlMeshGeometry("/box2"), "", DwaBaseMaterial("/surfacing_box/baseMtl"), LightSet("LightSet0C05F3"), undef(), undef(), LightFilterSet("/DEFAULT/emptyLightFilterSet"), undef(), undef()},
+    {RdlMeshGeometry("/box3"), "", DwaBaseMaterial("/surfacing_box/baseMtl"), LightSet("LightSet0C05F3"), undef(), undef(), LightFilterSet("/DEFAULT/emptyLightFilterSet"), undef(), undef()},
+    {RdlMeshGeometry("/box4"), "", DwaBaseMaterial("/surfacing_box/baseMtl"), LightSet("LightSet0C05F3"), undef(), undef(), LightFilterSet("/DEFAULT/emptyLightFilterSet"), undef(), undef()},
+    {RdlMeshGeometry("/box5"), "", DwaBaseMaterial("/surfacing_box/baseMtl"), LightSet("LightSet0C05F3"), undef(), undef(), LightFilterSet("/DEFAULT/emptyLightFilterSet"), undef(), undef()},
+    {RdlMeshGeometry("/box6"), "", DwaBaseMaterial("/surfacing_box/baseMtl"), LightSet("LightSet0C05F3"), undef(), undef(), LightFilterSet("/DEFAULT/emptyLightFilterSet"), undef(), undef()},
+    {RdlMeshGeometry("/box7"), "", DwaBaseMaterial("/surfacing_box/baseMtl"), LightSet("LightSet0C05F3"), undef(), undef(), LightFilterSet("/DEFAULT/emptyLightFilterSet"), undef(), undef()},
+    {RdlMeshGeometry("/floorGeom/_"), "", DwaBaseMaterial("/surfacing_floor/baseMtl"), LightSet("LightSet0C05F3"), undef(), undef(), LightFilterSet("/DEFAULT/emptyLightFilterSet"), undef(), undef()},
+    {RdlMeshGeometry("/wallGeom/_"), "", DwaBaseMaterial("/surfacing_floor/baseMtl"), LightSet("LightSet0C05F3"), undef(), undef(), LightFilterSet("/DEFAULT/emptyLightFilterSet"), undef(), undef()},
 }
 
-BaseMaterial("/surfacing_box/baseMtl") {
+DwaBaseMaterial("/surfacing_box/baseMtl") {
 }
 
-BaseMaterial("/surfacing_floor/baseMtl") {
-    ["diffuse_color"] = bind(ImageMap("/surfacing_floor/floorMap.out"), Rgb(1, 1, 1)),
-    ["specular_factor"] = 0,
+DwaBaseMaterial("/surfacing_floor/baseMtl") {
+    ["albedo"] = bind(ImageMap("/surfacing_floor/floorMap"), Rgb(1, 1, 1)),
 }
 
 EnvLight("/l0") {
+}
+
+LightFilterSet("/DEFAULT/emptyLightFilterSet") {
 }
 
 LightSet("LightSet0C05F3") {
@@ -149,45 +153,27 @@ PerspectiveCamera("/camera") {
     ["mb_shutter_open"] = 0,
     ["mb_shutter_close"] = 0,
     ["focal"] = blur(10, 10),
-    ["film_width_aperture"] = 10,
+    ["film_width_aperture"] = 10.0062494,
     ["dof"] = true,
     ["dof_aperture"] = 4,
     ["dof_focus_distance"] = 1,
 }
 
-PerspectiveCamera("primaryCamera") {
+PerspectiveCamera("/DEFAULT/primaryCamera") {
     ["node_xform"] = blur(Mat4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 2, 1), Mat4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 2, 1)),
     ["near"] = 0.100000001,
     ["mb_shutter_open"] = 0,
     ["mb_shutter_close"] = 0,
     ["focal"] = blur(10, 10),
-    ["film_width_aperture"] = 10,
+    ["film_width_aperture"] = 10.0062494,
     ["dof"] = true,
     ["dof_aperture"] = 4,
     ["dof_focus_distance"] = 1,
 }
 
-UserData("/box5.primvars:primId") {
-    ["float_key"] = "primId",
-    ["float_values_0"] = { 7},
-    ["rate"] = "constant",
-}
-
-UserData("/box7.primvars:primId") {
-    ["float_key"] = "primId",
-    ["float_values_0"] = { 9},
-    ["rate"] = "constant",
-}
-
 UserData("/box3.primvars:primId") {
     ["float_key"] = "primId",
     ["float_values_0"] = { 5},
-    ["rate"] = "constant",
-}
-
-UserData("/box0.primvars:primId") {
-    ["float_key"] = "primId",
-    ["float_values_0"] = { 2},
     ["rate"] = "constant",
 }
 
@@ -197,10 +183,11 @@ UserData("/floorGeom/_.primvars:primId") {
     ["rate"] = "constant",
 }
 
-UserData("/wallGeom/_.primvars:primId") {
-    ["float_key"] = "primId",
-    ["float_values_0"] = { 1},
-    ["rate"] = "constant",
+RenderOutput("/_outputs/elementId") {
+    ["result"] = "primitive attribute",
+    ["primitive_attribute"] = "elementId",
+    ["file_name"] = "/tmp/scene.exr",
+    ["math_filter"] = "closest",
 }
 
 UserData("/box4.primvars:primId") {
@@ -209,9 +196,53 @@ UserData("/box4.primvars:primId") {
     ["rate"] = "constant",
 }
 
+RenderOutput("/_outputs/instanceId") {
+    ["result"] = "primitive attribute",
+    ["primitive_attribute"] = "instanceId",
+    ["file_name"] = "/tmp/scene.exr",
+    ["math_filter"] = "closest",
+}
+
+UserData("/box7.primvars:primId") {
+    ["float_key"] = "primId",
+    ["float_values_0"] = { 9},
+    ["rate"] = "constant",
+}
+
+UserData("/box2.primvars:primId") {
+    ["float_key"] = "primId",
+    ["float_values_0"] = { 4},
+    ["rate"] = "constant",
+}
+
+RenderOutput("/_outputs/depth") {
+    ["result"] = "depth",
+    ["file_name"] = "/tmp/scene.exr",
+    ["math_filter"] = "min",
+}
+
 UserData("/box1.primvars:primId") {
     ["float_key"] = "primId",
     ["float_values_0"] = { 3},
+    ["rate"] = "constant",
+}
+
+RenderOutput("/_outputs/primId") {
+    ["result"] = "primitive attribute",
+    ["primitive_attribute"] = "primId",
+    ["file_name"] = "/tmp/scene.exr",
+    ["math_filter"] = "closest",
+}
+
+UserData("/wallGeom/_.primvars:primId") {
+    ["float_key"] = "primId",
+    ["float_values_0"] = { 1},
+    ["rate"] = "constant",
+}
+
+UserData("/box0.primvars:primId") {
+    ["float_key"] = "primId",
+    ["float_values_0"] = { 2},
     ["rate"] = "constant",
 }
 
@@ -221,8 +252,14 @@ UserData("/box6.primvars:primId") {
     ["rate"] = "constant",
 }
 
-UserData("/box2.primvars:primId") {
+UserData("/box5.primvars:primId") {
     ["float_key"] = "primId",
-    ["float_values_0"] = { 4},
+    ["float_values_0"] = { 7},
     ["rate"] = "constant",
+}
+
+RenderOutput("/_outputs/instanceIdA") {
+    ["result"] = "primitive attribute",
+    ["primitive_attribute"] = "instanceIdA",
+    ["math_filter"] = "closest",
 }

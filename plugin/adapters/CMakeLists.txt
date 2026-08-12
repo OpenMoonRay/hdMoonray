@@ -14,13 +14,15 @@ set_target_properties(${component} PROPERTIES PREFIX "")
 
 # Custom DWA source file
 if ("$ENV{STUDIO}" STREQUAL "GLD")
-    set(DwaSpecificSources ProceduralAdapter.cc)
+    set(DwaSpecificSources ProceduralAdapter.cc dataSourceProcedural.cc)
 endif()
 
 target_sources(${component}
     PRIVATE
         MoonrayMeshLightAdapter.cc
         MoonrayLightFilterAdapter.cc
+        dataSourceLightFilter.cc
+        dataSourceMeshLight.cc
         ${DwaSpecificSources}
 )
 

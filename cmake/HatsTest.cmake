@@ -23,9 +23,13 @@
 function(add_hats_test test_basename)
     # test_basename:                 basename of tests. By convention includes relative folder structure, example: geometry_basis_curves
 
-    cmake_parse_arguments(ARG "" "CAMERA" "" ${ARGN})
+    set(oneValueArgs CAMERA RENDER_SETTINGS)
+    cmake_parse_arguments(ARG "" "${oneValueArgs}" "" ${ARGN})
     if (DEFINED ARG_CAMERA)
-        set(camera_opt -camera "${ARG_CAMERA}")
+        set(camera_opt "cam=${ARG_CAMERA}")
+    endif()
+    if (DEFINED ARG_RENDER_SETTINGS)
+        set(rs_opt "rs=${ARG_RENDER_SETTINGS}")
     endif()
 
     set(input_usd ${CMAKE_CURRENT_SOURCE_DIR}/${test_basename}.usd)
@@ -33,11 +37,13 @@ function(add_hats_test test_basename)
     set(canonical_rdl ${CMAKE_CURRENT_SOURCE_DIR}/${test_basename}.canonical.rdla)
     set(generated_exr ${CMAKE_CURRENT_BINARY_DIR}/${test_basename}.exr)
     set(canonical_exr ${CMAKE_CURRENT_BINARY_DIR}/${test_basename}.canonical.exr)
-
+    set(dummy_exr /tmp/${test_basename}_dummy.exr)
+    
     set(generate_test_name hats_generate_${test_basename})
+  
     add_test(NAME ${generate_test_name}
              WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-             COMMAND hd_usd2rdl -in "${input_usd}" -out "${generated_rdl}" ${camera_opt}
+             COMMAND  python "${CMAKE_SOURCE_DIR}/cmake/generate_rdla.py" "${input_usd}" "${generated_rdl}" ${rs_opt} ${camera_opt}
     )
     set_tests_properties(${generate_test_name} PROPERTIES
             LABELS "generate"
@@ -67,5 +73,13 @@ function(add_hats_test test_basename)
     set_tests_properties(${render_test_name} PROPERTIES
             LABELS "render"
             DEPENDS ${generate_test_name}
+    )
+    
+    set(rendercanonical_test_name hats_rendercanonical_${test_basename})
+    add_test(NAME ${rendercanonical_test_name}
+             COMMAND moonray -in "${canonical_rdl}" -out "${canonical_exr}"
+    )
+    set_tests_properties(${rendercanonical_test_name} PROPERTIES
+            LABELS "rendercanonical"
     )
 endfunction()
