@@ -209,9 +209,11 @@ Mesh::syncSubdivScheme(const HdMeshTopology& topology,
     // - the refine level is < 1
     // - the "forcePolgon" render setting is on, or
     // - the subd scheme is "none"
-    bool disableSubd = _GetReprDesc(reprToken)[0].flatShadingEnabled ||
+    bool flatShading = _GetReprDesc(reprToken)[0].flatShadingEnabled;
+    bool forcePolygon = renderDelegate.getForcePolygon();
+    bool disableSubd = flatShading ||
                        refineLevel < 1 ||
-                       renderDelegate.getForcePolygon() ||
+                       forcePolygon ||
                        subdScheme == PxOsdOpenSubdivTokens->none;
 
 
@@ -235,9 +237,16 @@ Mesh::syncSubdivScheme(const HdMeshTopology& topology,
     }
 
     if (not isPrimvarUsed(smoothNormalToken)) {
-        // polygons should not autogenerate smooth normals, per UsdGeomMesh doc
-        if (disableSubd)
-            geometry()->set(rdlAttrSmoothNormal, false);
+        if (disableSubd) {
+            // Preserve the smooth appearance of Catmull-Clark meshes when
+            // refinement is zero. Explicit flat shading, forcePolygon, and
+            // non-subdivision meshes remain flat.
+            bool smoothNormal = !flatShading &&
+                                !forcePolygon &&
+                                subdScheme != PxOsdOpenSubdivTokens->none &&
+                                rdlScheme == rdlSubdSchemeCatClark;
+            geometry()->set(rdlAttrSmoothNormal, smoothNormal);
+        }
     }
 }
 
