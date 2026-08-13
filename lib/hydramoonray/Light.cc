@@ -404,8 +404,12 @@ Light::Sync(pxr::HdSceneDelegate *sceneDelegate,
         // Value is either "" or "<id>.collection:lightLink" though this will allow others.
         // Currently Finalize() is called when value changes, but this may be a bug.
         bool categoriesChanged = false;
-        pxr::TfToken t =
-            sceneDelegate->GetLightParamValue(id, pxr::HdTokens->lightLink).Get<pxr::TfToken>();
+        pxr::VtValue value =
+            sceneDelegate->GetLightParamValue(id, pxr::HdTokens->lightLink);
+        pxr::TfToken t;
+        if (value.IsHolding<pxr::TfToken>()) {
+            t = value.UncheckedGet<pxr::TfToken>();
+        }
         // registering the category id token with RenderDelegate will enable geometry
         // to look up mLight as the rdl2 scene object corresponding to this category id
         if (initialize || t != mLightLinkCategory) {
@@ -417,7 +421,12 @@ Light::Sync(pxr::HdSceneDelegate *sceneDelegate,
             categoriesChanged = true;
         }
         // "shadowLink" is much the same
-        t = sceneDelegate->GetLightParamValue(id, pxr::HdTokens->shadowLink).Get<pxr::TfToken>();
+        value = sceneDelegate->GetLightParamValue(id, pxr::HdTokens->shadowLink);
+        if (value.IsHolding<pxr::TfToken>()) {
+            t = value.UncheckedGet<pxr::TfToken>();
+        } else {
+            t = pxr::TfToken();
+        }
         if (initialize || t != mShadowLinkCategory) {
             if (!initialize) {
                 renderDelegate.releaseCategory(mLight, RenderDelegate::CategoryType::ShadowLink, mShadowLinkCategory);
