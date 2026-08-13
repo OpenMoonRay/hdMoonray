@@ -310,6 +310,8 @@ HdMoonray_Light::syncParams(const SdfPath& id,
                         }
                     } 
                 }
+            } else {
+                mMoonrayLight.set("geometry", MoonrayObject());
             }
             continue;
         }

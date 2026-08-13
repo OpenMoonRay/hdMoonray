@@ -1,9 +1,9 @@
-// Copyright 2023-2024 DreamWorks Animation LLC
+// Copyright 2023-2026 DreamWorks Animation LLC
 // SPDX-License-Identifier: Apache-2.0
 
 // Camera Sprim, implemented by RDL2 PerspectiveCamera
 //
-// This is complicted by the fact that earlier versions of Moonray did not like changing
+// This is complicated by the fact that earlier versions of Moonray did not like changing
 // which camera was used after the first render, so this copies all the perspective
 // cameras to a single primary camera. This may be fixed now and can be removed.
 
@@ -19,7 +19,6 @@
 #include "pxr/base/gf/frustum.h"
 #include "pxr/base/gf/camera.h"
 
-#include <iostream>
 #include <atomic>
 
 // define this to avoid switching the identity of the perspective camera
@@ -48,7 +47,7 @@ HdMoonray_Camera::Sync(HdSceneDelegate* sceneDelegate,
     const SdfPath &id = GetId();
     hdmLogSyncStart("Camera", id, dirtyBits);
 
-    mSceneDelegate = sceneDelegate; // save for use by setAsPrimaryCamera() and RenderPass
+   
     HdMoonray_RenderDelegate& renderDelegate(HdMoonray_RenderDelegate::get(renderParam));
 
     // Remember the dirty bits, as HdCamera::Sync clears them
@@ -64,14 +63,14 @@ HdMoonray_Camera::Sync(HdSceneDelegate* sceneDelegate,
     { 
         VtValue v = sceneDelegate->GetCameraParamValue(GetId(), HdMoonrayTokens->moonray_class);
         if (v.IsHolding<TfToken>()) {
-
             newClass = v.UncheckedGet<TfToken>();
-
+            if (!renderDelegate.scene().checkClassInterface(newClass.GetString(), 
+                                                            hdMoonray::MoonrayAttribute::InterfaceType::INTERFACE_CAMERA)) {
+                Logger::error(GetId(), ": invalid MoonRay camera class '", newClass, "', using PerspectiveCamera");
+                newClass = HdMoonrayTokens->PerspectiveCamera;
+            }
         } else {
-
-            const auto& matrix = ComputeProjectionMatrix();
-
-            if (matrix[2][3] == 0) {
+            if (GetProjection() == HdCamera::Orthographic) {
                 newClass = HdMoonrayTokens->OrthographicCamera;
             } else {
                 newClass = HdMoonrayTokens->PerspectiveCamera;
@@ -80,7 +79,9 @@ HdMoonray_Camera::Sync(HdSceneDelegate* sceneDelegate,
     }
 
     // The camera is created lazily
-    std::lock_guard<std::mutex> lock(mCreateMutex);
+    std::lock_guard<std::mutex> lock(mMutex);
+    mSceneDelegate = sceneDelegate; // need to do this under lock to avoid race with setAsPrimaryCamera
+    
     if (newClass != mClass) {
         mClass = newClass;
         mMoonrayCamera = MoonrayObject();
@@ -92,15 +93,13 @@ HdMoonray_Camera::Sync(HdSceneDelegate* sceneDelegate,
 }
 
 // create the RDL camera if it doesn't exist, and update to match HdCamera
+// mMutex must be locked when this is called
 MoonrayObject
-HdMoonray_Camera::createCamera(HdSceneDelegate* sceneDelegate, HdMoonray_RenderDelegate& renderDelegate)
+HdMoonray_Camera::createCameraInternal(HdSceneDelegate* sceneDelegate, HdMoonray_RenderDelegate& renderDelegate)
 {
     if (mMoonrayCamera.isNull()) {
-        std::lock_guard<std::mutex> lock(mCreateMutex);
-        if (mMoonrayCamera.isNull()) {
-            mMoonrayCamera = renderDelegate.scene().createObject(mClass.GetString(), GetId());
-            updateCamera(sceneDelegate, renderDelegate, DirtyBits::AllDirty);
-        }
+        mMoonrayCamera = renderDelegate.scene().createObject(mClass.GetString(), GetId());
+        updateCamera(sceneDelegate, renderDelegate, DirtyBits::AllDirty);
     }
     return mMoonrayCamera;
 }
@@ -112,13 +111,14 @@ HdMoonray_Camera::createCamera(HdSceneDelegate* sceneDelegate, HdMoonray_RenderD
     HdMoonray_Camera* camera =
         dynamic_cast<HdMoonray_Camera*>(sceneDelegate->GetRenderIndex().GetSprim(HdPrimTypeTokens->camera, path));
     if (camera) {
-        return camera->createCamera(sceneDelegate, renderDelegate);
+        std::lock_guard<std::mutex> lock(camera->mMutex);
+        return camera->createCameraInternal(sceneDelegate, renderDelegate);
     }
     return nullptr;
 }
 
 // update the existing RDL camera (mCamera) based on the Hydra values and dirty mask
-// mCamera must exist when this is called
+// mCamera must exist when this is called, and mMutex must be locked
 void
 HdMoonray_Camera::updateCamera(HdSceneDelegate* sceneDelegate, HdMoonray_RenderDelegate& renderDelegate, HdDirtyBits bits)
 {
@@ -181,8 +181,9 @@ HdMoonray_Camera::updateCamera(HdSceneDelegate* sceneDelegate, HdMoonray_RenderD
         }
 
         // according to MOONRAY-4278, vertical offset needs to be adjusted
-        double adjustedAr = adjustedAperture[0]/apertureHeight;
-        vertOffset *= adjustedAr;
+        if (apertureHeight != 0) {
+            vertOffset *= adjustedAperture[0]/apertureHeight;
+        }
 
         mMoonrayCamera.set("film_width_aperture", (float)adjustedAperture[0]);
         mMoonrayCamera.set("horizontal_film_offset", horizOffset);
@@ -198,7 +199,7 @@ HdMoonray_Camera::updateCamera(HdSceneDelegate* sceneDelegate, HdMoonray_RenderD
     }
 
     // handles all other params
-    if (bits & (DirtyBits::DirtyParams | HdCamera::DirtyBits::DirtyParams)) {
+    if (bits & DirtyBits::DirtyParams) {
         
         VtValue v;
 
@@ -248,14 +249,20 @@ HdMoonray_Camera::updateCamera(HdSceneDelegate* sceneDelegate, HdMoonray_RenderD
 void
 HdMoonray_Camera::setAsPrimaryCamera(HdMoonray_RenderDelegate& renderDelegate, double aspectRatio)
 {
+    std::lock_guard<std::mutex> lock(mMutex);
+    if (mSceneDelegate == nullptr) {
+        Logger::error(GetId(), ": setAsPrimaryCamera() called before Sync()");
+        return;
+    }
+    createCameraInternal(mSceneDelegate, renderDelegate);
+
     if (aspectRatio != mDesiredAspectRatio) {
         mDesiredAspectRatio = aspectRatio;
         if (mMoonrayCamera.isValid()) {
-            // will adjusr camera to match mDesiredAspectRatio
+            // will adjust camera to match mDesiredAspectRatio
             updateCamera(mSceneDelegate, renderDelegate, HdCamera::DirtyBits::DirtyParams);
         }
     }
-    createCamera(mSceneDelegate, renderDelegate);
 
     MoonrayObject cameraToUse;
 

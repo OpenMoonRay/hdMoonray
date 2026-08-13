@@ -1,4 +1,4 @@
-// Copyright 2023-2024 DreamWorks Animation LLC
+// Copyright 2023-2026 DreamWorks Animation LLC
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -26,7 +26,6 @@ public:
     void Finalize(pxr::HdRenderParam *renderParam) override;
     ~HdMoonray_Camera();
 
-    MoonrayObject createCamera(pxr::HdSceneDelegate*, HdMoonray_RenderDelegate&);
     static MoonrayObject createCamera(pxr::HdSceneDelegate*, HdMoonray_RenderDelegate&, const pxr::SdfPath&);
 
     float getNear() const { return mNear; }
@@ -37,12 +36,14 @@ public:
     pxr::HdSceneDelegate* getSceneDelegate() const { return mSceneDelegate; }
 
 private:
+
+    MoonrayObject createCameraInternal(pxr::HdSceneDelegate*, HdMoonray_RenderDelegate&);
     pxr::HdSceneDelegate* mSceneDelegate = nullptr; // set by Sync, needed by setAsPrimaryCamera
     void updateCamera(pxr::HdSceneDelegate*, HdMoonray_RenderDelegate&, pxr::HdDirtyBits bits);
     
     MoonrayObject mMoonrayCamera;
 
-    std::mutex mCreateMutex;
+    std::mutex mMutex;
     float mNear = 1;
     float mFar = 10000;
     float mShutterOpen = 0;

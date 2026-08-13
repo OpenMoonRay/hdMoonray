@@ -15,7 +15,6 @@
 
 using namespace pxr;
 
-#include <iostream>
 namespace {
 
 VtValue getElement(const VtValue& array, size_t index)
@@ -69,7 +68,7 @@ HdMoonray_Instancer::~HdMoonray_Instancer()
 
 // Hydra sends several apparent junk primvars that are not in the usd data, ignore them
 static bool
-ignorePrimvar(TfToken name)
+ignorePrimvar(const TfToken& name)
 {
     if (name.GetText()[0] == '_') return true; // Hydra internal variables
     if (not strncmp(name.GetText(), "usd", 3)) return true; // sceneflow data
@@ -105,8 +104,6 @@ HdMoonray_Instancer::Sync(HdSceneDelegate* sceneDelegate,
     }
 
     if (HdChangeTracker::IsAnyPrimvarDirty(*dirtyBits, id)) {
-
-        TfTokenVector primvarNames;
 
         const HdPrimvarDescriptorVector& primvars =
             sceneDelegate->GetPrimvarDescriptors(id, HdInterpolationInstance);
@@ -177,12 +174,14 @@ HdMoonray_Instancer::makeInstanceGeometry(const SdfPath& prototypeId,
 
 
     // add crytomatte id if enabled
-    const std::string name("prim_id");
-    std::string suffix = "/Instancer.primvars:" + name + protoSuffix;
+    std::string suffix = "/Instancer.primvars:prim_id" + protoSuffix;
     MoonrayObject cryptoId = renderDelegate.scene().createObject("UserData",prototypeId, suffix);
-    UpdateGuard guard(cryptoId);
-    float hash = MurmurHash3_to_float(instancer.sceneObject()->getName().c_str());
-    cryptoId.setData(name, hash, TfToken());
+
+    {
+        UpdateGuard guard(renderDelegate, cryptoId);
+        float hash = MurmurHash3_to_float(instancer.sceneObject()->getName().c_str());
+        cryptoId.setData("prim_id", hash, TfToken());
+    }
 
     // note: how to get instance paths via SceneIndex
     // PrimAccess primAccess(id, HdInstancerTopologySchemaTokens->instancerTopology, sceneDelegate, renderDelegate);
@@ -198,7 +197,7 @@ HdMoonray_Instancer::makeInstanceGeometry(const SdfPath& prototypeId,
     primitiveAttributes.append(instanceId);
     primitiveAttributes.append(cryptoId);
 
-    for (auto p : mPrimvars) {
+    for (const auto& p : mPrimvars) {
         const TfToken& name = p.first;
         if (name == INSTANCE_TRANSFORMS ||
             name == INSTANCE_SCALES ||
@@ -258,10 +257,10 @@ HdMoonray_Instancer::makeInstanceGeometry(const SdfPath& prototypeId,
         instancer.set("references", MoonrayObjectVector(prototype));
         instancer.set("use_reference_xforms", true);
 
-        auto i = mPrimvars.find(INSTANCE_TRANSFORMS);
-        if (i != mPrimvars.end()) {
+        auto it = mPrimvars.find(INSTANCE_TRANSFORMS);
+        if (it != mPrimvars.end()) {
             instancer.set("method", XFORM_LIST);
-            const VtValue& value = i->second.value;
+            const VtValue& value = it->second.value;
             const VtMatrix4dArray& v = value.Get<VtMatrix4dArray>();
             if (not v.empty()) {
                 VtMatrix4dArray mv(count);
@@ -273,9 +272,9 @@ HdMoonray_Instancer::makeInstanceGeometry(const SdfPath& prototypeId,
         } else {
             instancer.set("method", XFORM_ATTRIBUTES);
 
-            i = mPrimvars.find(INSTANCE_SCALES);
-            if (i != mPrimvars.end()) {
-                const VtValue& value = i->second.value;
+            it = mPrimvars.find(INSTANCE_SCALES);
+            if (it != mPrimvars.end()) {
+                const VtValue& value = it->second.value;
                 const VtVec3fArray& v = value.Get<VtVec3fArray>();
                 if (not v.empty()) {
                     VtVec3fArray mv(count);
@@ -285,9 +284,9 @@ HdMoonray_Instancer::makeInstanceGeometry(const SdfPath& prototypeId,
                 }
             }
 
-            i = mPrimvars.find(INSTANCE_ROTATIONS);
-            if (i != mPrimvars.end()) {
-                const VtValue& value = i->second.value;
+            it = mPrimvars.find(INSTANCE_ROTATIONS);
+            if (it != mPrimvars.end()) {
+                const VtValue& value = it->second.value;
 
                 // in 0.21.11 the type of the rotations attr switched from VtVec4fArray to VtQuathArray
                 if (value.IsHolding<VtQuathArray>()) {
@@ -310,9 +309,9 @@ HdMoonray_Instancer::makeInstanceGeometry(const SdfPath& prototypeId,
                     }
                 }
             }
-            i = mPrimvars.find(INSTANCE_TRANSLATIONS);
-            if (i != mPrimvars.end()) {
-                const VtValue& value = i->second.value;
+            it = mPrimvars.find(INSTANCE_TRANSLATIONS);
+            if (it != mPrimvars.end()) {
+                const VtValue& value = it->second.value;
                 const VtVec3fArray& v = value.Get<VtVec3fArray>();
                 if (not v.empty()) {
                     VtVec3fArray mv(count);
@@ -393,8 +392,8 @@ HdMoonray_Instancer::makeInstanceLights(const SdfPath& prototypeId,
     }
 
     // get the categories of the prototype, so we can register the instances too
-    TfToken lightLinkCategory = sceneDelegate->GetLightParamValue(prototypeId, HdTokens->lightLink).Get<TfToken>();
-    TfToken shadowLinkCategory = sceneDelegate->GetLightParamValue(prototypeId, HdTokens->shadowLink).Get<TfToken>();
+    TfToken lightLinkCategory = sceneDelegate->GetLightParamValue(prototypeId, HdTokens->lightLink).GetWithDefault<TfToken>(TfToken());
+    TfToken shadowLinkCategory = sceneDelegate->GetLightParamValue(prototypeId, HdTokens->shadowLink).GetWithDefault<TfToken>(TfToken());
    
     // (re)build the instance lights
     std::lock_guard<std::mutex> lock(mMapMutex);
@@ -435,7 +434,7 @@ void
 HdMoonray_Instancer::applyPrimvarOverrides(MoonrayObject obj,
                                            int index)
 {
-    for (auto pv : mPrimvars) {
+    for (const auto& pv : mPrimvars) {
         if (strncmp(pv.first.GetText(), "moonray:", 8)==0) {
             std::string attrName = pv.first.GetString().substr(8);
             if (obj.hasAttribute(attrName)) {

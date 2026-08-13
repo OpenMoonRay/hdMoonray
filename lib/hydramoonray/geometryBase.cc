@@ -13,8 +13,6 @@
 #include <pxr/imaging/hd/extComputationUtils.h>
 #include <pxr/base/gf/vec2f.h>
 
-#include <iostream>
-
 using namespace pxr;
 
 namespace hdMoonray {
@@ -119,12 +117,11 @@ HdMoonray_GeometryBase::syncAttributes(HdSceneDelegate* sceneDelegate,
         // if there's only one sample, it should match the cached value
         if (sampledXforms.count <= 1) {
             mGeometry.set("node_xform",sampledXforms.values[0]);
-            mMirror = sampledXforms.values[0].GetDeterminant() < 0; // workaround for MOONRAY-3512
         } else {
             // first and last samples will be sample interval boundaries
             mGeometry.set("node_xform",sampledXforms.values[0], sampledXforms.values[sampledXforms.count-1]);
-            mMirror = sampledXforms.values[0].GetDeterminant() < 0; // workaround for MOONRAY-3512
        }
+       mMirror = sampledXforms.values[0].GetDeterminant() < 0; // workaround for MOONRAY-3512
     }
 
     // side_type can be overridden by a primvar, so we have to check this hasn't happened

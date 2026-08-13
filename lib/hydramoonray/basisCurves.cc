@@ -1,4 +1,4 @@
-// Copyright 2023-2024 DreamWorks Animation LLC
+// Copyright 2023-2026 DreamWorks Animation LLC
 // SPDX-License-Identifier: Apache-2.0
 
 // HdMoonray_BasisCurves are implemented using RdlCurveGeometry
@@ -18,8 +18,6 @@
 #include "tokens.h"
 
 #include <pxr/base/gf/vec2f.h>
-
-#include <iostream>
 
 using namespace pxr;
 namespace {
@@ -41,7 +39,7 @@ constexpr int rdlCurveType_bspline = 2;
 const std::string rdlAttrCurvesSubtype("curves_subtype");
 constexpr int rdlCurvesSubtype_rayFacing = 0;
 constexpr int rdlCurvesSubtype_round = 1;
-constexpr int rdlCurvesSubtype_normalOriented = 2;
+// subtype normalOriented is not used
 const std::string rdlAttrCurveVertexCounts("curves_vertex_count");
 const std::string rdlAttrTessellationRate("tessellation_rate");
 const std::string rdlAttrReverseNormals("reverse_normals");
@@ -86,26 +84,31 @@ HdMoonray_BasisCurves::GetInitialDirtyBitsMask() const
 void
 HdMoonray_BasisCurves::syncTopology(const HdBasisCurvesTopology& topology)
 {
-    mGeometry.set(rdlAttrCurveVertexCounts, topology.GetCurveVertexCounts());
-
     if (topology.HasIndices()) {
         Logger::error(GetId(), ": curve indices are not supported");
+        return;
+    }
+
+    if (topology.GetCurveWrap() != HdTokens->nonperiodic) {
+        Logger::error(GetId(), ": unsupported curve wrap '", topology.GetCurveWrap(), "'");
+        return;
     }
 
     // note Hydra has separate type (linear, cubic) and basis (bezier, bSpline, catmullRom)
     // where basis is ignored for linear type. RDL has a single type enum (linear, bezier, bspline)
     const TfToken curveType(topology.GetCurveType());
     const TfToken curveBasis(topology.GetCurveBasis());
-    int rdlCurveType(rdlCurveType_bspline);
+    int rdlCurveType;
     if (curveType == HdTokens->linear)  rdlCurveType = rdlCurveType_linear;
     else if (curveBasis == HdTokens->bezier) rdlCurveType = rdlCurveType_bezier;
     else if (curveBasis == HdTokens->bSpline) rdlCurveType = rdlCurveType_bspline;
-    else Logger::error(GetId(), ": unsupported curve basis '", curveBasis, "'");
-    mGeometry.set(rdlAttrCurveType, rdlCurveType);
-
-    if (topology.GetCurveWrap() != HdTokens->nonperiodic) {
-        Logger::error(GetId(), ": unsupported curve wrap '", topology.GetCurveWrap(), "'");
+    else {
+        Logger::error(GetId(), ": unsupported curve basis '", curveBasis, "'");
+        return;
     }
+
+    mGeometry.set(rdlAttrCurveType, rdlCurveType);
+    mGeometry.set(rdlAttrCurveVertexCounts, topology.GetCurveVertexCounts());
 }
 
 void
@@ -142,8 +145,7 @@ HdMoonray_BasisCurves::syncAttributes(HdSceneDelegate* sceneDelegate,
         syncDisplayStyle(GetDisplayStyle(sceneDelegate));
     }
 
-    if (HdChangeTracker::IsTopologyDirty(*dirtyBits, GetId()) ||
-        HdChangeTracker::IsTransformDirty(*dirtyBits, GetId())) {
+    if (HdChangeTracker::IsTransformDirty(*dirtyBits, GetId())) {
         mGeometry.set(rdlAttrReverseNormals, isMirror());
     }
 
@@ -175,6 +177,9 @@ HdMoonray_BasisCurves::primvarChanged(HdSceneDelegate *sceneDelegate,
             // width is diameter : convert to radius
             for (float& r : w) r /= 2;
             mGeometry.set(rdlAttrRadiusList, w);
+        } else {
+            Logger::error(GetId(), ": unsupported type for widths primvar");
+            mGeometry.setToDefault(rdlAttrRadiusList);
         }
     } else {
         // allow HdMoonray_GeometryBase to handle all other cases, including

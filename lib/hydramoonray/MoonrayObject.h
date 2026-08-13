@@ -267,36 +267,6 @@ inline void MoonrayAttribute::set<MoonrayObjectVector>(const MoonrayObjectVector
 }
 
 template <>
-inline void MoonrayAttribute::set<pxr::VtIntArray>(const pxr::VtIntArray& value) {
-    const int* p = reinterpret_cast<const int*>(&value[0]);
-    set(rdl2::IntVector(p, p + value.size()));
-}
-
-template <>
-inline void MoonrayAttribute::set<pxr::VtFloatArray>(const pxr::VtFloatArray& value) {
-    const float* p = reinterpret_cast<const float*>(&value[0]);
-    set(rdl2::FloatVector(p, p + value.size()));
-}
-
-template <>
-inline void MoonrayAttribute::set<pxr::VtVec2fArray>(const pxr::VtVec2fArray& value) {
-    const rdl2::Vec2f* p = reinterpret_cast<const rdl2::Vec2f*>(&value[0]);
-    set(rdl2::Vec2fVector(p, p + value.size()));
-}
-
-template <>
-inline void MoonrayAttribute::set<pxr::VtVec3fArray>(const pxr::VtVec3fArray& value) {
-    const rdl2::Vec3f* p = reinterpret_cast<const rdl2::Vec3f*>(&value[0]);
-    set(rdl2::Vec3fVector(p, p + value.size()));
-}
-
-template <>
-inline void MoonrayAttribute::set<pxr::VtVec4fArray>(const pxr::VtVec4fArray& value) {
-    const rdl2::Vec4f* p = reinterpret_cast<const rdl2::Vec4f*>(&value[0]);
-    set(rdl2::Vec4fVector(p, p + value.size()));
-}
-
-template <>
 inline void MoonrayAttribute::set<pxr::GfVec3f>(const pxr::GfVec3f& value) {
     set(reinterpret_cast<const rdl2::Vec3f&>(value));
 }
@@ -310,10 +280,46 @@ template <>
 inline void MoonrayAttribute::set<pxr::GfMatrix4d>(const pxr::GfMatrix4d& value0, const pxr::GfMatrix4d& value1) {
     set(reinterpret_cast<const rdl2::Mat4d&>(value0), reinterpret_cast<const rdl2::Mat4d&>(value1));
 }
+
+template <typename HTYPE,typename RTYPE>
+inline void setRdlVec(MoonrayAttribute& attr, const HTYPE& value) {
+    // warning: don't use this for BoolVector, which is std::deque<bool>
+    if (value.empty()) {
+        attr.set(std::vector<RTYPE>()); 
+    } else {
+        const RTYPE* p = reinterpret_cast<const RTYPE*>(&value[0]);
+        attr.set(std::vector<RTYPE>(p, p + value.size()));
+    }
+}
+
+template <>
+inline void MoonrayAttribute::set<pxr::VtIntArray>(const pxr::VtIntArray& value) {
+    setRdlVec<pxr::VtIntArray,int>(*this, value);
+}
+
+template <>
+inline void MoonrayAttribute::set<pxr::VtFloatArray>(const pxr::VtFloatArray& value) {
+    setRdlVec<pxr::VtFloatArray,float>(*this, value);
+}
+
+template <>
+inline void MoonrayAttribute::set<pxr::VtVec2fArray>(const pxr::VtVec2fArray& value) {
+    setRdlVec<pxr::VtVec2fArray,rdl2::Vec2f>(*this, value);
+}
+
+template <>
+inline void MoonrayAttribute::set<pxr::VtVec3fArray>(const pxr::VtVec3fArray& value) {
+    setRdlVec<pxr::VtVec3fArray,rdl2::Vec3f>(*this, value);
+}
+
+template <>
+inline void MoonrayAttribute::set<pxr::VtVec4fArray>(const pxr::VtVec4fArray& value) {
+    setRdlVec<pxr::VtVec4fArray,rdl2::Vec4f>(*this, value);
+}
+
 template <>
 inline void MoonrayAttribute::set<pxr::VtMatrix4dArray>(const pxr::VtMatrix4dArray& value) {
-    const rdl2::Mat4d* p = reinterpret_cast<const rdl2::Mat4d*>(&value[0]);
-    set(rdl2::Mat4dVector(p, p + value.size()));
+    setRdlVec<pxr::VtMatrix4dArray,rdl2::Mat4d>(*this, value);
 }
 template <>
 inline void MoonrayAttribute::set<pxr::VtQuathArray>(const pxr::VtQuathArray& value) {
@@ -351,47 +357,82 @@ inline void MoonrayObject::setData<std::string>(const std::string& name, const s
 }
 template <> 
 inline void MoonrayObject::setData<pxr::VtFloatArray>(const std::string& name, const pxr::VtFloatArray& value, const pxr::TfToken&) {
-    const float* p = &value[0];
-    mSceneObject->asA<rdl2::UserData>()->setFloatData(name, rdl2::FloatVector(p, p + value.size()));
+    if (value.empty()) {
+        mSceneObject->asA<rdl2::UserData>()->setFloatData(name, rdl2::FloatVector());
+    } else {
+        const float* p = &value[0];
+        mSceneObject->asA<rdl2::UserData>()->setFloatData(name, rdl2::FloatVector(p, p + value.size()));
+    }
 }
 template <> 
 inline void MoonrayObject::setData<pxr::VtIntArray>(const std::string& name, const pxr::VtIntArray& value, const pxr::TfToken&) {
     // HDM-266 moonray does not support attribute type Int for face varying attribute, 
     // cast to float
-    const float* p = reinterpret_cast<const float*>(&value[0]);
-    mSceneObject->asA<rdl2::UserData>()->setFloatData(name, rdl2::FloatVector(p, p + value.size()));
+    if (value.empty()) {
+        mSceneObject->asA<rdl2::UserData>()->setFloatData(name, rdl2::FloatVector());
+    } else {
+        const float* p = reinterpret_cast<const float*>(&value[0]);
+        mSceneObject->asA<rdl2::UserData>()->setFloatData(name, rdl2::FloatVector(p, p + value.size()));
+    }
 }
 template <> 
 inline void MoonrayObject::setData<pxr::VtUIntArray>(const std::string& name, const pxr::VtUIntArray& value, const pxr::TfToken&) {
     // HDM-266 moonray does not support attribute type Int for face varying attribute, 
     // cast to float
-    const float* p = reinterpret_cast<const float*>(&value[0]);
-    mSceneObject->asA<rdl2::UserData>()->setFloatData(name, rdl2::FloatVector(p, p + value.size()));
+    if (value.empty()) {
+        mSceneObject->asA<rdl2::UserData>()->setFloatData(name, rdl2::FloatVector());
+    } else {
+        const float* p = reinterpret_cast<const float*>(&value[0]);
+        mSceneObject->asA<rdl2::UserData>()->setFloatData(name, rdl2::FloatVector(p, p + value.size()));
+    }
 }
+
 template <> 
 inline void MoonrayObject::setData<pxr::VtVec2fArray>(const std::string& name, const pxr::VtVec2fArray& value, const pxr::TfToken&) {
-    const rdl2::Vec2f* p = reinterpret_cast<const rdl2::Vec2f*>(&value[0]);
-    mSceneObject->asA<rdl2::UserData>()->setVec2fData(name, rdl2::Vec2fVector(p, p + value.size()));
+    if (value.empty()) {
+        mSceneObject->asA<rdl2::UserData>()->setVec2fData(name, rdl2::Vec2fVector());
+    } else {
+        const rdl2::Vec2f* p = reinterpret_cast<const rdl2::Vec2f*>(&value[0]);
+        mSceneObject->asA<rdl2::UserData>()->setVec2fData(name, rdl2::Vec2fVector(p, p + value.size()));
+    }
 }
 template <> 
 inline void MoonrayObject::setData<pxr::VtVec3fArray>(const std::string& name, const pxr::VtVec3fArray& value, const pxr::TfToken& role) {
     if (role == pxr::HdPrimvarRoleTokens->color) {
-        const rdl2::Rgb* p = reinterpret_cast<const rdl2::Rgb*>(&value[0]);
-        mSceneObject->asA<rdl2::UserData>()->setColorData(name, rdl2::RgbVector(p, p + value.size()));
+        if (value.empty()) {
+            mSceneObject->asA<rdl2::UserData>()->setColorData(name, rdl2::RgbVector());
+        } else {
+            const rdl2::Rgb* p = reinterpret_cast<const rdl2::Rgb*>(&value[0]);
+            mSceneObject->asA<rdl2::UserData>()->setColorData(name, rdl2::RgbVector(p, p + value.size()));
+        }
     } else {
-        const rdl2::Vec3f* p = reinterpret_cast<const rdl2::Vec3f*>(&value[0]);
-        mSceneObject->asA<rdl2::UserData>()->setVec3fData(name, rdl2::Vec3fVector(p, p + value.size()));
+        if (value.empty()) {
+            mSceneObject->asA<rdl2::UserData>()->setVec3fData(name, rdl2::Vec3fVector());
+        } else {
+            const rdl2::Vec3f* p = reinterpret_cast<const rdl2::Vec3f*>(&value[0]);
+            mSceneObject->asA<rdl2::UserData>()->setVec3fData(name, rdl2::Vec3fVector(p, p + value.size()));
+        }
     }
 }
+
 template <> 
 inline void MoonrayObject::setData<pxr::VtStringArray>(const std::string& name, const pxr::VtStringArray& value, const pxr::TfToken&) {
-    const std::string* p = &value[0];
-    mSceneObject->asA<rdl2::UserData>()->setStringData(name, rdl2::StringVector(p, p + value.size()));
+    if (value.empty()) {
+        mSceneObject->asA<rdl2::UserData>()->setStringData(name, rdl2::StringVector());
+    } else {    
+        const std::string* p = &value[0];
+        mSceneObject->asA<rdl2::UserData>()->setStringData(name, rdl2::StringVector(p, p + value.size()));
+    }
 }
+
 template <> 
 inline void MoonrayObject::setData<pxr::VtBoolArray>(const std::string& name, const pxr::VtBoolArray& value, const pxr::TfToken&) {
-    const bool* p = &value[0];
-    mSceneObject->asA<rdl2::UserData>()->setBoolData(name, rdl2::BoolVector(p, p + value.size()));
+    if (value.empty()) {
+        mSceneObject->asA<rdl2::UserData>()->setBoolData(name, rdl2::BoolVector());
+    } else {
+        const bool* p = &value[0];
+        mSceneObject->asA<rdl2::UserData>()->setBoolData(name, rdl2::BoolVector(p, p + value.size()));
+    }
 }
 
 template <> 
