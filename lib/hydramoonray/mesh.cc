@@ -204,18 +204,20 @@ HdMoonray_Mesh::syncSubdivScheme(const HdMeshTopology& topology,
     // the parameter (which defaults to 0) sent to GetMeshTopology()
     int refineLevel = GetDisplayStyle(sceneDelegate).refineLevel;
 
-    // subd is disabled if 
+    // We render as polygons if:
     // - the repr has flat shading enabled
-    // - the refine level is < 1
-    // - the "forcePolgon" render setting is on, or
+    // - the user has forced polygon rendering
     // - the subd scheme is "none"
-    bool disableSubd = _GetReprDesc(reprToken)[0].flatShadingEnabled ||
-                       refineLevel < 1 ||
+    // - refineLevel is 0
+    bool flatPolygons = _GetReprDesc(reprToken)[0].flatShadingEnabled ||
                        renderDelegate.options().getForcePolygon() ||
                        subdScheme == PxOsdOpenSubdivTokens->none;
+    bool smoothPolygons = !flatPolygons && 
+                          rdlScheme == rdlSubdSchemeCatClark &&
+                          refineLevel == 0;
 
-
-    mGeometry.set(rdlAttrIsSubd, !disableSubd);
+    bool polygons = flatPolygons || smoothPolygons;
+    mGeometry.set(rdlAttrIsSubd, !polygons);
 
     // mesh resolution, adaptive error and smooth_normals can be overridden
     // by primvars, so check before overwriting
@@ -236,9 +238,7 @@ HdMoonray_Mesh::syncSubdivScheme(const HdMeshTopology& topology,
     }
 
     if (not isPrimvarUsed(smoothNormalToken)) {
-        // polygons should not autogenerate smooth normals, per UsdGeomMesh doc
-        if (disableSubd)
-            mGeometry.set(rdlAttrSmoothNormal, false);
+        mGeometry.set(rdlAttrSmoothNormal, smoothPolygons);
     }
 }
 
