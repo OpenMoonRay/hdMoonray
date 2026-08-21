@@ -16,8 +16,6 @@
 
 namespace hdMoonray {
 
-using scene_rdl2::logging::Logger;
-
 ArrasRenderer::ArrasRenderer()
 {
     mSceneContext = new scene_rdl2::rdl2::SceneContext();
@@ -157,7 +155,6 @@ ArrasRenderer::connect(bool resetFailureCount)
 void
 ArrasRenderer::messageHandler(const arras4::api::Message& msg)
 {
-    hdmLogArras("messageHandler");
     std::lock_guard<std::mutex> guard(mMutex);
 
     // don't try to process messages while destructing
@@ -212,7 +209,6 @@ ArrasRenderer::messageHandler(const arras4::api::Message& msg)
             hdmLogArras("creditSendFailed");
         }
     }
-    hdmLogArras("endMessageHandler");
 }
 
 void 
@@ -299,10 +295,10 @@ ArrasRenderer::statusHandler(const std::string& msg)
 // Due to problems with Hydra, the RenderOutput may be null, in which case the request must
 // be used to get the type and size of the buffer.
 bool
-ArrasRenderer::allocate(scene_rdl2::rdl2::RenderOutput* ro, PixelData& pd, const PixelSize& request)
+ArrasRenderer::allocate(MoonrayOutput output, PixelData& pd, const PixelSize& request)
 {
     if (not pd.mData) { // don't reallocate until resolve() so display does not blink
-        pd.mChannels = isBeauty(ro) ? 4 : request.mChannels;
+        pd.mChannels = output.isBeauty() ? 4 : request.mChannels;
         pd.mWidth = request.mWidth;
         pd.mHeight = request.mHeight;
         pd.vec.resize(pd.mWidth * pd.mHeight * pd.mChannels);
@@ -313,32 +309,31 @@ ArrasRenderer::allocate(scene_rdl2::rdl2::RenderOutput* ro, PixelData& pd, const
 
 
 bool
-ArrasRenderer::resolve(scene_rdl2::rdl2::RenderOutput* ro, PixelData& pd)
+ArrasRenderer::resolve(MoonrayOutput output, PixelData& pd, bool forceUpdate)
 {
     // mProgress < 0 indicates that mFbReceiver hasn't received any images yet,
     if (mProgress < 0) return false;
 
     // see if no change since last time
     unsigned n = mFbReceiver->getFbActivityCounter();
-    if (n == pd.filmActivity) return false;
+    if (!forceUpdate && n == pd.filmActivity) return false;
     pd.filmActivity = n;
 
-    if (isBeauty(ro)) {
+    if (output.isBeauty()) {
         mFbReceiver->getBeautyMTSafe(pd.vec, pd.mWidth, pd.mHeight);
         pd.mChannels = 4;
     } else {
-        unsigned n = mFbReceiver->getRenderOutputMTSafe(ro->getName(), pd.vec, pd.mWidth, pd.mHeight);
+        unsigned n = mFbReceiver->getRenderOutputMTSafe(output.objectName(), pd.vec, pd.mWidth, pd.mHeight);
         if (not n) return false; // ignore occasional bad data
         pd.mChannels = n;
     }
     pd.mData = pd.vec.data();
-
     return true;
 }
 
 
 void
-ArrasRenderer::deallocate(scene_rdl2::rdl2::RenderOutput* ro, PixelData& pd)
+ArrasRenderer::deallocate(MoonrayOutput output, PixelData& pd)
 { }
 
 

@@ -90,3 +90,5 @@ def Camera "camera" (
     uniform token[] xformOpOrder = ["xformOp:transform"]
 }
 
+def DomeLight "defaultLight" {
+}

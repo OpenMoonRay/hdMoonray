@@ -73,3 +73,6 @@ def Xform "Points5" (
     double3 xformOp:rotateXYZ = (45, 45, 45)
 }
 
+def DomeLight "defaultLight"
+{
+}
