@@ -1,0 +1,116 @@
+#usda 1.0
+(
+    defaultPrim = "World"
+    metersPerUnit = 1
+    upAxis = "Y"
+)
+
+def Xform "World"
+{
+    def Camera "camera"
+    {
+        matrix4d xformOp:transform = ( (1, 0, 0, 0),
+                                       (0, 1, 0, 0),
+                                       (0, 0, 1, 0),
+                                       (0, 2.5, 9, 1) )
+        uniform token[] xformOpOrder = ["xformOp:transform"]
+
+        float focalLength = 35
+        float horizontalAperture = 20.955
+        float verticalAperture = 15.2908
+        float2 clippingRange = (0.01, 1000)
+    }
+
+    def Mesh "receiver"
+    {
+        float3[] extent = [(-3, 0, -3), (3, 0, 3)]
+        int[] faceVertexCounts = [4]
+        int[] faceVertexIndices = [0, 1, 3, 2]
+        point3f[] points = [(-3, 0, 3), (3, 0, 3), (-3, 0, -3), (3, 0, -3)]
+        color3f[] primvars:displayColor = [(0.8, 0.8, 0.8)] (
+            interpolation = "constant"
+        )
+    }
+
+    def Mesh "emitterMesh"
+    {
+        matrix4d xformOp:transform = ( (1.2, 0, 0, 0),
+                                       (0, 1.2, 0, 0),
+                                       (0, 0, 1.2, 0),
+                                       (0, 3, -1.5, 1) )
+        uniform token[] xformOpOrder = ["xformOp:transform"]
+
+        float3[] extent = [(-0.5, -0.5, 0), (0.5, 0.5, 0)]
+        int[] faceVertexCounts = [4]
+        int[] faceVertexIndices = [0, 1, 3, 2]
+        point3f[] points = [(-0.5, -0.5, 0), (0.5, -0.5, 0), (-0.5, 0.5, 0), (0.5, 0.5, 0)]
+        color3f[] primvars:displayColor = [(1, 0.8, 0.5)] (
+            interpolation = "constant"
+        )
+    }
+
+    def MoonrayMeshLight "meshLight"
+    {
+        uniform token moonray:class = "MeshLight"
+        rel inputs:geometry = </World/emitterMesh>
+        float inputs:intensity = 1.5
+        float intensity = 1.5
+        token moonray:visible_in_camera = "force on"
+    }
+
+    def Camera "cookieProjector"
+    {
+        matrix4d xformOp:transform = ( (1, 0, 0, 0),
+                                       (0, 1, 0, 0),
+                                       (0, 0, 1, 0),
+                                       (0, 3, 2, 1) )
+        uniform token[] xformOpOrder = ["xformOp:transform"]
+
+        float focalLength = 50
+        float horizontalAperture = 20.955
+        float verticalAperture = 15.2908
+    }
+
+    def MoonrayLightFilter "cookie"
+    {
+        uniform token moonray:class = "CookieLightFilter"
+        rel moonray:projector = </World/cookieProjector>
+    }
+
+    def MoonrayLightFilter "rod"
+    {
+        uniform token moonray:class = "RodLightFilter"
+        matrix4d xformOp:transform = ( (1, 0, 0, 0),
+                                       (0, 1, 0, 0),
+                                       (0, 0, 1, 0),
+                                       (0.75, 2.5, -1, 1) )
+        uniform token[] xformOpOrder = ["xformOp:transform"]
+
+        float moonray:depth = 2
+        float moonray:height = 2
+        float moonray:radius = 0.25
+        float moonray:width = 1
+    }
+
+    def MoonrayLightFilter "combine"
+    {
+        uniform token moonray:class = "CombineLightFilter"
+        int moonray:mode = 0
+        rel moonray:light_filters = [</World/cookie>, </World/rod>]
+    }
+
+    def DiskLight "keyLight"
+    {
+        uniform token moonray:class = "SpotLight"
+        matrix4d xformOp:transform = ( (0, 0, 1, 0),
+                                       (1, 0, 0, 0),
+                                       (0, 1, 0, 0),
+                                       (0, 4, 3, 1) )
+        uniform token[] xformOpOrder = ["xformOp:transform"]
+
+        float inputs:intensity = 0.5
+        float inputs:shaping:cone:angle = 35
+        bool inputs:normalize = true
+        rel light:filters = [</World/combine>]
+    }
+}

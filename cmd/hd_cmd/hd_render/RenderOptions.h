@@ -50,10 +50,12 @@ public:
     const std::string getOutputExrFile() const { return mOutputExrFile; }
 
     const std::string getCamera() const { return mCamera; }
+    const std::string &getRenderSettingsPath() const { return mRenderSettingsPath; }
 
 
     unsigned int getWidth() const { return mWidth; }
     unsigned int getHeight() const { return mHeight; }
+    bool isSizeSpecified() const { return mSizeSpecified; }
     float getRes() const { return mRes; }
 
     unsigned int getRefineLevel() const { return mRefineLevel; }
@@ -91,6 +93,7 @@ private:
     static const char * const sOutputExrFile;
 
     static const char * const sCamera;
+    static const char * const sRenderSettingsPath;
 
     static const char * const sSamplingCamera;
 
@@ -124,9 +127,11 @@ private:
     std::string mOutputExrFile;
 
     std::string mCamera;
+    std::string mRenderSettingsPath;
 
     unsigned int mWidth;
     unsigned int mHeight;
+    bool mSizeSpecified;
     float mRes;
     unsigned int mRefineLevel;
 
@@ -156,4 +161,3 @@ private:
 };
 
 } // namespace hd_render
-

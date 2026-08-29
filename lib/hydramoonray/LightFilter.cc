@@ -17,7 +17,10 @@
 #include <scene_rdl2/scene/rdl2/Layer.h>
 #include <scene_rdl2/scene/rdl2/Material.h>
 #include <scene_rdl2/render/logging/logging.h>
+#include <algorithm>
+#include <cctype>
 #include <iostream>
+#include <string>
 
 using namespace scene_rdl2::rdl2;
 
@@ -25,7 +28,168 @@ namespace {
 using scene_rdl2::logging::Logger;
 
 pxr::TfToken moonrayClassToken("moonray:class");
+pxr::TfToken infoIdToken("info:id");
 pxr::TfToken fallbackClass("DecayLightFilter");
+
+void
+makeLightFilterInert(scene_rdl2::rdl2::LightFilter* lightFilter,
+                     hdMoonray::RenderDelegate& renderDelegate)
+{
+    if (!lightFilter) {
+        return;
+    }
+
+    hdMoonray::UpdateGuard guard(renderDelegate, lightFilter);
+    const SceneClass& sceneClass = lightFilter->getSceneClass();
+    try {
+        const Attribute* onAttr = sceneClass.getAttribute("on");
+        if (onAttr && onAttr->getType() == TYPE_BOOL) {
+            lightFilter->set(AttributeKey<Bool>(*onAttr), false);
+        }
+    } catch (const std::exception&) {
+        // Some future/custom LightFilter classes may not expose "on". RDL
+        // objects cannot be deleted interactively, so category release and
+        // pointer clearing still make the object inert from hdMoonray's side.
+    }
+}
+
+bool
+isMoonRayLightFilterClass(const std::string& className,
+                          hdMoonray::RenderDelegate& renderDelegate)
+{
+    try {
+        const SceneClass* sceneClass = renderDelegate.acquireSceneContext().createSceneClass(className);
+        return sceneClass && (sceneClass->getDeclaredInterface() & INTERFACE_LIGHTFILTER);
+    } catch (const std::exception&) {
+        return false;
+    }
+}
+
+std::string
+normalizedRampToken(const std::string& value)
+{
+    std::string result = value;
+    std::transform(result.begin(), result.end(), result.begin(),
+                   [](unsigned char c) {
+                       if (c == '-' || c == ' ') return '_';
+                       return static_cast<char>(std::tolower(c));
+                   });
+    return result;
+}
+
+bool
+rampInterpolationTokenToInt(const std::string& token, int* out)
+{
+    const std::string key = normalizedRampToken(token);
+
+    if (key == "none" || key == "constant") {
+        *out = 0;
+        return true;
+    }
+    if (key == "linear") {
+        *out = 1;
+        return true;
+    }
+    if (key == "exponential_up" || key == "ease_in") {
+        *out = 2;
+        return true;
+    }
+    if (key == "exponential_down" || key == "ease_out") {
+        *out = 3;
+        return true;
+    }
+    if (key == "smooth" || key == "smoothstep" || key == "hermite" ||
+        key == "bezier" || key == "bspline" || key == "b_spline") {
+        *out = 4;
+        return true;
+    }
+    if (key == "catmull_rom" || key == "catmullrom") {
+        *out = 5;
+        return true;
+    }
+    if (key == "monotone_cubic" || key == "monotonecubic") {
+        *out = 6;
+        return true;
+    }
+    return false;
+}
+
+int
+getAuthoredRampCount(const pxr::SdfPath& id,
+                     const std::string& attrName,
+                     pxr::HdSceneDelegate* sceneDelegate)
+{
+    // Prefer the authored ramp position array length because it is the value
+    // that must match the ramp value and interpolation vectors. inputs:ramp is
+    // authored by Houdini as the UI point count and is only used as a fallback.
+    const char* positionsName = nullptr;
+    if (attrName == "interpolation_types") {
+        positionsName = "inputs:distances";
+    } else if (attrName == "ramp_interpolation_types") {
+        positionsName = "inputs:ramp_in_distances";
+    } else if (attrName == "density_remap_interpolation_types") {
+        positionsName = "inputs:density_remap_inputs";
+    }
+
+    if (positionsName) {
+        pxr::VtValue positions = sceneDelegate->GetLightParamValue(id, pxr::TfToken(positionsName));
+        if (positions.IsHolding<pxr::VtArray<float>>()) {
+            return static_cast<int>(positions.UncheckedGet<pxr::VtArray<float>>().size());
+        }
+    }
+
+    pxr::VtValue countVal = sceneDelegate->GetLightParamValue(id, pxr::TfToken("inputs:ramp"));
+    if (countVal.IsHolding<int>()) {
+        return countVal.UncheckedGet<int>();
+    }
+    if (countVal.IsHolding<long>()) {
+        return static_cast<int>(countVal.UncheckedGet<long>());
+    }
+    if (countVal.IsHolding<long long>()) {
+        return static_cast<int>(countVal.UncheckedGet<long long>());
+    }
+
+    return 0;
+}
+
+pxr::VtValue
+expandRampInterpolationToken(const pxr::VtValue& val,
+                             const pxr::SdfPath& id,
+                             const std::string& attrName,
+                             pxr::HdSceneDelegate* sceneDelegate)
+{
+    if (attrName.find("interpolation") == std::string::npos) {
+        return val;
+    }
+
+    std::string token;
+    if (val.IsHolding<pxr::TfToken>()) {
+        token = val.UncheckedGet<pxr::TfToken>().GetString();
+    } else if (val.IsHolding<std::string>()) {
+        token = val.UncheckedGet<std::string>();
+    } else {
+        return val;
+    }
+
+    int interpolation = 0;
+    if (!rampInterpolationTokenToInt(token, &interpolation)) {
+        return val;
+    }
+
+    // ValueConverter can expand a scalar ramp token using the RDL scene-class
+    // default vector size. Solaris light filter ramps can author a different
+    // editable point count on the prim, so expand to that authored count here
+    // before generic conversion.
+    const int count = getAuthoredRampCount(id, attrName, sceneDelegate);
+    if (count <= 0) {
+        return val;
+    }
+
+    pxr::VtArray<int> values;
+    values.resize(count);
+    std::fill(values.begin(), values.end(), interpolation);
+    return pxr::VtValue(values);
+}
 
 #if PXR_VERSION >= 2005
 # define lightFilterToken (pxr::HdPrimTypeTokens->lightFilter)
@@ -69,9 +233,15 @@ LightFilter::syncParams(const pxr::SdfPath& id,
             pxr::TfToken moonrayName("moonray:" + attrName);
             pxr::VtValue val = sceneDelegate->GetLightParamValue(id, moonrayName);
             if (val.IsEmpty()) {
+                pxr::TfToken inputName("inputs:" + attrName);
+                val = sceneDelegate->GetLightParamValue(id, inputName);
+            }
+            if (val.IsEmpty()) {
                 ValueConverter::setDefault(mLightFilter, *it);
             } else {
-                ValueConverter::setAttribute(mLightFilter, *it, val);
+                val = expandRampInterpolationToken(val, id, attrName, sceneDelegate);
+                ValueConverter::setAttribute(mLightFilter, *it, val,
+                                             &renderDelegate.colorManagement());
             }
         }
     }
@@ -89,7 +259,7 @@ LightFilter::syncProjector(const pxr::SdfPath& id,
     pxr::VtValue val = sceneDelegate->Get(id, projectorToken); // supplied by adapter
     if (val.IsHolding<pxr::SdfPath>()) {
         pxr::SdfPath path = val.UncheckedGet<pxr::SdfPath>();
-        path.ReplacePrefix(pxr::SdfPath::AbsoluteRootPath(), sceneDelegate->GetDelegateID());
+        path = path.ReplacePrefix(pxr::SdfPath::AbsoluteRootPath(), sceneDelegate->GetDelegateID());
         SceneObject* so = hdMoonray::Camera::createCamera(sceneDelegate, renderDelegate, path);
         mLightFilter->set("projector", so);
         if (not so) {
@@ -141,7 +311,7 @@ LightFilter::syncCombineFilters(const pxr::SdfPath& id,
         pxr::SdfPathVector pathVec = val.UncheckedGet<pxr::SdfPathVector>();
         for (const pxr::SdfPath& cpath : pathVec) {
             pxr::SdfPath path(cpath);
-            path.ReplacePrefix(pxr::SdfPath::AbsoluteRootPath(), sceneDelegate->GetDelegateID());
+            path = path.ReplacePrefix(pxr::SdfPath::AbsoluteRootPath(), sceneDelegate->GetDelegateID());
             SceneObject* so = LightFilter::getFilter(sceneDelegate, renderDelegate, path);
             if (so) {
                 rdlObjects.push_back(so);
@@ -210,16 +380,51 @@ LightFilter::getOrCreateFilter(pxr::HdSceneDelegate *sceneDelegate,
                                const pxr::SdfPath& id)
 {
     std::lock_guard<std::mutex> lock(mCreateMutex);
-    if (not mLightFilter) {
-        pxr::VtValue vtClass = sceneDelegate->GetLightParamValue(id, moonrayClassToken);
-        pxr::TfToken classToken;
-        if (vtClass.IsHolding<pxr::TfToken>()) {
-            classToken = vtClass.UncheckedGet<pxr::TfToken>();
-        } else {
-            classToken = fallbackClass;
-            Logger::warn("hdMoonray: Unspecified LightFilter type : creating ", classToken);
+
+    pxr::VtValue vtClass = sceneDelegate->GetLightParamValue(id, moonrayClassToken);
+    if (vtClass.IsEmpty()) {
+        vtClass = sceneDelegate->GetLightParamValue(id, infoIdToken);
+    }
+
+    pxr::TfToken classToken;
+    if (vtClass.IsHolding<pxr::TfToken>()) {
+        classToken = vtClass.UncheckedGet<pxr::TfToken>();
+    } else if (vtClass.IsHolding<std::string>()) {
+        classToken = pxr::TfToken(vtClass.UncheckedGet<std::string>());
+    } else {
+        classToken = fallbackClass;
+        Logger::warn("hdMoonray: Unspecified LightFilter type : creating ", classToken);
+    }
+
+    if (!isMoonRayLightFilterClass(classToken.GetString(), renderDelegate)) {
+        Logger::error(id, ": invalid MoonRay LightFilter class '", classToken, "'");
+        if (mLightFilter) {
+            makeLightFilterInert(mLightFilter, renderDelegate);
+            renderDelegate.releaseCategory(mLightFilter, RenderDelegate::CategoryType::FilterLink, mLightFilterCategory);
+            mLightFilter = nullptr;
+            mLightFilterCategory = pxr::TfToken();
         }
-        mLightFilter = renderDelegate.createSceneObject(classToken.GetString(), id)->asA<scene_rdl2::rdl2::LightFilter>();
+        return nullptr;
+    }
+
+    if (mLightFilter && mLightFilter->getSceneClass().getName() != classToken.GetString()) {
+        makeLightFilterInert(mLightFilter, renderDelegate);
+        renderDelegate.releaseCategory(mLightFilter, RenderDelegate::CategoryType::FilterLink, mLightFilterCategory);
+        mLightFilter = nullptr;
+        mLightFilterCategory = pxr::TfToken();
+    }
+
+    if (not mLightFilter) {
+        SceneObject* sceneObject = renderDelegate.createSceneObject(classToken.GetString(), id);
+        if (!sceneObject) {
+            Logger::error(id, ": failed to create MoonRay LightFilter class '", classToken, "'");
+            return nullptr;
+        }
+        mLightFilter = sceneObject->asA<scene_rdl2::rdl2::LightFilter>();
+        if (!mLightFilter) {
+            Logger::error(id, ": MoonRay scene object class '", classToken, "' is not a LightFilter");
+            return nullptr;
+        }
 
         // See Light.cc for explanation...
         pxr::VtValue val = sceneDelegate->GetLightParamValue(id, lightFilterLinkToken);
@@ -240,11 +445,15 @@ LightFilter::Sync(pxr::HdSceneDelegate *sceneDelegate,
     hdmLogSyncStart("LightFilter", id, dirtyBits);
     RenderDelegate& renderDelegate(RenderDelegate::get(renderParam));
 
-    getOrCreateFilter(sceneDelegate,renderDelegate,id);
+    if (!getOrCreateFilter(sceneDelegate, renderDelegate, id)) {
+        *dirtyBits = pxr::HdChangeTracker::Clean;
+        hdmLogSyncEnd(id);
+        return;
+    }
 
     if ((*dirtyBits) & pxr::HdChangeTracker::DirtyParams) {
         UpdateGuard guard(renderDelegate, mLightFilter);
-        syncParams(id,sceneDelegate, renderDelegate);
+        syncParams(id, sceneDelegate, renderDelegate);
     }
 
     *dirtyBits = pxr::HdChangeTracker::Clean;
@@ -254,8 +463,14 @@ LightFilter::Sync(pxr::HdSceneDelegate *sceneDelegate,
 void
 LightFilter::Finalize(pxr::HdRenderParam *renderParam)
 {
+    if (!mLightFilter) {
+        return;
+    }
     RenderDelegate& renderDelegate(RenderDelegate::get(renderParam));
-    renderDelegate.releaseCategory(mLightFilter,RenderDelegate::CategoryType::FilterLink,mLightFilterCategory);
+    makeLightFilterInert(mLightFilter, renderDelegate);
+    renderDelegate.releaseCategory(mLightFilter, RenderDelegate::CategoryType::FilterLink, mLightFilterCategory);
+    mLightFilter = nullptr;
+    mLightFilterCategory = pxr::TfToken();
 }
 
 /*static*/ LightFilter*
@@ -284,4 +499,3 @@ LightFilter::getFilter(pxr::HdSceneDelegate* sceneDelegate,
 }
 
 }
-

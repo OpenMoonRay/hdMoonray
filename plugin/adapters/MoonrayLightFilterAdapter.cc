@@ -5,6 +5,7 @@
 #include <pxr/usdImaging/usdImaging/lightAdapter.h>
 #include <pxr/usdImaging/usdImaging/delegate.h>
 #include <pxr/usdImaging/usdImaging/indexProxy.h>
+#include <pxr/usdImaging/usdImaging/tokens.h>
 
 #include "pxr/imaging/hd/tokens.h"
 
@@ -26,6 +27,24 @@ TF_REGISTRY_FUNCTION(TfType)
 
 MoonrayLightFilterAdapter::~MoonrayLightFilterAdapter()
 {
+}
+
+bool
+MoonrayLightFilterAdapter::IsSupported(
+        UsdImagingIndexProxy const* index) const
+{
+    return index->IsSprimTypeSupported(HdPrimTypeTokens->lightFilter);
+}
+
+SdfPath
+MoonrayLightFilterAdapter::Populate(UsdPrim const& prim,
+                                    UsdImagingIndexProxy* index,
+                                    UsdImagingInstancerContext const* instancerContext)
+{
+    index->InsertSprim(HdPrimTypeTokens->lightFilter, prim.GetPath(), prim);
+    HD_PERF_COUNTER_INCR(UsdImagingTokens->usdPopulatedPrimCount);
+
+    return prim.GetPath();
 }
 
 VtValue
@@ -56,6 +75,13 @@ MoonrayLightFilterAdapter::Get(
         }
     }
     return BaseAdapter::Get(prim, cachePath, key, time, outIndices);
+}
+
+void
+MoonrayLightFilterAdapter::_RemovePrim(SdfPath const& cachePath,
+                                       UsdImagingIndexProxy* index)
+{
+    index->RemoveSprim(HdPrimTypeTokens->lightFilter, cachePath);
 }
 
 

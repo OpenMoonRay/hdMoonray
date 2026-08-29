@@ -21,6 +21,7 @@ const char * const RenderOptions::sInputSceneFile = "scene.usd";
 const char * const RenderOptions::sOutputRdlFile = "scene.rdl";
 
 const char * const RenderOptions::sCamera = "";
+const char * const RenderOptions::sRenderSettingsPath = "";
 
 const unsigned int RenderOptions::sWidth = 1920;
 const unsigned int RenderOptions::sHeight = 1080;
@@ -35,8 +36,10 @@ RenderOptions::RenderOptions(int argc, char *argv[]):
     mInputSceneFile(sInputSceneFile),
     mOutputRdlFile(sOutputRdlFile),
     mCamera(sCamera),
+    mRenderSettingsPath(sRenderSettingsPath),
     mWidth(sWidth),
     mHeight(sHeight),
+    mSizeSpecified(false),
     mRefineLevel(sRefineLevel),
     mTimeType(sTimeType),
     mPrintRenderSettingsRequested(sPrintRenderSettingsRequested),
@@ -74,6 +77,11 @@ RenderOptions::RenderOptions(int argc, char *argv[]):
     validFlags.push_back("-camera");
     if (args.getFlagValues("-camera", 1, values) >= 0) {
         mCamera = values[0];
+    }
+
+    validFlags.push_back("-settings");
+    if (args.getFlagValues("-settings", 1, values) >= 0) {
+        mRenderSettingsPath = values[0];
     }
 
     validFlags.push_back("-purpose");
@@ -115,6 +123,7 @@ RenderOptions::RenderOptions(int argc, char *argv[]):
     if (args.getFlagValues("-size", 2, values) >= 0) {
         mWidth = atoi(values[0].c_str());
         mHeight = atoi(values[1].c_str());
+        mSizeSpecified = true;
     }
 
     mAllFlagsValid = args.allFlagsValid(validFlags);
@@ -141,8 +150,14 @@ RenderOptions::usage(const char *argv0) const
                        "\n"
                        "Optional:\n"
                        "-camera <CAMERA_NAME>\n"
-                       "    Name of the rendering camera.  If not specified, a default\n"
-                       "    camera is created that frames the scene geometry.\n"
+                       "    Name or USD path of the rendering camera. If not specified,\n"
+                       "    the selected RenderSettings camera is used when available;\n"
+                       "    otherwise a default camera frames the scene geometry.\n"
+                       "\n"
+                       "-settings <RENDER_SETTINGS_PATH>\n"
+                       "    USD RenderSettings prim to use for camera and resolution defaults.\n"
+                       "    If not specified, /Render/rendersettings or the first RenderSettings\n"
+                       "    prim on the stage is used when available.\n"
                        "\n"
                        "-purpose <PURPOSE>\n"
                        "    Specifies a UsdGeomImageable purpose to include in the render.\n"
@@ -170,4 +185,3 @@ RenderOptions::usage(const char *argv0) const
 }
 
 } // namespace hd_render
-

@@ -1,0 +1,83 @@
+#usda 1.0
+(
+    defaultPrim = "World"
+    upAxis = "Y"
+)
+
+def Material "dwa_material"
+{
+    color4f outputs:moonray:surface.connect = </dwa_material/dwa.outputs:surface>
+
+    def Shader "dwa"
+    {
+        uniform token info:id = "DwaBaseMaterial"
+        color4f outputs:surface
+        color3f inputs:albedo = (0.35, 0.62, 0.9)
+        float inputs:roughness = 0.5
+        float inputs:specular = 0.25
+    }
+}
+
+def Xform "World"
+{
+    def Camera "camera"
+    {
+        matrix4d xformOp:transform = ( (1, 0, 0, 0),
+                                       (0, 0.965926, -0.258819, 0),
+                                       (0, 0.258819, 0.965926, 0),
+                                       (0, 1.2, 6, 1) )
+        uniform token[] xformOpOrder = ["xformOp:transform"]
+        float focalLength = 45
+        float horizontalAperture = 36
+        float verticalAperture = 20.25
+        float2 clippingRange = (0.01, 1000)
+    }
+
+    def Sphere "sphere"
+    {
+        double radius = 1
+        rel material:binding = </dwa_material>
+    }
+
+    def RectLight "key"
+    {
+        matrix4d xformOp:transform = ( (0.707107, 0, 0.707107, 0),
+                                       (0.353553, 0.866025, -0.353553, 0),
+                                       (-0.612372, 0.5, 0.612372, 0),
+                                       (-2.5, 4, 3, 1) )
+        uniform token[] xformOpOrder = ["xformOp:transform"]
+        color3f inputs:color = (1, 0.95, 0.85)
+        float inputs:intensity = 350
+        bool inputs:normalize = true
+        float inputs:width = 2
+        float inputs:height = 2
+    }
+}
+
+def Scope "Render"
+{
+    def RenderSettings "RenderSettings"
+    {
+        rel camera = </World/camera>
+        rel products = </Render/Product>
+        int2 resolution = (64, 64)
+    }
+
+    def RenderProduct "Product"
+    {
+        token productType = "raster"
+        string productName = "dwa_material_no_dome.exr"
+        rel orderedVars = </Render/Vars/color>
+    }
+
+    def Scope "Vars"
+    {
+        def RenderVar "color"
+        {
+            custom string driver:parameters:aov:name = "color"
+            token dataType = "color4f"
+            string sourceName = "color"
+            token sourceType = "raw"
+        }
+    }
+}

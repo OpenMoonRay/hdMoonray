@@ -14,6 +14,7 @@ target_sources(${component}
     PRIVATE
         BasisCurves.cc
         Camera.cc
+        ColorManagement.cc
         CoordSys.cc
         GeometryMixin.cc
         HdmLog.cc
@@ -25,6 +26,7 @@ target_sources(${component}
         MurmurHash3.cc
         NullRenderer.cc
         Points.cc
+        PrimTypeUtils.cc
         Primvars.cc
         Procedural.cc
         RenderBuffer.cc
@@ -39,6 +41,7 @@ set_property(TARGET ${component}
     PROPERTY PUBLIC_HEADER
         BasisCurves.h
         Camera.h
+        ColorManagement.h
         CoordSys.h
         GeometryMixin.h
         HdmLog.h
@@ -50,6 +53,7 @@ set_property(TARGET ${component}
         NullRenderer.h
         PixelData.h
         Points.h
+        PrimTypeUtils.h
         Procedural.h
         RenderBuffer.h
         RenderDelegate.h
@@ -61,10 +65,36 @@ set_property(TARGET ${component}
         Volume.h
 )
 
+if (HDMOONRAY_HOUDINI_OCIO_INCLUDE_DIR)
+    target_include_directories(${component}
+        BEFORE PRIVATE
+            ${HDMOONRAY_HOUDINI_OCIO_INCLUDE_DIR}
+    )
+endif()
+
 target_include_directories(${component}
     PUBLIC
         $<BUILD_INTERFACE:${buildIncludeDir}>
         $<INSTALL_INTERFACE:include>
+)
+
+# Dirty compatibility workaround:
+# Houdini 20.5 ships USD 24.03 headers that fail to compile through
+# usdImaging/delegate.h under Xcode 26 / AppleClang 21 because
+# pxr/usd/sdf/childrenProxy.h contains an invalid _ValueProxy::operator=
+# path that calls SdfChildrenProxy::_Set(), which does not exist.
+#
+# This include path is limited to the hydramoonray source files that actually
+# use UsdImagingDelegate for USD time-sampling. It does not represent a
+# MoonRay integration fix, a USD update, or a translation layer. Remove this
+# when building against a Houdini/USD/toolchain combination where the
+# usdImaging headers compile normally.
+set(houdini205Usd24CompatInclude
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../plugin/adapters/compat/houdini20_5_usd24_xcode26
+)
+set_source_files_properties(RenderDelegate.cc RenderPass.cc
+    PROPERTIES
+        COMPILE_FLAGS "-I${houdini205Usd24CompatInclude}"
 )
 
 if (NOT IsDarwinPlatform)
@@ -81,6 +111,7 @@ target_link_libraries(${component}
         TBB::tbb
         hd   # pxr imaging
         usdImaging
+        ${HDMOONRAY_HOUDINI_OCIO_TARGET}
         Python::Module
         ${PlatformSpecificLibs}
 )

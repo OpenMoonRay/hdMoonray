@@ -6,9 +6,21 @@
 #include "ValueConverter.h"
 #include "Utils.h"
 
+// Houdini 20.5 USD 24.03's stock SdfChildrenProxy header does not compile in
+// this Xcode/AppleClang build. RenderDelegate.cc and RenderPass.cc use the
+// same local compatibility header through CMake include flags; include it
+// directly here because this source also needs UsdStage for metersPerUnit.
+#include "../../plugin/adapters/compat/houdini20_5_usd24_xcode26/pxr/usd/sdf/childrenProxy.h"
+
+#include <pxr/usd/sdf/assetPath.h>
+#include <pxr/usd/usd/stage.h>
+#include <pxr/usd/usdGeom/metrics.h>
+
 #include <scene_rdl2/scene/rdl2/SceneContext.h>
 #include <scene_rdl2/scene/rdl2/SceneVariables.h>
 #include <scene_rdl2/render/logging/logging.h>
+
+#include <sstream>
 
 // If adding or changing the descriptors, the file
 // ../houdini/soho/parameters/HdMoonrayRendererPlugin_Viewport.ds must be updated to match
@@ -32,7 +44,70 @@ TF_DEFINE_PRIVATE_TOKENS(Tokens,
     (pruneWrapDeform)
     (forcePolygon)
     (executionMode)
+    ((houdiniFrame, "houdini:frame"))
+    ((houdiniFps, "houdini:fps"))
+    ((houdiniViewport, "houdini:viewport"))
+    ((usdFilename, "usdFilename"))
+    ((usdFileTimeStamp, "usdFileTimeStamp"))
+    ((renderCameraPath, "renderCameraPath"))
+    ((batchCommandLine, "batchCommandLine"))
+    ((huskDelegateOptions, "huskDelegateOptions"))
 );
+
+const TfToken sceneScaleToken("moonray:sceneVariable:scene_scale");
+const TfToken houdiniSceneScaleToken("sceneVariable_scene_scale");
+
+bool
+hasExplicitSceneScale(const hdMoonray::RenderDelegate& delegate)
+{
+    return !delegate.GetRenderSetting(sceneScaleToken).IsEmpty() ||
+           !delegate.GetRenderSetting(houdiniSceneScaleToken).IsEmpty();
+}
+
+std::string
+getStringRenderSetting(const hdMoonray::RenderDelegate& delegate, const TfToken& key)
+{
+    VtValue value = delegate.GetRenderSetting(key);
+    if (value.IsHolding<std::string>()) {
+        return value.UncheckedGet<std::string>();
+    }
+    if (value.IsHolding<TfToken>()) {
+        return value.UncheckedGet<TfToken>().GetString();
+    }
+    if (value.IsHolding<SdfAssetPath>()) {
+        const SdfAssetPath& assetPath = value.UncheckedGet<SdfAssetPath>();
+        return !assetPath.GetResolvedPath().empty() ?
+            assetPath.GetResolvedPath() : assetPath.GetAssetPath();
+    }
+    return std::string();
+}
+
+bool
+getAutomaticSceneScale(const hdMoonray::RenderDelegate& delegate,
+                       float* sceneScale,
+                       std::string* source)
+{
+    if (hasExplicitSceneScale(delegate)) {
+        return false;
+    }
+
+    const std::string usdFilename = getStringRenderSetting(delegate, Tokens->usdFilename);
+    if (usdFilename.empty()) {
+        return false;
+    }
+
+    UsdStageRefPtr stage = UsdStage::Open(usdFilename);
+    if (!stage) {
+        scene_rdl2::logging::Logger::warn(
+                "hdMoonray: unable to open USD stage '", usdFilename,
+                "' while deriving SceneVariables.scene_scale from metersPerUnit");
+        return false;
+    }
+
+    *sceneScale = static_cast<float>(UsdGeomGetStageMetersPerUnit(stage));
+    *source = usdFilename;
+    return true;
+}
 
 }
 
@@ -100,6 +175,10 @@ void RenderSettings::apply()
     {
         UpdateGuard guard(sv);
         const SceneClass& sceneClass = sv.getSceneClass();
+        float automaticSceneScale = 0.0f;
+        std::string automaticSceneScaleSource;
+        const bool hasAutomaticSceneScale =
+            getAutomaticSceneScale(mDelegate, &automaticSceneScale, &automaticSceneScaleSource);
         for (auto it = sceneClass.beginAttributes(); it != sceneClass.endAttributes(); ++it) {
 
             const std::string& attrName = (*it)->getName();
@@ -114,6 +193,15 @@ void RenderSettings::apply()
                 val = mDelegate.GetRenderSetting(key);
                 if (not val.IsEmpty()) {
                     ValueConverter::setAttribute(&sv, *it, val);
+                } else if (hasAutomaticSceneScale && attrName == "scene_scale") {
+                    ValueConverter::setAttribute(&sv, *it, VtValue(automaticSceneScale));
+                    std::ostringstream message;
+                    message << "hdMoonray: using USD metersPerUnit "
+                            << automaticSceneScale
+                            << " from " << automaticSceneScaleSource
+                            << " for SceneVariables.scene_scale";
+                    Logger::info(message.str());
+                    std::cerr << message.str() << std::endl;
                 }
             }
         }
@@ -148,6 +236,46 @@ RenderSettings::getExecutionMode() const
     } else {
         return "auto";
     }
+}
+
+bool
+RenderSettings::getHoudiniFrame(float& frame) const
+{
+    VtValue val = mDelegate.GetRenderSetting(Tokens->houdiniFrame);
+    if (val.IsEmpty()) return false;
+    if (val.IsHolding<double>()) {
+        frame = static_cast<float>(val.UncheckedGet<double>());
+        return true;
+    }
+    if (val.IsHolding<float>()) {
+        frame = val.UncheckedGet<float>();
+        return true;
+    }
+    if (val.IsHolding<int>()) {
+        frame = static_cast<float>(val.UncheckedGet<int>());
+        return true;
+    }
+    return false;
+}
+
+bool
+RenderSettings::getHoudiniFps(double& fps) const
+{
+    VtValue val = mDelegate.GetRenderSetting(Tokens->houdiniFps);
+    if (val.IsEmpty()) return false;
+    if (val.IsHolding<double>()) {
+        fps = val.UncheckedGet<double>();
+        return true;
+    }
+    if (val.IsHolding<float>()) {
+        fps = static_cast<double>(val.UncheckedGet<float>());
+        return true;
+    }
+    if (val.IsHolding<int>()) {
+        fps = static_cast<double>(val.UncheckedGet<int>());
+        return true;
+    }
+    return false;
 }
 
 void

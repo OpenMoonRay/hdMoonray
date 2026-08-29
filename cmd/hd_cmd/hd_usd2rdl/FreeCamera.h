@@ -9,6 +9,7 @@
 #include <pxr/base/tf/token.h>
 #include <pxr/usd/usd/stage.h>
 #include <pxr/usd/usd/timeCode.h>
+#include <pxr/usd/usdGeom/camera.h>
 
 namespace hd_usd2rdl {
 
@@ -20,6 +21,8 @@ class FreeCamera
                   float aspectRatio,
                   pxr::UsdTimeCode timeCode, 
                   const pxr::TfTokenVector &includedPurposes);
+        FreeCamera(const pxr::UsdGeomCamera &camera,
+                   pxr::UsdTimeCode timeCode);
 
         pxr::VtValue getParam(pxr::TfToken const& key) const;
         pxr::GfMatrix4d getTransform() const;
@@ -34,4 +37,3 @@ class FreeCamera
 
 
 } // namespace hd_usd2rdl
-

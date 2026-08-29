@@ -45,9 +45,11 @@ public:
     const std::string getOutputRdlFile() const { return mOutputRdlFile; }
 
     const std::string getCamera() const { return mCamera; }
+    const std::string &getRenderSettingsPath() const { return mRenderSettingsPath; }
 
     unsigned int getWidth() const { return mWidth; }
     unsigned int getHeight() const { return mHeight; }
+    bool isSizeSpecified() const { return mSizeSpecified; }
 
     unsigned int getRefineLevel() const { return mRefineLevel; }
 
@@ -69,6 +71,7 @@ private:
     static const char * const sOutputRdlFile;
 
     static const char * const sCamera;
+    static const char * const sRenderSettingsPath;
 
 
     static const unsigned int sWidth;
@@ -87,10 +90,12 @@ private:
     std::string mOutputRdlFile;
 
     std::string mCamera;
+    std::string mRenderSettingsPath;
 
 
     unsigned int mWidth;
     unsigned int mHeight;
+    bool mSizeSpecified;
     unsigned int mRefineLevel;
 
     TimeType mTimeType;
@@ -108,4 +113,3 @@ private:
 };
 
 } // namespace hd_render
-

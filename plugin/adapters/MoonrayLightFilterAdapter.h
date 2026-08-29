@@ -25,11 +25,21 @@ public:
 
     virtual ~MoonrayLightFilterAdapter();
 
+    virtual SdfPath Populate(UsdPrim const& prim,
+                             UsdImagingIndexProxy* index,
+                             UsdImagingInstancerContext const* instancerContext = NULL);
+
+    virtual bool IsSupported(UsdImagingIndexProxy const* index) const;
+
     virtual VtValue Get(UsdPrim const& prim,
                         SdfPath const& cachePath,
                         TfToken const& key,
                         UsdTimeCode time, 
                         VtIntArray* outIndices) const;
+
+protected:
+    virtual void _RemovePrim(SdfPath const& cachePath,
+                             UsdImagingIndexProxy* index) final;
 
 };
 

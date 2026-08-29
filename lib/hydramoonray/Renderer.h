@@ -54,6 +54,8 @@ public:
 
     /// True when converged
     virtual bool isFrameComplete() const=0;
+    /// True when the renderer reached a terminal error state instead of convergence.
+    virtual bool hasTerminalError() const { return false; }
 
 
     /// A null RenderOutput* indicates the beauty buffer. This function should be used to test this
@@ -96,4 +98,3 @@ private:
 };
 
 }
-

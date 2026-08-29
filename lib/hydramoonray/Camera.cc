@@ -16,11 +16,15 @@
 #include <pxr/imaging/hd/sceneDelegate.h>
 #include "pxr/base/gf/frustum.h"
 #include "pxr/base/gf/camera.h"
+#include <pxr/base/gf/range1f.h>
 
+#include <scene_rdl2/render/logging/logging.h>
 #include <scene_rdl2/scene/rdl2/Camera.h>
 #include <scene_rdl2/scene/rdl2/Geometry.h>
 
+#include <cstdlib>
 #include <iostream>
+#include <sstream>
 
 // define this to avoid switching the identity of the perspective camera
 // (see HDM-95/HDM-351)
@@ -43,6 +47,113 @@ const pxr::HdCamera::DirtyBits CamDirtyView = pxr::HdCamera::DirtyBits::DirtyTra
 const pxr::HdCamera::DirtyBits CamDirtyProj = pxr::HdCamera::DirtyBits::DirtyProjMatrix;
 const pxr::HdCamera::DirtyBits CamDirtyView = pxr::HdCamera::DirtyBits::DirtyViewMatrix;
 #endif
+
+bool
+cameraFramingDiagEnabled()
+{
+    static const bool enabled = std::getenv("HDMR_CAMERA_FRAMING_DIAG") != nullptr;
+    return enabled;
+}
+
+template <typename T>
+std::string
+diagString(const T& value)
+{
+    std::ostringstream out;
+    out << value;
+    return out.str();
+}
+
+std::string
+vtValueString(const pxr::VtValue& value)
+{
+    if (value.IsEmpty()) {
+        return "<empty>";
+    }
+    if (value.IsHolding<float>()) {
+        return std::to_string(value.UncheckedGet<float>());
+    }
+    if (value.IsHolding<double>()) {
+        return std::to_string(value.UncheckedGet<double>());
+    }
+    if (value.IsHolding<pxr::GfVec2f>()) {
+        return diagString(value.UncheckedGet<pxr::GfVec2f>());
+    }
+    if (value.IsHolding<pxr::GfVec2d>()) {
+        return diagString(value.UncheckedGet<pxr::GfVec2d>());
+    }
+    if (value.IsHolding<pxr::GfRange1f>()) {
+        return diagString(value.UncheckedGet<pxr::GfRange1f>());
+    }
+    return value.GetTypeName();
+}
+
+void
+logCameraProjectionDiag(const pxr::SdfPath& id,
+                        const pxr::TfToken& cameraClass,
+                        int windowPolicy,
+                        const pxr::VtValue& rawHorizontalAperture,
+                        const pxr::VtValue& rawVerticalAperture,
+                        const pxr::VtValue& rawHorizontalOffset,
+                        const pxr::VtValue& rawVerticalOffset,
+                        const pxr::VtValue& rawFocal,
+                        const pxr::VtValue& rawClippingRange,
+                        double desiredAspect,
+                        const pxr::GfVec2d& apertureBeforeConform,
+                        const pxr::GfVec2d& apertureAfterConform,
+                        float focalLength,
+                        float horizontalOffset,
+                        float verticalOffset,
+                        float nearPlane,
+                        float farPlane,
+                        scene_rdl2::rdl2::Camera* camera)
+{
+    if (!cameraFramingDiagEnabled()) {
+        return;
+    }
+
+    std::cerr << "[HDMR_CAMERA_FRAMING_DIAG] Camera.updateCamera"
+              << " id=" << id
+              << " class=" << cameraClass
+              << " windowPolicy=" << windowPolicy
+              << " rawHorizontalAperture=" << vtValueString(rawHorizontalAperture)
+              << " rawVerticalAperture=" << vtValueString(rawVerticalAperture)
+              << " rawHorizontalOffset=" << vtValueString(rawHorizontalOffset)
+              << " rawVerticalOffset=" << vtValueString(rawVerticalOffset)
+              << " rawFocalLength=" << vtValueString(rawFocal)
+              << " rawClippingRange=" << vtValueString(rawClippingRange)
+              << " desiredAspect=" << desiredAspect
+              << " apertureBeforeConform=" << diagString(apertureBeforeConform)
+              << " apertureAfterConform=" << diagString(apertureAfterConform)
+              << " focalLength=" << focalLength
+              << " horizontalFilmOffset=" << horizontalOffset
+              << " verticalFilmOffset=" << verticalOffset
+              << " near=" << nearPlane
+              << " far=" << farPlane
+              << " rdlFilmWidthAperture=" << camera->get<float>("film_width_aperture")
+              << " rdlFocal=" << camera->get<float>("focal")
+              << " rdlHorizontalFilmOffset=" << camera->get<float>("horizontal_film_offset")
+              << " rdlVerticalFilmOffset=" << camera->get<float>("vertical_film_offset")
+              << std::endl;
+}
+
+void
+logSetPrimaryCameraDiag(const pxr::SdfPath& id,
+                        const pxr::TfToken& cameraClass,
+                        double requestedAspect,
+                        double previousAspect)
+{
+    if (!cameraFramingDiagEnabled()) {
+        return;
+    }
+
+    std::cerr << "[HDMR_CAMERA_FRAMING_DIAG] Camera.setAsPrimaryCamera"
+              << " id=" << id
+              << " class=" << cameraClass
+              << " requestedAspect=" << requestedAspect
+              << " previousAspect=" << previousAspect
+              << std::endl;
+}
 
 }
 
@@ -196,6 +307,18 @@ Camera::updateCamera(pxr::HdSceneDelegate* sceneDelegate, RenderDelegate& render
 #else
         const auto& matrix = GetProjectionMatrix();
 #endif
+        const pxr::VtValue rawHorizontalAperture =
+            sceneDelegate->GetCameraParamValue(id, pxr::HdCameraTokens->horizontalAperture);
+        const pxr::VtValue rawVerticalAperture =
+            sceneDelegate->GetCameraParamValue(id, pxr::HdCameraTokens->verticalAperture);
+        const pxr::VtValue rawHorizontalOffset =
+            sceneDelegate->GetCameraParamValue(id, pxr::HdCameraTokens->horizontalApertureOffset);
+        const pxr::VtValue rawVerticalOffset =
+            sceneDelegate->GetCameraParamValue(id, pxr::HdCameraTokens->verticalApertureOffset);
+        const pxr::VtValue rawFocal =
+            sceneDelegate->GetCameraParamValue(id, pxr::HdCameraTokens->focalLength);
+        const pxr::VtValue rawClippingRange =
+            sceneDelegate->GetCameraParamValue(id, pxr::HdCameraTokens->clippingRange);
 
         if (mClass == OrthographicCameraToken) {
 
@@ -211,11 +334,10 @@ Camera::updateCamera(pxr::HdSceneDelegate* sceneDelegate, RenderDelegate& render
 
             // The projection matrix cannot be used to obtain the aperture,
             // but once we have the aperture width we can compute the rest
-            pxr::VtValue v = sceneDelegate->GetCameraParamValue(id, pxr::HdCameraTokens->horizontalAperture);
-            if (v.IsEmpty()) {
+            if (rawHorizontalAperture.IsEmpty()) {
                 apertureWidth = 20.955f; // USD default value (Moonray default is 24.0)
             } else {
-                apertureWidth = v.Get<float>() * 10; // convert back to value in USD prim, Hydra divided by 10
+                apertureWidth = rawHorizontalAperture.Get<float>() * 10; // convert back to value in USD prim, Hydra divided by 10
                 // HDM-153: Houdini by default measures camera in 1/10 meters. This ran into clamping
                 // issues in Moonray (MOONRAY-4261), and may also mess up fstop (below). Check this
             }
@@ -232,6 +354,7 @@ Camera::updateCamera(pxr::HdSceneDelegate* sceneDelegate, RenderDelegate& render
         // and the window policy. Note that the RDL camera only specifies apertureWidth, so
         // it's not clear that all conform options will work
         pxr::GfVec2d adjustedAperture(apertureWidth, apertureHeight);
+        const pxr::GfVec2d apertureBeforeConform(adjustedAperture);
         if (mDesiredAspectRatio != 0.0) {
             adjustedAperture = pxr::CameraUtilConformedWindow(adjustedAperture, GetWindowPolicy(), mDesiredAspectRatio);
         }
@@ -246,6 +369,24 @@ Camera::updateCamera(pxr::HdSceneDelegate* sceneDelegate, RenderDelegate& render
         mCamera->set("vertical_film_offset", vertOffset);
         mCamera->setNear(mNear);
         mCamera->setFar(mFar);
+        logCameraProjectionDiag(id,
+                                mClass,
+                                static_cast<int>(GetWindowPolicy()),
+                                rawHorizontalAperture,
+                                rawVerticalAperture,
+                                rawHorizontalOffset,
+                                rawVerticalOffset,
+                                rawFocal,
+                                rawClippingRange,
+                                mDesiredAspectRatio,
+                                apertureBeforeConform,
+                                adjustedAperture,
+                                focalLength,
+                                horizOffset,
+                                vertOffset,
+                                mNear,
+                                mFar,
+                                mCamera);
         mProjChanged = true;
     }
 
@@ -311,6 +452,7 @@ Camera::updateCamera(pxr::HdSceneDelegate* sceneDelegate, RenderDelegate& render
 void
 Camera::setAsPrimaryCamera(RenderDelegate& renderDelegate, double aspectRatio)
 {
+    logSetPrimaryCameraDiag(GetId(), mClass, aspectRatio, mDesiredAspectRatio);
     if (aspectRatio != mDesiredAspectRatio) {
         mDesiredAspectRatio = aspectRatio;
         if (mCamera) {
@@ -412,4 +554,3 @@ Camera::~Camera()
 }
 
 }
-

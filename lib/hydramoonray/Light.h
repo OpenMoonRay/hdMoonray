@@ -18,8 +18,7 @@ class RenderDelegate;
 class Light: public pxr::HdLight
 {
 public:
-    Light(const pxr::TfToken& type, const pxr::SdfPath& id):
-        pxr::HdLight(id), mType(type), mRectToSpotlight(false) {}
+    Light(const pxr::TfToken& type, const pxr::SdfPath& id);
 
     /// Dirty bits to pass to first call to Sync()
     pxr::HdDirtyBits GetInitialDirtyBitsMask() const override;
@@ -37,7 +36,8 @@ public:
 
 private:
     const std::string& rdlClassName(const pxr::SdfPath& id,
-                                    pxr::HdSceneDelegate *sceneDelegate);
+                                    pxr::HdSceneDelegate *sceneDelegate,
+                                    RenderDelegate& renderDelegate);
 
     void syncXform(const pxr::SdfPath& id,
                    pxr::HdSceneDelegate *sceneDelegate);
@@ -48,7 +48,7 @@ private:
                         pxr::HdSceneDelegate *sceneDelegate,
                         RenderDelegate& renderDelegate);
 
-    void fixCylinderLight(scene_rdl2::rdl2::Mat4d& mat);
+    void fixLightXform(scene_rdl2::rdl2::Mat4d& mat);
 
     pxr::TfToken mType;
 
@@ -58,6 +58,7 @@ private:
     scene_rdl2::rdl2::Light* mLight = nullptr;
     bool mOn = false;
     void setOn(bool, RenderDelegate& renderDelegate);
+    void resetLightObject(RenderDelegate& renderDelegate);
 
     // the name of a category holding all geometry lit by this light
     pxr::TfToken mLightLinkCategory;
@@ -65,4 +66,3 @@ private:
 };
 
 }
-

@@ -4,15 +4,29 @@
         "menulabel" : "Moonray",
         "needsselection" : true,
         "depthstyle": "linear",
+        "aovsupport" : true,
+        "diskproducttypes" : [ "raster", "deepRaster" ],
         "defaultpurposes" : [ "render" ],
-        "complexitymultiplier" : 1.173
+        "complexitymultiplier" : 1.173,
+        "statsdatapaths" : {
+            "percentDone" : "percentDone",
+            "totalClockTime" : "totalClockTime",
+            "renderProgressAnnotation" : "renderProgressAnnotation"
+        }
     },
     "HdMoonrayRendererDebugPlugin" : {
         "valid" : true,
         "menulabel" : "Moonray (Debug)",
         "needsselection" : true,
         "depthstyle": "linear",
+        "aovsupport" : true,
+        "diskproducttypes" : [ "raster", "deepRaster" ],
         "defaultpurposes" : [ "render" ],
-        "complexitymultiplier" : 1.173
+        "complexitymultiplier" : 1.173,
+        "statsdatapaths" : {
+            "percentDone" : "percentDone",
+            "totalClockTime" : "totalClockTime",
+            "renderProgressAnnotation" : "renderProgressAnnotation"
+        }
     }
 }

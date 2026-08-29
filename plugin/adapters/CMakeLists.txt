@@ -24,6 +24,27 @@ target_sources(${component}
         ${DwaSpecificSources}
 )
 
+# Dirty compatibility workaround:
+# Houdini 20.5 ships USD 24.03 headers that fail to compile
+# through usdImaging lightAdapter/lightFilterAdapter under
+# Xcode 26 / AppleClang 21 because pxr/usd/sdf/childrenProxy.h
+# contains an invalid _ValueProxy::operator= path that calls
+# SdfChildrenProxy::_Set(), which does not exist.
+#
+# This shim is target-local to hdMoonrayAdapters only.
+# It does not represent a MoonRay integration fix, a USD update,
+# or a translation layer. It only quarantines a compiler/header
+# compatibility problem so the existing MoonRay mesh-light and
+# light-filter adapter registration path can still be built and
+# runtime-tested.
+#
+# Remove this workaround when building against a Houdini/USD/toolchain
+# combination where the usdImaging adapter headers compile normally.
+target_include_directories(${component}
+    BEFORE PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/compat/houdini20_5_usd24_xcode26
+)
+
 target_include_directories(${component}
     PUBLIC
         $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
@@ -80,6 +101,12 @@ install(TARGETS ${component}
 )
 
 # install main plugInfo
+INSTALL(FILES ${CMAKE_CURRENT_SOURCE_DIR}/../plugInfo.json
+    COMPONENT ${component}
+    DESTINATION plugin/pxr
+)
+
 INSTALL(FILES ${plugInfoFile}
+    COMPONENT ${component}
     DESTINATION plugin/pxr/${component}
 )

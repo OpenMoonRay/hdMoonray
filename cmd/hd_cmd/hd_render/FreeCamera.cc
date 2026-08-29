@@ -74,6 +74,15 @@ FreeCamera::FreeCamera(const pxr::UsdStageRefPtr stage,
     mCamera.SetTransform(xf);
 }
 
+FreeCamera::FreeCamera(const pxr::UsdGeomCamera &camera,
+                       pxr::UsdTimeCode timeCode)
+{
+    mCamera = camera.GetCamera(timeCode);
+    camera.GetShutterOpenAttr().Get(&mShutterOpen, timeCode);
+    camera.GetShutterCloseAttr().Get(&mShutterClose, timeCode);
+    camera.GetExposureAttr().Get(&mExposure, timeCode);
+}
+
 pxr::VtValue 
 FreeCamera::getParam(pxr::TfToken const& key) const
 {
@@ -138,4 +147,3 @@ FreeCamera::getTransform() const
 }
 
 } // namespace hd_render
-
