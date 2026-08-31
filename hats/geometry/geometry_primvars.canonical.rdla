@@ -1,30 +1,32 @@
 SceneVariables {
-    ["camera"] = PerspectiveCamera("primaryCamera"),
-    ["layer"] = Layer("defaultLayer"),
+    ["camera"] = PerspectiveCamera("/DEFAULT/primaryCamera"),
+    ["layer"] = Layer("/DEFAULT/defaultLayer"),
+    ["image_width"] = 960,
+    ["image_height"] = 700,
     ["enable_motion_blur"] = false,
 }
 
-AttributeMap("/mat/PrimvarColorMoonray.result") {
+AttributeMap("/mat/PrimvarColorMoonray") {
     ["default_value"] = bind(undef(), Rgb(0.5, 0.5, 0.5)),
     ["primitive_attribute_name"] = "displayColor",
 }
 
-UsdPrimvarReader_float("/mat/PrimvarOpacity.result") {
+UsdPrimvarReader_float("/mat/PrimvarOpacity") {
     ["fallback"] = bind(undef(), 1),
     ["varname"] = "displayOpacity",
 }
 
-UsdPrimvarReader_float("/mat/PrimvarRoughness.result") {
+UsdPrimvarReader_float("/mat/PrimvarRoughness") {
     ["fallback"] = bind(undef(), 0.5),
     ["varname"] = "roughness",
 }
 
-AttributeMap("displayColor") {
+AttributeMap("/DEFAULT/displayColorMap") {
     ["default_value"] = bind(undef(), Rgb(0.5, 0.5, 0.5)),
     ["primitive_attribute_name"] = "displayColor",
 }
 
-AttributeMap("displayOpacity") {
+AttributeMap("/DEFAULT/displayOpacityMap") {
     ["primitive_attribute_name"] = "displayOpacity",
     ["primitive_attribute_type"] = "float",
 }
@@ -188,7 +190,7 @@ RdlMeshGeometry("/World/x1/s13") {
     ["mesh_resolution"] = 4,
 }
 
-GeometrySet("allGeometry") {
+GeometrySet("/DEFAULT/allGeometry") {
     RdlMeshGeometry("/World/plane"),
     RdlMeshGeometry("/World/s00"),
     RdlMeshGeometry("/World/s01"),
@@ -208,62 +210,64 @@ GeometrySet("allGeometry") {
     RdlMeshGeometry("/World/x1/s13"),
 }
 
-Layer("defaultLayer") {
-    {RdlMeshGeometry("/World/plane"), "", UsdPreviewSurface("defaultMaterial"), LightSet("LightSet0E11AB"), undef(), undef(), undef(), undef(), undef()},
-    {RdlMeshGeometry("/World/s00"), "", UsdPreviewSurface("/mat/MoonrayMtl"), LightSet("LightSet0E11AB"), undef(), undef(), undef(), undef(), undef()},
-    {RdlMeshGeometry("/World/s01"), "", UsdPreviewSurface("/mat/MoonrayMtl"), LightSet("LightSet0E11AB"), undef(), undef(), undef(), undef(), undef()},
-    {RdlMeshGeometry("/World/s02"), "", UsdPreviewSurface("/mat/MoonrayMtl"), LightSet("LightSet0E11AB"), undef(), undef(), undef(), undef(), undef()},
-    {RdlMeshGeometry("/World/s03"), "", UsdPreviewSurface("/mat/MoonrayMtl"), LightSet("LightSet0E11AB"), undef(), undef(), undef(), undef(), undef()},
-    {RdlMeshGeometry("/World/s20"), "", UsdPreviewSurface("/mat/MoonrayMtl"), LightSet("LightSet0E11AB"), undef(), undef(), undef(), undef(), undef()},
-    {RdlMeshGeometry("/World/s21"), "", UsdPreviewSurface("/mat/MoonrayMtl"), LightSet("LightSet0E11AB"), undef(), undef(), undef(), undef(), undef()},
-    {RdlMeshGeometry("/World/s22"), "", UsdPreviewSurface("/mat/MoonrayMtl"), LightSet("LightSet0E11AB"), undef(), undef(), undef(), undef(), undef()},
-    {RdlMeshGeometry("/World/s23"), "", UsdPreviewSurface("/mat/MoonrayMtl"), LightSet("LightSet0E11AB"), undef(), undef(), undef(), undef(), undef()},
-    {RdlMeshGeometry("/World/s30"), "", UsdPreviewSurface("/mat/MoonrayMtl"), LightSet("LightSet0E11AB"), undef(), undef(), undef(), undef(), undef()},
-    {RdlMeshGeometry("/World/s31"), "", UsdPreviewSurface("/mat/MoonrayMtl"), LightSet("LightSet0E11AB"), undef(), undef(), undef(), undef(), undef()},
-    {RdlMeshGeometry("/World/s32"), "", UsdPreviewSurface("/mat/MoonrayMtl"), LightSet("LightSet0E11AB"), undef(), undef(), undef(), undef(), undef()},
-    {RdlMeshGeometry("/World/s33"), "", UsdPreviewSurface("/mat/MoonrayMtl"), LightSet("LightSet0E11AB"), undef(), undef(), undef(), undef(), undef()},
-    {RdlMeshGeometry("/World/x1/s10"), "", UsdPreviewSurface("/mat/MoonrayMtl"), LightSet("LightSet0E11AB"), undef(), undef(), undef(), undef(), undef()},
-    {RdlMeshGeometry("/World/x1/s11"), "", UsdPreviewSurface("/mat/MoonrayMtl"), LightSet("LightSet0E11AB"), undef(), undef(), undef(), undef(), undef()},
-    {RdlMeshGeometry("/World/x1/s12"), "", UsdPreviewSurface("/mat/MoonrayMtl"), LightSet("LightSet0E11AB"), undef(), undef(), undef(), undef(), undef()},
-    {RdlMeshGeometry("/World/x1/s13"), "", UsdPreviewSurface("/mat/MoonrayMtl"), LightSet("LightSet0E11AB"), undef(), undef(), undef(), undef(), undef()},
+Layer("/DEFAULT/defaultLayer") {
+    {RdlMeshGeometry("/World/plane"), "", UsdPreviewSurface("/DEFAULT/defaultMaterial"), LightSet("LightSet3AC404"), undef(), undef(), LightFilterSet("/DEFAULT/emptyLightFilterSet"), undef(), undef()},
+    {RdlMeshGeometry("/World/s00"), "", UsdPreviewSurface("/mat/MoonrayMtl"), LightSet("LightSet3AC404"), undef(), undef(), LightFilterSet("/DEFAULT/emptyLightFilterSet"), undef(), undef()},
+    {RdlMeshGeometry("/World/s01"), "", UsdPreviewSurface("/mat/MoonrayMtl"), LightSet("LightSet3AC404"), undef(), undef(), LightFilterSet("/DEFAULT/emptyLightFilterSet"), undef(), undef()},
+    {RdlMeshGeometry("/World/s02"), "", UsdPreviewSurface("/mat/MoonrayMtl"), LightSet("LightSet3AC404"), undef(), undef(), LightFilterSet("/DEFAULT/emptyLightFilterSet"), undef(), undef()},
+    {RdlMeshGeometry("/World/s03"), "", UsdPreviewSurface("/mat/MoonrayMtl"), LightSet("LightSet3AC404"), undef(), undef(), LightFilterSet("/DEFAULT/emptyLightFilterSet"), undef(), undef()},
+    {RdlMeshGeometry("/World/s20"), "", UsdPreviewSurface("/mat/MoonrayMtl"), LightSet("LightSet3AC404"), undef(), undef(), LightFilterSet("/DEFAULT/emptyLightFilterSet"), undef(), undef()},
+    {RdlMeshGeometry("/World/s21"), "", UsdPreviewSurface("/mat/MoonrayMtl"), LightSet("LightSet3AC404"), undef(), undef(), LightFilterSet("/DEFAULT/emptyLightFilterSet"), undef(), undef()},
+    {RdlMeshGeometry("/World/s22"), "", UsdPreviewSurface("/mat/MoonrayMtl"), LightSet("LightSet3AC404"), undef(), undef(), LightFilterSet("/DEFAULT/emptyLightFilterSet"), undef(), undef()},
+    {RdlMeshGeometry("/World/s23"), "", UsdPreviewSurface("/mat/MoonrayMtl"), LightSet("LightSet3AC404"), undef(), undef(), LightFilterSet("/DEFAULT/emptyLightFilterSet"), undef(), undef()},
+    {RdlMeshGeometry("/World/s30"), "", UsdPreviewSurface("/mat/MoonrayMtl"), LightSet("LightSet3AC404"), undef(), undef(), LightFilterSet("/DEFAULT/emptyLightFilterSet"), undef(), undef()},
+    {RdlMeshGeometry("/World/s31"), "", UsdPreviewSurface("/mat/MoonrayMtl"), LightSet("LightSet3AC404"), undef(), undef(), LightFilterSet("/DEFAULT/emptyLightFilterSet"), undef(), undef()},
+    {RdlMeshGeometry("/World/s32"), "", UsdPreviewSurface("/mat/MoonrayMtl"), LightSet("LightSet3AC404"), undef(), undef(), LightFilterSet("/DEFAULT/emptyLightFilterSet"), undef(), undef()},
+    {RdlMeshGeometry("/World/s33"), "", UsdPreviewSurface("/mat/MoonrayMtl"), LightSet("LightSet3AC404"), undef(), undef(), LightFilterSet("/DEFAULT/emptyLightFilterSet"), undef(), undef()},
+    {RdlMeshGeometry("/World/x1/s10"), "", UsdPreviewSurface("/mat/MoonrayMtl"), LightSet("LightSet3AC404"), undef(), undef(), LightFilterSet("/DEFAULT/emptyLightFilterSet"), undef(), undef()},
+    {RdlMeshGeometry("/World/x1/s11"), "", UsdPreviewSurface("/mat/MoonrayMtl"), LightSet("LightSet3AC404"), undef(), undef(), LightFilterSet("/DEFAULT/emptyLightFilterSet"), undef(), undef()},
+    {RdlMeshGeometry("/World/x1/s12"), "", UsdPreviewSurface("/mat/MoonrayMtl"), LightSet("LightSet3AC404"), undef(), undef(), LightFilterSet("/DEFAULT/emptyLightFilterSet"), undef(), undef()},
+    {RdlMeshGeometry("/World/x1/s13"), "", UsdPreviewSurface("/mat/MoonrayMtl"), LightSet("LightSet3AC404"), undef(), undef(), LightFilterSet("/DEFAULT/emptyLightFilterSet"), undef(), undef()},
 }
 
 UsdPreviewSurface("/mat/MoonrayMtl") {
-    ["diffuseColor"] = bind(AttributeMap("/mat/PrimvarColorMoonray.result"), Rgb(1, 1, 1)),
-    ["roughness"] = bind(UsdPrimvarReader_float("/mat/PrimvarRoughness.result"), 1),
-    ["opacity"] = bind(UsdPrimvarReader_float("/mat/PrimvarOpacity.result"), 1),
+    ["diffuseColor"] = bind(AttributeMap("/mat/PrimvarColorMoonray"), Rgb(1, 1, 1)),
+    ["roughness"] = bind(UsdPrimvarReader_float("/mat/PrimvarRoughness"), 1),
+    ["opacity"] = bind(UsdPrimvarReader_float("/mat/PrimvarOpacity"), 1),
 }
 
-UsdPreviewSurface("defaultMaterial") {
-    ["diffuseColor"] = bind(AttributeMap("displayColor"), Rgb(1, 1, 1)),
+UsdPreviewSurface("/DEFAULT/defaultMaterial") {
+    ["diffuseColor"] = bind(AttributeMap("/DEFAULT/displayColorMap"), Rgb(1, 1, 1)),
     ["roughness"] = bind(undef(), 0.300000012),
-    ["opacity"] = bind(AttributeMap("displayOpacity"), 1),
+    ["opacity"] = bind(AttributeMap("/DEFAULT/displayOpacityMap"), 1),
 }
 
-EnvLight("defaultLight") {
-    ["max_shadow_distance"] = 100,
+EnvLight("/defaultLight") {
 }
 
-LightSet("LightSet0E11AB") {
-    EnvLight("defaultLight"),
+LightFilterSet("/DEFAULT/emptyLightFilterSet") {
 }
 
-PerspectiveCamera("/app_scene/free_cam") {
+LightSet("LightSet3AC404") {
+    EnvLight("/defaultLight"),
+}
+
+PerspectiveCamera("/_UsdImaging_HdMoonrayRendererPlugin_0xID/camera") {
     ["node_xform"] = blur(Mat4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 29.995246887207031, 1), Mat4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 29.995246887207031, 1)),
     ["far"] = 1000000,
     ["mb_shutter_open"] = 0,
     ["mb_shutter_close"] = 0,
     ["focal"] = blur(50, 50),
-    ["film_width_aperture"] = 20.9549999,
+    ["film_width_aperture"] = 20.9702396,
 }
 
-PerspectiveCamera("primaryCamera") {
+PerspectiveCamera("/DEFAULT/primaryCamera") {
     ["node_xform"] = blur(Mat4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 29.995246887207031, 1), Mat4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 29.995246887207031, 1)),
     ["far"] = 1000000,
     ["mb_shutter_open"] = 0,
     ["mb_shutter_close"] = 0,
     ["focal"] = blur(50, 50),
-    ["film_width_aperture"] = 20.9549999,
+    ["film_width_aperture"] = 20.9702396,
 }
 
 UserData("/World/s20.primvars:roughness") {
@@ -276,6 +280,13 @@ UserData("/World/s20.primvars:primId") {
     ["float_key"] = "primId",
     ["float_values_0"] = { 8},
     ["rate"] = "constant",
+}
+
+RenderOutput("/_outputs/primId") {
+    ["result"] = "primitive attribute",
+    ["primitive_attribute"] = "primId",
+    ["file_name"] = "/tmp/scene.exr",
+    ["math_filter"] = "closest",
 }
 
 UserData("/World/x1/s11.primvars:primId") {
@@ -428,6 +439,13 @@ UserData("/World/x1/s10.primvars:roughness") {
     ["rate"] = "constant",
 }
 
+RenderOutput("/_outputs/elementId") {
+    ["result"] = "primitive attribute",
+    ["primitive_attribute"] = "elementId",
+    ["file_name"] = "/tmp/scene.exr",
+    ["math_filter"] = "closest",
+}
+
 UserData("/World/s22.primvars:primId") {
     ["float_key"] = "primId",
     ["float_values_0"] = { 10},
@@ -440,6 +458,13 @@ UserData("/World/s32.primvars:primId") {
     ["rate"] = "constant",
 }
 
+RenderOutput("/_outputs/instanceId") {
+    ["result"] = "primitive attribute",
+    ["primitive_attribute"] = "instanceId",
+    ["file_name"] = "/tmp/scene.exr",
+    ["math_filter"] = "closest",
+}
+
 UserData("/World/s30.primvars:displayColor") {
     ["vec3f_key"] = "displayColor",
     ["vec3f_values_0"] = { Vec3(0.5, 0.5, 0.5)},
@@ -449,6 +474,12 @@ UserData("/World/s30.primvars:displayColor") {
 UserData("/World/s20.primvars:displayColor") {
     ["vec3f_key"] = "displayColor",
     ["vec3f_values_0"] = { Vec3(0.5, 0.5, 0.5)},
+    ["rate"] = "constant",
+}
+
+UserData("/World/s00.primvars:primId") {
+    ["float_key"] = "primId",
+    ["float_values_0"] = { 0},
     ["rate"] = "constant",
 }
 
@@ -470,9 +501,9 @@ UserData("/World/s31.primvars:roughness") {
     ["rate"] = "constant",
 }
 
-UserData("/World/s00.primvars:primId") {
-    ["float_key"] = "primId",
-    ["float_values_0"] = { 0},
+UserData("/World/s23.primvars:displayColor") {
+    ["vec3f_key"] = "displayColor",
+    ["vec3f_values_0"] = { Vec3(0.5, 0.5, 0.5)},
     ["rate"] = "constant",
 }
 
@@ -486,6 +517,12 @@ UserData("/World/x1/s10.primvars:displayColor") {
     ["vec3f_key"] = "displayColor",
     ["vec3f_values_0"] = { Vec3(0.5, 0.5, 0.5)},
     ["rate"] = "constant",
+}
+
+RenderOutput("/_outputs/depth") {
+    ["result"] = "depth",
+    ["file_name"] = "/tmp/scene.exr",
+    ["math_filter"] = "min",
 }
 
 UserData("/World/x1/s13.primvars:displayColor") {
@@ -512,10 +549,10 @@ UserData("/World/x1/s13.primvars:roughness") {
     ["rate"] = "constant",
 }
 
-UserData("/World/s23.primvars:displayColor") {
-    ["vec3f_key"] = "displayColor",
-    ["vec3f_values_0"] = { Vec3(0.5, 0.5, 0.5)},
-    ["rate"] = "constant",
+RenderOutput("/_outputs/instanceIdA") {
+    ["result"] = "primitive attribute",
+    ["primitive_attribute"] = "instanceIdA",
+    ["math_filter"] = "closest",
 }
 
 UserData("/World/s22.primvars:roughness") {

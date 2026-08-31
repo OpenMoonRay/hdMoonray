@@ -4,6 +4,7 @@
 include(CTest)
 include(HatsTest)
 
+add_subdirectory(aov)
 add_subdirectory(camera)
 add_subdirectory(geometry)
 add_subdirectory(light)

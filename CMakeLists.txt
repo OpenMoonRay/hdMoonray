@@ -31,6 +31,13 @@ if(NOT pxr_FOUND)
     find_package(pxr REQUIRED)
 endif()
 
+# Skip hdMoonray if USD is less than 0.25.5
+if(PXR_VERSION VERSION_LESS 2505)
+    message(STATUS "Skipping hdMoonray build because USD version is less than 0.25.5")
+    install(CODE " # Empty install action ")
+    return()
+endif()
+
 # This is needed for linking against the USD 0.25.5 libraries
 # as they depend on OpenGL but don't specify it in
 # their cmake config.
@@ -135,9 +142,4 @@ install(FILES
         ${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}-${PROJECT_VERSION}
 )
 
-install(
-    DIRECTORY testSuite
-    DESTINATION .
-    USE_SOURCE_PERMISSIONS
-)
 

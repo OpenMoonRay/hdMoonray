@@ -16,7 +16,7 @@ if 'early' not in locals() or not callable(early):
 
 @early()
 def version():
-    _version = '7.6'
+    _version = '10.3'
     from rezbuild import earlybind
     return earlybind.version(this, _version)
 
@@ -41,37 +41,13 @@ else:
 variants = [
     [   # variant 0
         'os-rocky-9',
-        'refplat-vfx2023.1',
-        'usd_imaging-0.23.8.x',
-        'openimageio-2.4.8.0.x',
-        'opt_level-optdebug',
-        'python-3.10'
-    ],
-    [   # variant 1
-        'os-rocky-9',
-        'refplat-vfx2023.1',
-        'usd_imaging-0.23.8.x',
-        'openimageio-2.4.8.0.x',
-        'opt_level-debug',
-        'python-3.10'
-    ],
-    [   # variant 2
-        'os-rocky-9',
-        'refplat-vfx2024.0',
-        'usd_imaging-0.24.3.x',
-        'openimageio-2.4.8.0.x',
-        'opt_level-optdebug',
-        'python-3.11'
-    ],
-    [   # variant 3
-        'os-rocky-9',
         'refplat-vfx2025.0',
         'usd_imaging-0.25.5.1.x',
         'openimageio-3.0',
         'opt_level-optdebug',
         'python-3.11'
     ],
-    [   # variant 4
+    [   # variant 1
         'os-rocky-9',
         'refplat-houdini21.0',
         'usd_imaging-0.25.5.1.x.5',
@@ -79,14 +55,14 @@ variants = [
         'opt_level-optdebug',
         'python-3.11'
     ],
-    [   # variant 5
-        'os-rocky-9',
-        'refplat-vfx2022.0',
-        'usd_imaging-0.22.5.x.4',
-        'openimageio-2.3.20.0.x',
-        'opt_level-optdebug',
-        'python-3.9'
-    ],
+    #[   # variant 2
+    #    'os-rocky-9',
+    #    'refplat-vfx2025.0',
+    #    'usd_imaging-0.25.11',
+    #    'openimageio-3.0',
+    #    'opt_level-optdebug',
+    #    'python-3.11'
+    #],
 ]
 
 conf_CI_variants = variants
