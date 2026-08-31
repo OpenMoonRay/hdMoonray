@@ -8,6 +8,7 @@ namespace hdMoonray {
 NullRenderer::NullRenderer()
 {
     mSceneContext = new scene_rdl2::rdl2::SceneContext();
+    mSceneContext->setProxyModeEnabled(true);
 }
 
 NullRenderer::~NullRenderer()
@@ -16,12 +17,12 @@ NullRenderer::~NullRenderer()
 }
 
 bool 
-NullRenderer::allocate(scene_rdl2::rdl2::RenderOutput* ro, PixelData& pd, const PixelSize& request) 
+NullRenderer::allocate(MoonrayOutput output, PixelData& pd, const PixelSize& request)
 {
     // we have to allocate a buffer, even though we won't fill it,
     // because the calling app may fail without one
     // (we could perhaps add an option to disable this)
-    pd.mChannels = isBeauty(ro) ? 4 : request.mChannels;
+    pd.mChannels = output.isBeauty() ? 4 : request.mChannels;
     pd.mWidth = request.mWidth;
     pd.mHeight = request.mHeight;
     pd.vec.resize(pd.mWidth * pd.mHeight * pd.mChannels);
@@ -31,13 +32,13 @@ NullRenderer::allocate(scene_rdl2::rdl2::RenderOutput* ro, PixelData& pd, const 
 }
 
 bool
-NullRenderer::resolve(scene_rdl2::rdl2::RenderOutput*, PixelData&) 
+NullRenderer::resolve(MoonrayOutput, PixelData&, bool) 
 {
     return false;
 }
     
 void 
-NullRenderer::deallocate(scene_rdl2::rdl2::RenderOutput*, PixelData&) 
+NullRenderer::deallocate(MoonrayOutput, PixelData&) 
 {
 }
 

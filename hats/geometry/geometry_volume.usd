@@ -3,7 +3,7 @@
     defaultPrim = "Volume"
 )
 
-def Volume "Volume"
+def Volume "Volume" (prepend apiSchemas = ["MaterialBindingAPI"])
 {
     rel field:density = </Volume/Field>
     double3 xformOp:scale = (1, 1, 1)
@@ -43,3 +43,6 @@ def Mesh "box"
     uniform token subdivisionScheme = "none"
 }
 
+def DomeLight "defaultLight"
+{
+}

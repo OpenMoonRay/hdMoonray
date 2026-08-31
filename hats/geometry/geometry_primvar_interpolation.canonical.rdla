@@ -1,15 +1,17 @@
 SceneVariables {
-    ["camera"] = PerspectiveCamera("primaryCamera"),
-    ["layer"] = Layer("defaultLayer"),
+    ["camera"] = PerspectiveCamera("/DEFAULT/primaryCamera"),
+    ["layer"] = Layer("/DEFAULT/defaultLayer"),
+    ["image_width"] = 960,
+    ["image_height"] = 700,
     ["enable_motion_blur"] = false,
 }
 
-AttributeMap("displayColor") {
+AttributeMap("/DEFAULT/displayColorMap") {
     ["default_value"] = bind(undef(), Rgb(0.5, 0.5, 0.5)),
     ["primitive_attribute_name"] = "displayColor",
 }
 
-AttributeMap("displayOpacity") {
+AttributeMap("/DEFAULT/displayOpacityMap") {
     ["primitive_attribute_name"] = "displayOpacity",
     ["primitive_attribute_type"] = "float",
 }
@@ -80,7 +82,7 @@ RdlMeshGeometry("/vertex") {
     ["smooth_normal"] = false,
 }
 
-GeometrySet("allGeometry") {
+GeometrySet("/DEFAULT/allGeometry") {
     RdlMeshGeometry("/constant"),
     RdlMeshGeometry("/faceVarying"),
     RdlMeshGeometry("/invalid"),
@@ -89,45 +91,66 @@ GeometrySet("allGeometry") {
     RdlMeshGeometry("/vertex"),
 }
 
-Layer("defaultLayer") {
-    {RdlMeshGeometry("/constant"), "", UsdPreviewSurface("defaultMaterial"), LightSet("LightSet0E11AB"), undef(), undef(), undef(), undef(), undef()},
-    {RdlMeshGeometry("/faceVarying"), "", UsdPreviewSurface("defaultMaterial"), LightSet("LightSet0E11AB"), undef(), undef(), undef(), undef(), undef()},
-    {RdlMeshGeometry("/invalid"), "", UsdPreviewSurface("defaultMaterial"), LightSet("LightSet0E11AB"), undef(), undef(), undef(), undef(), undef()},
-    {RdlMeshGeometry("/uniform"), "", UsdPreviewSurface("defaultMaterial"), LightSet("LightSet0E11AB"), undef(), undef(), undef(), undef(), undef()},
-    {RdlMeshGeometry("/varying"), "", UsdPreviewSurface("defaultMaterial"), LightSet("LightSet0E11AB"), undef(), undef(), undef(), undef(), undef()},
-    {RdlMeshGeometry("/vertex"), "", UsdPreviewSurface("defaultMaterial"), LightSet("LightSet0E11AB"), undef(), undef(), undef(), undef(), undef()},
+Layer("/DEFAULT/defaultLayer") {
+    {RdlMeshGeometry("/constant"), "", UsdPreviewSurface("/DEFAULT/defaultMaterial"), LightSet("LightSet3AC404"), undef(), undef(), LightFilterSet("/DEFAULT/emptyLightFilterSet"), undef(), undef()},
+    {RdlMeshGeometry("/faceVarying"), "", UsdPreviewSurface("/DEFAULT/defaultMaterial"), LightSet("LightSet3AC404"), undef(), undef(), LightFilterSet("/DEFAULT/emptyLightFilterSet"), undef(), undef()},
+    {RdlMeshGeometry("/invalid"), "", UsdPreviewSurface("/DEFAULT/defaultMaterial"), LightSet("LightSet3AC404"), undef(), undef(), LightFilterSet("/DEFAULT/emptyLightFilterSet"), undef(), undef()},
+    {RdlMeshGeometry("/uniform"), "", UsdPreviewSurface("/DEFAULT/defaultMaterial"), LightSet("LightSet3AC404"), undef(), undef(), LightFilterSet("/DEFAULT/emptyLightFilterSet"), undef(), undef()},
+    {RdlMeshGeometry("/varying"), "", UsdPreviewSurface("/DEFAULT/defaultMaterial"), LightSet("LightSet3AC404"), undef(), undef(), LightFilterSet("/DEFAULT/emptyLightFilterSet"), undef(), undef()},
+    {RdlMeshGeometry("/vertex"), "", UsdPreviewSurface("/DEFAULT/defaultMaterial"), LightSet("LightSet3AC404"), undef(), undef(), LightFilterSet("/DEFAULT/emptyLightFilterSet"), undef(), undef()},
 }
 
-UsdPreviewSurface("defaultMaterial") {
-    ["diffuseColor"] = bind(AttributeMap("displayColor"), Rgb(1, 1, 1)),
+UsdPreviewSurface("/DEFAULT/defaultMaterial") {
+    ["diffuseColor"] = bind(AttributeMap("/DEFAULT/displayColorMap"), Rgb(1, 1, 1)),
     ["roughness"] = bind(undef(), 0.300000012),
-    ["opacity"] = bind(AttributeMap("displayOpacity"), 1),
+    ["opacity"] = bind(AttributeMap("/DEFAULT/displayOpacityMap"), 1),
 }
 
-EnvLight("defaultLight") {
-    ["max_shadow_distance"] = 100,
+EnvLight("/defaultLight") {
 }
 
-LightSet("LightSet0E11AB") {
-    EnvLight("defaultLight"),
+LightFilterSet("/DEFAULT/emptyLightFilterSet") {
 }
 
-PerspectiveCamera("/app_scene/free_cam") {
+LightSet("LightSet3AC404") {
+    EnvLight("/defaultLight"),
+}
+
+PerspectiveCamera("/_UsdImaging_HdMoonrayRendererPlugin_0xID/camera") {
     ["node_xform"] = blur(Mat4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 2, 14.188564300537109, 1), Mat4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 2, 14.188564300537109, 1)),
     ["far"] = 1000000,
     ["mb_shutter_open"] = 0,
     ["mb_shutter_close"] = 0,
     ["focal"] = blur(50, 50),
-    ["film_width_aperture"] = 20.9549999,
+    ["film_width_aperture"] = 20.9702396,
 }
 
-PerspectiveCamera("primaryCamera") {
+PerspectiveCamera("/DEFAULT/primaryCamera") {
     ["node_xform"] = blur(Mat4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 2, 14.188564300537109, 1), Mat4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 2, 14.188564300537109, 1)),
     ["far"] = 1000000,
     ["mb_shutter_open"] = 0,
     ["mb_shutter_close"] = 0,
     ["focal"] = blur(50, 50),
-    ["film_width_aperture"] = 20.9549999,
+    ["film_width_aperture"] = 20.9702396,
+}
+
+UserData("/vertex.primvars:displayColor") {
+    ["color_key"] = "displayColor",
+    ["color_values_0"] = { Rgb(1, 0, 0), Rgb(0, 1, 0), Rgb(0, 0, 1), Rgb(1, 0, 1)},
+    ["rate"] = "vertex",
+}
+
+UserData("/faceVarying.primvars:primId") {
+    ["float_key"] = "primId",
+    ["float_values_0"] = { 4},
+    ["rate"] = "constant",
+}
+
+RenderOutput("/_outputs/elementId") {
+    ["result"] = "primitive attribute",
+    ["primitive_attribute"] = "elementId",
+    ["file_name"] = "/tmp/scene.exr",
+    ["math_filter"] = "closest",
 }
 
 UserData("/varying.primvars:displayColor") {
@@ -142,6 +165,19 @@ UserData("/faceVarying.primvars:displayColor") {
     ["rate"] = "face varying",
 }
 
+RenderOutput("/_outputs/instanceId") {
+    ["result"] = "primitive attribute",
+    ["primitive_attribute"] = "instanceId",
+    ["file_name"] = "/tmp/scene.exr",
+    ["math_filter"] = "closest",
+}
+
+RenderOutput("/_outputs/instanceIdA") {
+    ["result"] = "primitive attribute",
+    ["primitive_attribute"] = "instanceIdA",
+    ["math_filter"] = "closest",
+}
+
 UserData("/uniform.primvars:primId") {
     ["float_key"] = "primId",
     ["float_values_0"] = { 1},
@@ -154,27 +190,21 @@ UserData("/constant.primvars:displayColor") {
     ["rate"] = "constant",
 }
 
-UserData("/faceVarying.primvars:primId") {
-    ["float_key"] = "primId",
-    ["float_values_0"] = { 4},
-    ["rate"] = "constant",
-}
-
-UserData("/vertex.primvars:displayColor") {
+UserData("/invalid.primvars:displayColor") {
     ["color_key"] = "displayColor",
     ["color_values_0"] = { Rgb(1, 0, 0), Rgb(0, 1, 0), Rgb(0, 0, 1), Rgb(1, 0, 1)},
-    ["rate"] = "vertex",
+    ["rate"] = "face varying",
 }
 
-UserData("/vertex.primvars:primId") {
-    ["float_key"] = "primId",
-    ["float_values_0"] = { 3},
-    ["rate"] = "constant",
+RenderOutput("/_outputs/depth") {
+    ["result"] = "depth",
+    ["file_name"] = "/tmp/scene.exr",
+    ["math_filter"] = "min",
 }
 
-UserData("/varying.primvars:primId") {
+UserData("/invalid.primvars:primId") {
     ["float_key"] = "primId",
-    ["float_values_0"] = { 2},
+    ["float_values_0"] = { 5},
     ["rate"] = "constant",
 }
 
@@ -184,16 +214,23 @@ UserData("/constant.primvars:primId") {
     ["rate"] = "constant",
 }
 
-UserData("/invalid.primvars:primId") {
+UserData("/varying.primvars:primId") {
     ["float_key"] = "primId",
-    ["float_values_0"] = { 5},
+    ["float_values_0"] = { 2},
     ["rate"] = "constant",
 }
 
-UserData("/invalid.primvars:displayColor") {
-    ["color_key"] = "displayColor",
-    ["color_values_0"] = { Rgb(1, 0, 0), Rgb(0, 1, 0), Rgb(0, 0, 1), Rgb(1, 0, 1)},
-    ["rate"] = "face varying",
+UserData("/vertex.primvars:primId") {
+    ["float_key"] = "primId",
+    ["float_values_0"] = { 3},
+    ["rate"] = "constant",
+}
+
+RenderOutput("/_outputs/primId") {
+    ["result"] = "primitive attribute",
+    ["primitive_attribute"] = "primId",
+    ["file_name"] = "/tmp/scene.exr",
+    ["math_filter"] = "closest",
 }
 
 UserData("/uniform.primvars:displayColor") {
