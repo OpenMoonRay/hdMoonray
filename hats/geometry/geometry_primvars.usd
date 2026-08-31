@@ -63,7 +63,7 @@ def Xform "World"
     float[] primvars:roughness = [0]
     float primvars:moonray:mesh_resolution = 4
 
-    def Sphere "s00"
+    def Sphere "s00" (prepend apiSchemas = ["MaterialBindingAPI"])
     {
         double3 xformOp:translate = (-3, -3, 2)
         uniform token[] xformOpOrder = ["xformOp:translate"]
@@ -71,21 +71,21 @@ def Xform "World"
         rel material:binding = </mat>
     }
 
-    def Sphere "s01"
+    def Sphere "s01" (prepend apiSchemas = ["MaterialBindingAPI"])
     {
         double3 xformOp:translate = (-1, -3, 2)
         uniform token[] xformOpOrder = ["xformOp:translate"]
         rel material:binding = </mat>
     }
 
-    def Sphere "s02"
+    def Sphere "s02" (prepend apiSchemas = ["MaterialBindingAPI"])
     {
         double3 xformOp:translate = (1, -3, 2)
         uniform token[] xformOpOrder = ["xformOp:translate"]
         rel material:binding = </mat>
     }
 
-    def Sphere "s03"
+    def Sphere "s03" (prepend apiSchemas = ["MaterialBindingAPI"])
     {
         double3 xformOp:translate = (3, -3, 2)
         uniform token[] xformOpOrder = ["xformOp:translate"]
@@ -96,14 +96,14 @@ def Xform "World"
     def Xform "x1" {
         bool primvars:moonray:visible_in_camera = False
 
-    def Sphere "s10"
+    def Sphere "s10" (prepend apiSchemas = ["MaterialBindingAPI"])
     {
         double3 xformOp:translate = (-3, -1, 2)
         uniform token[] xformOpOrder = ["xformOp:translate"]
         rel material:binding = </mat>
     }
 
-    def Sphere "s11"
+    def Sphere "s11" (prepend apiSchemas = ["MaterialBindingAPI"])
     {
         double3 xformOp:translate = (-1, -1, 2)
         uniform token[] xformOpOrder = ["xformOp:translate"]
@@ -111,14 +111,14 @@ def Xform "World"
         rel material:binding = </mat>
     }
 
-    def Sphere "s12"
+    def Sphere "s12" (prepend apiSchemas = ["MaterialBindingAPI"])
     {
         double3 xformOp:translate = (1, -1, 2)
         uniform token[] xformOpOrder = ["xformOp:translate"]
         rel material:binding = </mat>
     }
 
-    def Sphere "s13"
+    def Sphere "s13" (prepend apiSchemas = ["MaterialBindingAPI"])
     {
         double3 xformOp:translate = (3, -1, 2)
         uniform token[] xformOpOrder = ["xformOp:translate"]
@@ -126,21 +126,21 @@ def Xform "World"
     }
     }
 
-    def Sphere "s20"
+    def Sphere "s20" (prepend apiSchemas = ["MaterialBindingAPI"])
     {
         double3 xformOp:translate = (-3, 1, 2)
         uniform token[] xformOpOrder = ["xformOp:translate"]
         rel material:binding = </mat>
     }
 
-    def Sphere "s21"
+    def Sphere "s21" (prepend apiSchemas = ["MaterialBindingAPI"])
     {
         double3 xformOp:translate = (-1, 1, 2)
         uniform token[] xformOpOrder = ["xformOp:translate"]
         rel material:binding = </mat>
     }
 
-    def Sphere "s22"
+    def Sphere "s22" (prepend apiSchemas = ["MaterialBindingAPI"])
     {
         double3 xformOp:translate = (1, 1, 2)
         uniform token[] xformOpOrder = ["xformOp:translate"]
@@ -148,14 +148,14 @@ def Xform "World"
         float[] primvars:displayOpacity = [0]
     }
 
-    def Sphere "s23"
+    def Sphere "s23" (prepend apiSchemas = ["MaterialBindingAPI"])
     {
         double3 xformOp:translate = (3, 1, 2)
         uniform token[] xformOpOrder = ["xformOp:translate"]
         rel material:binding = </mat>
     }
 
-    def Sphere "s30"
+    def Sphere "s30" (prepend apiSchemas = ["MaterialBindingAPI"])
     {
         double3 xformOp:translate = (-3, 3, 2)
         uniform token[] xformOpOrder = ["xformOp:translate"]
@@ -163,21 +163,21 @@ def Xform "World"
         float primvars:moonray:mesh_resolution = 1
     }
 
-    def Sphere "s31"
+    def Sphere "s31" (prepend apiSchemas = ["MaterialBindingAPI"])
     {
         double3 xformOp:translate = (-1, 3, 2)
         uniform token[] xformOpOrder = ["xformOp:translate"]
         rel material:binding = </mat>
     }
 
-    def Sphere "s32"
+    def Sphere "s32" (prepend apiSchemas = ["MaterialBindingAPI"])
     {
         double3 xformOp:translate = (1, 3, 2)
         uniform token[] xformOpOrder = ["xformOp:translate"]
         rel material:binding = </mat>
     }
 
-    def Sphere "s33"
+    def Sphere "s33" (prepend apiSchemas = ["MaterialBindingAPI"])
     {
         double3 xformOp:translate = (3, 3, 2)
         uniform token[] xformOpOrder = ["xformOp:translate"]
@@ -285,3 +285,6 @@ def Xform "World"
     }
 }
 
+def DomeLight "defaultLight"
+{
+}

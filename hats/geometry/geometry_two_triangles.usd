@@ -21,3 +21,7 @@ def Mesh "two_triangles"
     )
     uniform token subdivisionScheme = "none"
 }
+
+def DomeLight "defaultLight"
+{
+}

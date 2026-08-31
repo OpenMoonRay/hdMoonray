@@ -32,7 +32,8 @@ def RectLight "key"
     bool inputs:normalize = true
 }
 
-def "plane1" ( payload = @/work/rd/raas/hydra/rats/data/plane_xz_unit.usd@ )
+def "plane1" ( payload = @/work/rd/raas/hydra/rats/data/plane_xz_unit.usd@
+               prepend apiSchemas = ["MaterialBindingAPI"] )
 {
     matrix4d xformOp:transform = ( (2, 0, 0, 0),
                                    (0, 0, 1, 0),
@@ -45,7 +46,8 @@ def "plane1" ( payload = @/work/rd/raas/hydra/rats/data/plane_xz_unit.usd@ )
     rel material:binding = </surfacing_plane1>
 }
 
-def "plane2" ( payload = @/work/rd/raas/hydra/rats/data/plane_xz_unit.usd@ )
+def "plane2" ( payload = @/work/rd/raas/hydra/rats/data/plane_xz_unit.usd@
+               prepend apiSchemas = ["MaterialBindingAPI"] )
 {
     matrix4d xformOp:transform = ( (2, 0, 0, 0),
                                    (0, 0, 1, 0),
@@ -64,12 +66,9 @@ def Material "surfacing_plane1"
 
         def Shader "planeMtl"
         {
-            uniform token info:id = "BaseMaterial"
+            uniform token info:id = "DwaBaseMaterial"
             color4f outputs:surface
-            color3f inputs:diffuse_color.connect = <../planeMap.outputs:out>
-            float inputs:specular_factor = 0.02
-            float inputs:specular_roughness = 0.54772255750517
-            float inputs:directional_diffuse_roughness = 0.547723
+            color3f inputs:albedo.connect = <../planeMap.outputs:out>
         }
 
         def Shader "planeMap"
@@ -87,12 +86,9 @@ def Material "surfacing_plane2"
 
         def Shader "planeMtl"
         {
-            uniform token info:id = "BaseMaterial"
+            uniform token info:id = "DwaBaseMaterial"
             color4f outputs:surface
-            color3f inputs:diffuse_color.connect = <../planeMap.outputs:out>
-            float inputs:specular_factor = 0.02
-            float inputs:specular_roughness = 0.54772255750517
-            float inputs:directional_diffuse_roughness = 0.547723
+            color3f inputs:albedo.connect = <../planeMap.outputs:out>
         }
 
         def Shader "planeMap"

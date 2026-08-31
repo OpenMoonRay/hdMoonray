@@ -1,0 +1,55 @@
+#usda 1.0
+
+def Camera "shot_cam"
+{
+    matrix4d xformOp:transform = ( (1, 0, 0, 0), (0, 1, 0, 0), (0, 0, 1, 0), (0, 0.5, 10, 1) )
+    uniform token[] xformOpOrder = ["xformOp:transform"]
+}
+
+def Mesh "two_triangles"
+{
+    int[] faceVertexCounts = [3, 3]
+    int[] faceVertexIndices = [0, 1, 2, 0, 2, 3]
+    point3f[] points = [(-1, 0, 0), (1, 0, 0), (1, 1, 0), (-1, 1, 0)] (
+        interpolation = "vertex"
+    )
+    uniform token subdivisionScheme = "none"
+    def GeomSubset "set1" (prepend apiSchemas = ["MaterialBindingAPI"])
+    {
+        int[] indices = [0]
+        rel material:binding = </mat>
+    }
+    def GeomSubset "set2" (prepend apiSchemas = ["MaterialBindingAPI"])
+    {
+        int[] indices = [1]
+        rel material:binding = </mat>
+    }
+}
+
+def DomeLight "dome1"
+{
+    bool collection:lightLink:includeRoot = false
+    color3f inputs:color = (0, 0, 1)
+    rel collection:lightLink:includes = [</two_triangles/set1>]
+}
+
+def DomeLight "dome2"
+{
+    bool collection:lightLink:includeRoot = false
+    color3f inputs:color = (0, 1, 0)
+    rel collection:lightLink:includes = [</two_triangles/set2>]
+}
+
+def Material "mat"
+{
+    color4f outputs:moonray:surface.connect = <mtl.outputs:surface>
+
+    def Shader "mtl"
+    {
+        uniform token info:id = "DwaBaseMaterial"
+        color4f outputs:surface
+    }
+}
+
+
+

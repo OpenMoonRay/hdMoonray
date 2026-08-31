@@ -6,4 +6,5 @@ add_hats_test(material_dwabase_defaults CAMERA camera)
 add_hats_test(material_dwabase_normal CAMERA camera)
 add_hats_test(material_dwametal_defaults CAMERA camera)
 add_hats_test(material_udim CAMERA camera)
+add_hats_test(material_accent CAMERA camera)
 
