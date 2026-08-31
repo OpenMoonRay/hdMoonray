@@ -1,0 +1,39 @@
+#usda 1.0
+
+def Camera "camera"
+{
+    matrix4d xformOp:transform = ( (0.97038, 0, 0.241585, 0),
+                                   (0.0982038, 0.913652, -0.394457, 0),
+                                   (-0.220725, 0.406498, 0.886589, 0),
+                                   (-2.29199, 5.33596, 9.42018, 1) )
+
+    uniform token[] xformOpOrder = ["xformOp:transform"]
+
+    float focalLength = 300;
+    float horizontalAperture = 240;
+    float verticalAperture = 135;
+    float2 clippingRange = (0.01, 10000)
+}
+
+def Capsule "shape"
+{
+    matrix4d xformOp:transform = ( (3, 0, 0, 0),
+                                   (0, 3, 0, 0),
+                                   (0, 0, 3, 0),
+                                   (0, 1, -5, 1) )
+    uniform token[] xformOpOrder = ["xformOp:transform"]
+}
+
+def DistantLight "distantLight"
+{
+    matrix4d xformOp:transform = ( (0.786774, 0.019432, -0.616936, 0),
+                                   (-0.525164, 0.546265, -0.652531, 0),
+                                   (0.324331, 0.837387, 0.439992, 0),
+                                   (13.7238, 7, 2.81431, 1)  )
+    uniform token[] xformOpOrder = ["xformOp:transform"]
+
+    color3f inputs:color = (0.8, 0.8, 0.6)
+    float inputs:intensity = 1
+    float inputs:exposure = 9
+    float inputs:angle = 5
+}

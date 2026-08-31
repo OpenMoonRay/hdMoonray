@@ -2,14 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "ValueConverter.h"
-
-#include <scene_rdl2/render/logging/logging.h>
+#include "HdmLog.h"
 
 #include <pxr/usd/sdf/assetPath.h>
 
 namespace hdMoonray {
-
-using scene_rdl2::logging::Logger;
 
 static void _clearBinding(SceneObject* sceneObj, const Attribute* attribute)
 {
@@ -153,6 +150,10 @@ static bool _setAttribute(SceneObject* sceneObj, const Attribute* attribute, con
 void
 ValueConverter::setAttribute(SceneObject* sceneObj, const Attribute* attribute, const pxr::VtValue& val)
 {
+    if (val.IsEmpty()) {
+        setDefault(sceneObj, attribute);
+        return;
+    }
     switch(attribute->getType()) {
     case TYPE_BOOL:
         if (val.IsHolding<long>()) {

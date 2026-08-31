@@ -19,28 +19,21 @@ def Camera "camera"
 
 def DomeLight "env"
 {
-        float intensity = 0.5
         float inputs:intensity = 0.5
-        asset texture:file = "/work/gshad/moonshine_test/rats_data/motion_blur/common/med/gld_dusk_GI_HS_PF_hdr.exr"
         asset inputs:texture:file = "/work/gshad/moonshine_test/rats_data/motion_blur/common/med/gld_dusk_GI_HS_PF_hdr.exr"
 }
 
 def RectLight "key"
 {
-        float intensity = 12
         float inputs:intensity = 12
-        color3f color = (0.855, 0.77, 0.535)
         color3f inputs:color = (0.855, 0.77, 0.535)
-        float width = 5
         float inputs:width = 5
-        float height = 5
         float inputs:height = 5
 }
 
-def Sphere "sphere"
+def Sphere "sphere" (prepend apiSchemas = ["MaterialBindingAPI"])
 {
         float3 xformOp:translate = (0, 10, 0)
-        float radius = 0.5
         uniform token[] xformOpOrder = ["xformOp:translate"]
         rel material:binding = </surfacing_sphere>
 }
@@ -51,8 +44,8 @@ def Material "surfacing_sphere"
 
     def Shader "baseMtl"
     {
-        uniform token info:id = "BaseMaterial"
+        uniform token info:id = "DwaBaseMaterial"
         color4f outputs:surface
-        color3f inputs:diffuse_color = (0.319, 0.06, 0.0)
+        color3f inputs:albedo = (0.319, 0.06, 0.0)
     }
 }

@@ -3,7 +3,7 @@
 
 #include "ArrasRenderer.h"
 #include <hydramoonray/NullRenderer.h>
-#include <hydramoonray/RenderDelegate.h>
+#include <hydramoonray/renderDelegate.h>
 #include <pxr/imaging/hd/rendererPlugin.h>
 #include <pxr/imaging/hd/rendererPluginRegistry.h>
 
@@ -16,32 +16,35 @@ public:
     HdMoonrayRendererPlugin() {}
 
     pxr::HdRenderDelegate *CreateRenderDelegate() override {
-        return new hdMoonray::RenderDelegate(new hdMoonray::ArrasRenderer());
+        return new hdMoonray::HdMoonray_RenderDelegate(new hdMoonray::ArrasRenderer());
     }
 
     pxr::HdRenderDelegate *CreateRenderDelegate(pxr::HdRenderSettingsMap const& settings) override {
-        auto it = settings.find(pxr::TfToken("disableRender"));
-        if (it != settings.end()) {
-            if (it->second.Get<bool>()) {
-                auto rd = new hdMoonray::RenderDelegate(new hdMoonray::NullRenderer(),settings);
-                rd->setDisableRender(true);
-                return rd;
-            }
+
+        if (hdMoonray::RenderSettings::staticDisableRender(settings)) {
+            std::cout << "HdMoonray: rendering is DISABLED" << std::endl;
+            auto rd = new hdMoonray::HdMoonray_RenderDelegate(new hdMoonray::NullRenderer(),settings);
+            rd->options().setDisableRender(true);
+            return rd;
         }
-        return new hdMoonray::RenderDelegate(new hdMoonray::ArrasRenderer(),settings);
+
+        return new hdMoonray::HdMoonray_RenderDelegate(new hdMoonray::ArrasRenderer(),settings);
     }
 
     void DeleteRenderDelegate(pxr::HdRenderDelegate *renderDelegate) override {
         delete renderDelegate;
     }
-#if PXR_VERSION >= 2302
+
+#if HD_API_VERSION < 83
     bool IsSupported(bool gpuEnabled = true) const override {
         return true;
     }
 #else
-bool IsSupported() const override {
-        return true;
-    }
+    bool IsSupported(
+        HdRendererCreateArgs const &rendererCreateArgs,
+        std::string * reasonWhyNot = nullptr) const override {
+            return true;
+        }
 #endif
 
 private:

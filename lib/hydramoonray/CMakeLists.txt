@@ -12,53 +12,70 @@ add_library(${PROJECT_NAME}::${component} ALIAS ${component})
 
 target_sources(${component}
     PRIVATE
-        BasisCurves.cc
-        Camera.cc
-        CoordSys.cc
-        GeometryMixin.cc
+        basisCurves.cc
+        camera.cc
+        geometryBase.cc
         HdmLog.cc
-        Instancer.cc
-        Light.cc
-        LightFilter.cc
-        Material.cc
-        Mesh.cc
+        hydra2_utils.cc
+        instancer.cc
+        light.cc
+        material.cc
+        mesh.cc
+        MoonrayLightFilter.cc
+        MoonrayOutput.cc
+        MoonrayScene.cc
+        MoonraySceneIndexPlugin.cc
         MurmurHash3.cc
         NullRenderer.cc
-        Points.cc
-        Primvars.cc
-        Procedural.cc
-        RenderBuffer.cc
-        RenderDelegate.cc
-        RenderPass.cc
+        Options.cc
+        points.cc
+        primvars.cc
+        procedural.cc
+        renderBuffer.cc
+        renderDelegate.cc
+        renderPass.cc
         RenderSettings.cc
+        renderSettingsPrim.cc
+        renderVar.cc
+        shader_utils.cc
+        tokens.cc
         ValueConverter.cc
-        Volume.cc
+        volume.cc
 )
 
 set_property(TARGET ${component}
     PROPERTY PUBLIC_HEADER
-        BasisCurves.h
-        Camera.h
-        CoordSys.h
-        GeometryMixin.h
+        basisCurves.h
+        camera.h
+        geometryBase.h
         HdmLog.h
-        Instancer.h
-        Light.h
-        LightFilter.h
-        Material.h
-        Mesh.h
+        hydra2_utils.h
+        instancer.h
+        light.h
+        material.h
+        mesh.h
+        MoonrayLightFilter.h
+        MoonrayObject.h
+        MoonrayOutput.h
+        MoonrayScene.h
+        MoonraySceneIndexPlugin.h
         NullRenderer.h
+        Options.h
         PixelData.h
-        Points.h
-        Procedural.h
-        RenderBuffer.h
-        RenderDelegate.h
+        points.h
+        procedural.h
+        renderBuffer.h
+        renderDelegate.h
         Renderer.h
-        RenderPass.h
+        renderPass.h
         RenderSettings.h
+        renderSettingsPrim.h
+        renderVar.h
+        shader_utils.h
+        tokens.h
         Utils.h
         ValueConverter.h
-        Volume.h
+        volume.h
 )
 
 target_include_directories(${component}
@@ -79,7 +96,7 @@ target_link_libraries(${component}
         SceneRdl2::render_logging
         SceneRdl2::scene_rdl2
         TBB::tbb
-        hd   # pxr imaging
+        hd hdsi  # pxr imaging
         usdImaging
         Python::Module
         ${PlatformSpecificLibs}

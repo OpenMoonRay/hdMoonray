@@ -3,6 +3,7 @@
 
 #include "RndrRenderer.h"
 
+#include <hydramoonray/HdmLog.h>
 #include <hydramoonray/RenderSettings.h>
 
 #include <scene_rdl2/common/fb_util/VariablePixelBuffer.h>
@@ -17,8 +18,6 @@
 //#define DEBUG_MSG
 
 namespace hdMoonray {
-
-using scene_rdl2::logging::Logger;
 
 RndrRenderer::RndrRenderer(uint32_t numThreads)
 {
@@ -73,7 +72,7 @@ RndrRenderer::renderOutputIndex(scene_rdl2::rdl2::RenderOutput* ro) const
 // Due to problems with Hydra, the RenderOutput may be null, in which case the request must
 // be used to get the type and size of the buffer.
 bool
-RndrRenderer::allocate(scene_rdl2::rdl2::RenderOutput* ro, PixelData& pd, const PixelSize& request)
+RndrRenderer::allocate(MoonrayOutput output, PixelData& pd, const PixelSize& request)
 {
 #   ifdef DEBUG_MSG
     std::cerr << ">> RndrRenderer.cc allocate()\n";
@@ -82,7 +81,7 @@ RndrRenderer::allocate(scene_rdl2::rdl2::RenderOutput* ro, PixelData& pd, const 
     if (pd.mData) {
         // don't resize any existing buffer
         mResized = true;
-    } else if (isBeauty(ro) && request.mChannels == 4) {
+    } else if (output.isBeauty() && request.mChannels == 4) {
         renderBuffer.init(request.mWidth, request.mHeight);
         pd.mChannels = 4;
         pd.mWidth = request.mWidth;
@@ -90,8 +89,8 @@ RndrRenderer::allocate(scene_rdl2::rdl2::RenderOutput* ro, PixelData& pd, const 
         pd.mData = renderBuffer.getData();
     } else {
         pd.mChannels = request.mChannels;
-        if (ro) {
-            int index = renderOutputIndex(ro);
+        if (output.isValid()) {
+            int index = renderOutputIndex(output.renderOutput());
             if (index >= 0) pd.mChannels = mRenderContext->getRenderOutputDriver()->getNumberOfChannels(index);
         }
         pd.mWidth = request.mWidth;
@@ -121,14 +120,15 @@ static scene_rdl2::rdl2::RenderOutput* prevRo = nullptr;
 
 // warning: multithreaded
 bool
-RndrRenderer::resolve(scene_rdl2::rdl2::RenderOutput* ro, PixelData& pd)
+RndrRenderer::resolve(MoonrayOutput output, PixelData& pd, bool forceUpdate)
 {
 #   ifdef DEBUG_MSG
     std::cerr << ">> RndrRenderer.cc resolve()\n";
 #   endif // end DEBUG_MSG
 
-    //std::cout << "RndrRenderer::resolve " << (ro ? ro->getName() : "beauty") << std::endl;
+    //std::cout << "RndrRenderer::resolve " << (moro ? moro.objectName() : "beauty") << std::endl;
 
+    scene_rdl2::rdl2::RenderOutput* ro = output.renderOutput();
     if (isHoudini() && not mUpdateActive) { // HDM-183 detect Houdini-18 hanging
         if (not setPrevRo) {
             setPrevRo = true;
@@ -161,13 +161,13 @@ RndrRenderer::resolve(scene_rdl2::rdl2::RenderOutput* ro, PixelData& pd)
     } else {
         pd.filmActivity = n;
     }
-    if (n == oldN) {
+    if (!forceUpdate && n == oldN) {
         return false; // render image is not updated.
     }
 
     mResized = false;
 
-    if (isBeauty(ro)) {
+    if (output.isBeauty()) {
         mRenderContext->snapshotRenderBuffer(&renderBuffer, true, true, /* usePrimaryAov */false);
         pd.mChannels = 4;
         pd.mWidth = renderBuffer.getWidth();
@@ -213,13 +213,13 @@ RndrRenderer::resolve(scene_rdl2::rdl2::RenderOutput* ro, PixelData& pd)
 
 
 void
-RndrRenderer::deallocate(scene_rdl2::rdl2::RenderOutput* ro, PixelData& pd)
+RndrRenderer::deallocate(MoonrayOutput output, PixelData& pd)
 {
 #   ifdef DEBUG_MSG
     std::cerr << ">> RndrRenderer.cc deallocate()\n";
 #   endif // end DEBUG_MSG
 
-    if (isBeauty(ro)) {
+    if (output.isBeauty()) {
         renderBuffer.cleanUp();
     } else {
         // free other buffers that may have been allocated:

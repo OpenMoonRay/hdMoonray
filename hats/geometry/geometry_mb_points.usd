@@ -1,0 +1,53 @@
+#usda 1.0
+(
+    startTimeCode = 1
+    endTimeCode = 8
+)
+
+def Points "p0"
+{
+    point3f[] points = [(-2, 0, 0)] (
+        interpolation = "vertex"
+    )
+    float[] widths = [1] (
+        interpolation = "vertex"
+    )
+    
+}
+def Points "p1"
+{
+    point3f[] points = [(2, 0, 0)] (
+        interpolation = "vertex"
+    )
+    float[] widths = [1] (
+        interpolation = "vertex"
+    )
+}
+
+def Points "p"
+{
+    # at frame 4, with open=-0.25 and close=+0.25, blur should start at (-2,0,0) and go to (+2,0,0)
+    point3f[] points (
+        interpolation = "vertex"
+    )
+    point3f[] points.timeSamples = {
+                3: [(-8, 0, 0)],
+                4: [(0, 0, 0)],
+                5: [(8, 0, 0)],
+    }
+
+    float[] widths = [1] (
+        interpolation = "vertex"
+    )
+}
+def Camera "camera"
+{
+    uniform token[] xformOpOrder = ["xformOp:translate"]
+    float3 xformOp:translate = (0, 0, 50)
+    double shutter:open = -0.25
+    double shutter:close = 0.25
+}
+
+def DomeLight "defaultLight"
+{
+}

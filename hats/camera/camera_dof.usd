@@ -15,70 +15,72 @@ def DomeLight "l0"
 {
 }
 
-def "floorGeom" ( payload = @/work/rd/raas/hydra/rats/data/plane_xz_unit.usd@ )
+def "floorGeom" ( payload = @/work/rd/raas/hydra/rats/data/plane_xz_unit.usd@ 
+                  prepend apiSchemas = ["MaterialBindingAPI"])
 {
         float3 xformOp:translate = (0, -0.5, 0.5)
         uniform token[] xformOpOrder = ["xformOp:translate"]
         rel material:binding = </surfacing_floor>
 }
 
-def "wallGeom" ( payload = @/work/rd/raas/hydra/rats/data/plane_xz_unit.usd@ )
+def "wallGeom" ( payload = @/work/rd/raas/hydra/rats/data/plane_xz_unit.usd@
+                 prepend apiSchemas = ["MaterialBindingAPI"])
 {
         float xformOp:rotateX = 90
         uniform token[] xformOpOrder = ["xformOp:rotateX"]
         rel material:binding = </surfacing_floor>
 }
 
-def Cube "box0"
+def Cube "box0" (prepend apiSchemas = ["MaterialBindingAPI"])
 {
         float3 xformOp:translate = (-0.4375, -0.4375, 0.9375)
         uniform token[] xformOpOrder = ["xformOp:translate"]
         double size = 0.125
         rel material:binding = </surfacing_box>
 }
-def Cube "box1"
+def Cube "box1" (prepend apiSchemas = ["MaterialBindingAPI"])
 {
         float3 xformOp:translate = (-0.3125, -0.4375, 0.8125)
         uniform token[] xformOpOrder = ["xformOp:translate"]
         double size = 0.125
         rel material:binding = </surfacing_box>
 }
-def Cube "box2"
+def Cube "box2" (prepend apiSchemas = ["MaterialBindingAPI"])
 {
         float3 xformOp:translate = (-0.1875, -0.4375, 0.6875)
         uniform token[] xformOpOrder = ["xformOp:translate"]
         double size = 0.125
         rel material:binding = </surfacing_box>
 }
-def Cube "box3"
+def Cube "box3" (prepend apiSchemas = ["MaterialBindingAPI"])
 {
         float3 xformOp:translate = (-0.0625, -0.4375, 0.5625)
         uniform token[] xformOpOrder = ["xformOp:translate"]
         double size = 0.125
         rel material:binding = </surfacing_box>
 }
-def Cube "box4"
+def Cube "box4" (prepend apiSchemas = ["MaterialBindingAPI"])
 {
         float3 xformOp:translate = (0.0625, -0.4375, 0.4375)
         uniform token[] xformOpOrder = ["xformOp:translate"]
         double size = 0.125
         rel material:binding = </surfacing_box>
 }
-def Cube "box5"
+def Cube "box5" (prepend apiSchemas = ["MaterialBindingAPI"])
 {
         float3 xformOp:translate = (0.1875, -0.4375, 0.3125)
         uniform token[] xformOpOrder = ["xformOp:translate"]
         double size = 0.125
         rel material:binding = </surfacing_box>
 }
-def Cube "box6"
+def Cube "box6" (prepend apiSchemas = ["MaterialBindingAPI"])
 {
         float3 xformOp:translate = (0.3125, -0.4375, 0.1875)
         uniform token[] xformOpOrder = ["xformOp:translate"]
         double size = 0.125
         rel material:binding = </surfacing_box>
 }
-def Cube "box7"
+def Cube "box7" (prepend apiSchemas = ["MaterialBindingAPI"])
 {
         float3 xformOp:translate = (0.4375, -0.4375, 0.0625)
         uniform token[] xformOpOrder = ["xformOp:translate"]
@@ -92,10 +94,9 @@ def Material "surfacing_floor"
 
         def Shader "baseMtl"
         {
-            uniform token info:id = "BaseMaterial"
+            uniform token info:id = "DwaBaseMaterial"
             color4f outputs:surface
-            color3f inputs:diffuse_color.connect = <../floorMap.outputs:out>
-            float inputs:specular_factor = 0
+            color3f inputs:albedo.connect = <../floorMap.outputs:out>
         }
 
         def Shader "floorMap"
@@ -114,7 +115,7 @@ def Material "surfacing_box"
 
         def Shader "baseMtl"
         {
-            uniform token info:id = "BaseMaterial"
+            uniform token info:id = "DwaBaseMaterial"
             color4f outputs:surface
         }
 }
