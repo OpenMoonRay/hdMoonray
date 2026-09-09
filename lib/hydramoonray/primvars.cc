@@ -348,10 +348,8 @@ HdMoonray_GeometryBase::setVec3fPrimvarMb(HdSceneDelegate* sceneDelegate,
             mGeometry.setToDefault(rdlName_1);
             return;
         }
-        const rdl2::Vec3f* p = reinterpret_cast<const rdl2::Vec3f*>(&firstSample[0]);
-        mGeometry.set(rdlName_0, firstSample[0]);
-        p = reinterpret_cast<const rdl2::Vec3f*>(&secondSample[0]);
-        mGeometry.set(rdlName_1, secondSample[0]);
+        mGeometry.set(rdlName_0, firstSample);
+        mGeometry.set(rdlName_1, secondSample);
 
     } catch (std::exception& e) {
         // may be called in cases that rdlName_0 or _1 don't exist : e.g.
