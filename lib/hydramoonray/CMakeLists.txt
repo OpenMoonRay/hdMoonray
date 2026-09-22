@@ -84,10 +84,6 @@ target_include_directories(${component}
         $<INSTALL_INTERFACE:include>
 )
 
-if (NOT IsDarwinPlatform)
-    set(PlatformSpecificLibs atomic)
-endif()
-
 target_link_libraries(${component}
     PUBLIC
         SceneRdl2::common_except
@@ -99,8 +95,9 @@ target_link_libraries(${component}
         hd hdsi  # pxr imaging
         usdImaging
         Python::Module
-        ${PlatformSpecificLibs}
 )
+
+omr_target_link_atomic(${component} PUBLIC)
 
 # If at Dreamworks add a SConscript stub file so others can use this library.
 SConscript_Stub(${component})

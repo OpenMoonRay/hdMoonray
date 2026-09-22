@@ -74,7 +74,7 @@ MoonrayScene::~MoonrayScene()
 
 // read only access to the scene context
 const rdl2::SceneContext& 
-MoonrayScene::sceneContext() 
+MoonrayScene::sceneContext() const
 { 
     return mRenderer->getSceneContext(); 
 }
@@ -128,7 +128,7 @@ MoonrayScene::get(const SdfPath& id, const std::string& suffix)
     const SdfPath simplePath = getSimplePath(id);
     std::string rdlName = simplePath.GetString() + suffix;
     try {
-        return sceneContext().getSceneObject(rdlName);
+        return mRenderer->getSceneContext().getSceneObject(rdlName);
     } catch (const std::exception& e) {
         // caller can print a more informative error message
         return nullptr;

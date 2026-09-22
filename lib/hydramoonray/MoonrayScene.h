@@ -57,7 +57,7 @@ public:
     void initialize();
 
     // read only access to the scene context
-    const scene_rdl2::rdl2::SceneContext& sceneContext();
+    const scene_rdl2::rdl2::SceneContext& sceneContext() const;
     // beginUpdate() must be called before modifying the scene context
     // acquireSceneContext() automatically calls beginUpdate() and returns a non-const reference to the scene context for modification.
     void beginUpdate();

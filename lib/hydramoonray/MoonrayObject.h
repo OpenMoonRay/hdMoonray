@@ -37,7 +37,7 @@ public:
     using InterfaceType = rdl2::SceneObjectInterface;
 
     MoonrayAttribute(rdl2::SceneObject* sceneObject, 
-                     rdl2::Attribute* attribute) : 
+                     const rdl2::Attribute* attribute) :
                      mSceneObject(sceneObject), mAttribute(attribute) {}
     MoonrayAttribute(rdl2::SceneObject* sceneObject, 
                      const std::string& attributeName) : 
@@ -63,7 +63,7 @@ public:
 
 private:
     rdl2::SceneObject* mSceneObject;
-    rdl2::Attribute* mAttribute;
+    const rdl2::Attribute* mAttribute;
 };
 
 class MoonrayAttrIterator
@@ -136,8 +136,8 @@ public:
     // null object is also used to represent the beauty render output, which is not a SceneObject
     bool isBeautyOutput() const { return mSceneObject == nullptr; }
 
-    rdl2::SceneObject* sceneObject() { return mSceneObject; }
-    template <typename T> T* sceneObjectAs() { return mSceneObject ? mSceneObject->asA<T>() : nullptr; }
+    rdl2::SceneObject* sceneObject() const { return mSceneObject; }
+    template <typename T> T* sceneObjectAs() const { return mSceneObject ? mSceneObject->asA<T>() : nullptr; }
 
     template <typename T> void set(const std::string& name, const T& value) { getAttribute(name).set(value); }
     template <typename T> void set(const std::string& name, const T& value0, const T& value1) { getAttribute(name).set(value0, value1); }
@@ -146,12 +146,12 @@ public:
     MoonrayAttrIterator beginAttributes() { return MoonrayAttrIterator(mSceneObject, mSceneObject->getSceneClass().beginAttributes()); }
     MoonrayAttrIterator endAttributes() {  return MoonrayAttrIterator(mSceneObject, mSceneObject->getSceneClass().endAttributes());}
     MoonrayAttribute getAttribute(const std::string& name) { return MoonrayAttribute(mSceneObject, name); }
-    bool hasAttribute(const std::string& name) { return mSceneObject->getSceneClass().hasAttribute(name); }
+    bool hasAttribute(const std::string& name) const { return mSceneObject->getSceneClass().getAttribute(name) != nullptr; }
 
     MoonrayObject getInstanceIdData() const;
     void assign(const MoonrayObject& obj, const std::string& partName, const MoonrayAssignment& assignment);
 
-    template <typename T> void setData(const std::string& name, const T& value, const pxr::TfToken& role);
+    template <typename T> void setData(const std::string& name, const T& value, const pxr::TfToken& role) = delete;
     void setDataRate(DataRate rate) { mSceneObject->asA<rdl2::UserData>()->setRate(rate); }
 
     void beginUpdate() { mSceneObject->beginUpdate(); }
@@ -338,16 +338,14 @@ inline void MoonrayAttribute::set<pxr::VtQuathArray>(const pxr::VtQuathArray& va
 // RenderBuffer is requested as an int format, it is translated
 // from float to int in RenderBuffer::Resolve() [q.v.]
 
-template <typename T> void MoonrayObject::setData(const std::string& name, const T& value, const pxr::TfToken& role) = delete;
- 
 template <> 
 inline void MoonrayObject::setData<float>(const std::string& name, const float& value, const pxr::TfToken&) {
-    rdl2::FloatVector v{value};
+    rdl2::FloatVector v{static_cast<float>(value)};
     mSceneObject->asA<rdl2::UserData>()->setFloatData(name, v);
 }
 template <> 
 inline void MoonrayObject::setData<int>(const std::string& name, const int& value, const pxr::TfToken&) {
-    rdl2::FloatVector v{value};
+    rdl2::FloatVector v{static_cast<float>(value)};
     mSceneObject->asA<rdl2::UserData>()->setFloatData(name, v);
 }
 template <> 

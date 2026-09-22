@@ -123,9 +123,9 @@ void MoonrayOutput::applySettings(const pxr::VtDictionary& aovSettings)
         for (auto attrIt = obj.beginAttributes(); attrIt != obj.endAttributes(); ++attrIt) {
             const std::string& attrName = (*attrIt).name();
             pxr::TfToken key = pxr::TfToken("parameters:moonray:" + attrName);
-            pxr::VtValue val = aovSettings[key];
-            if (!val.IsEmpty()) {
-                (*attrIt).set(val);
+            const auto valueIt = aovSettings.find(key.GetString());
+            if (valueIt != aovSettings.end() && !valueIt->second.IsEmpty()) {
+                (*attrIt).set(valueIt->second);
             }
         }
         obj.endUpdate();

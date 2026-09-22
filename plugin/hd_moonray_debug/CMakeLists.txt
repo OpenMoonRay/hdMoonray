@@ -24,10 +24,6 @@ target_include_directories(${component}
         $<INSTALL_INTERFACE:include>
 )
 
-if (NOT IsDarwinPlatform)
-    set(PlatformSpecificLibs atomic)
-endif()
-
 target_link_libraries(${component}
     PUBLIC
         HdMoonray::hydramoonray
@@ -39,7 +35,6 @@ target_link_libraries(${component}
         hd   # pxr imaging
         usdImaging
         Python::Module
-        ${PlatformSpecificLibs}
 )
 
 # If at Dreamworks add a SConscript stub file so others can use this library.
@@ -85,5 +80,3 @@ install(TARGETS ${component}
 INSTALL(FILES ${plugInfoFile}
     DESTINATION plugin/pxr/${component}
 )
-
-

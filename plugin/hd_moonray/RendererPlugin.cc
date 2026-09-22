@@ -35,7 +35,19 @@ public:
         delete renderDelegate;
     }
 
-#if HD_API_VERSION < 83
+#if HD_API_VERSION >= 97
+    bool IsSupported(
+        HdContainerDataSourceHandle const &rendererCreateArgs,
+        std::string *reasonWhyNot = nullptr) const override {
+        return true;
+    }
+
+    bool IsSupported(
+        HdRendererCreateArgs const &rendererCreateArgs,
+        std::string *reasonWhyNot = nullptr) const override {
+        return true;
+    }
+#elif HD_API_VERSION < 83
     bool IsSupported(bool gpuEnabled = true) const override {
         return true;
     }
