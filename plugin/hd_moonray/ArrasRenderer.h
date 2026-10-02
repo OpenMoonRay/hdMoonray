@@ -59,6 +59,12 @@ private:
     // Called whenever an exception is thrown.
     void exceptionHandler(const std::exception& e);
 
+    // Record that the frame in flight cannot finish, and why. Called from the
+    // Arras callback threads; the failure is acted on from resolve(), which runs
+    // on the thread driving UsdAppUtilsFrameRecorder's convergence loop.
+    void setFrameFailure(const std::string& reason);
+    std::string getFailureReason() const;
+
     // Called when statuses are received from other components in Arras.
     void statusHandler(const std::string& msg);
 
@@ -80,6 +86,13 @@ private:
     bool mPaused = false;
 
     std::atomic<bool> mConnected{false};
+
+    // Set when Arras reports the session stopped, or the SDK raises, while a
+    // frame is in flight. Left alone the frame simply never completes, and the
+    // recorder's convergence loop -- which has no timeout -- waits forever.
+    std::atomic<bool> mFrameFailed{false};
+    mutable std::mutex mFailureMutex;
+    std::string mFailureReason;
 
     std::mutex mMutex;
 
