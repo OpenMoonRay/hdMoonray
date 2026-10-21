@@ -557,7 +557,7 @@ HdMoonray_Light::Sync(HdSceneDelegate *sceneDelegate,
         if (categoriesChanged) {
             // in 0.22.5, DirtyCategories seems to be ignored. We can force a sync using
             // DirtyMaterialId even though it isn't strict;y right...
-            sceneDelegate->GetRenderIndex().GetChangeTracker().MarkAllRprimsDirty(
+            renderDelegate.markAllRprimsDirty(
                 HdChangeTracker::DirtyCategories | HdChangeTracker::DirtyMaterialId);
         }
     }

@@ -44,7 +44,8 @@ if not os.path.exists(tmp_path):
     sys.exit(1)
 
 # replace sequences of 16 hex digits with "H16X"
-reps = [ (re.compile(r'_UsdImaging_HdMoonrayRendererPlugin_0x[0-9a-fA-F]{2,16}') , "_UsdImaging_HdMoonrayRendererPlugin_0xID")
+reps = [ (re.compile(r'_UsdImaging_HdMoonrayRendererPlugin_0x[0-9a-fA-F]{2,16}') , "_UsdImaging_HdMoonrayRendererPlugin_0xID"),
+         (re.compile(r'_UsdImaging_Moonray_0x[0-9a-fA-F]{2,16}'), "_UsdImaging_HdMoonrayRendererPlugin_0xID")
 ]
 
 with open(tmp_path, "r") as f:

@@ -13,6 +13,7 @@
 
 #include <pxr/imaging/hd/extComputationUtils.h>
 #include <pxr/base/gf/vec2f.h>
+#include <pxr/base/tf/staticTokens.h>
 
 
 #include <iostream>
@@ -25,19 +26,24 @@ namespace {
 
     // filter primvars by name, to remove excessive "junk" primvars
     // return true if primvar should be ignored
+    TF_DEFINE_PRIVATE_TOKENS(
+        _filteredPrimvarTokens,
+        (PreMenvPosingRefPose)
+        (gprimID)
+        (asset_name)
+        (orig_vert_index)
+    );
+
     bool primvarFilter(const TfToken& name)
     {
-        if (name.GetText()[0] == '_') return true; // Hydra internal variables
-        if (not strncmp(name.GetText(), "usd", 3)) return true; // sceneflow data
-        if (not strncmp(name.GetText(), "part:", 4)) return true; // obsolete part api
-        static const std::set<TfToken> names {
-            TfToken("PreMenvPosingRefPose"), // I think this may be something from Pixar's animation
-            TfToken("gprimID"), // Hydra sets this but never requests it
-            TfToken("asset_name"), // bookeeping from Pixar
-            TfToken("orig_vert_index") // often incorrect primvar from downrez code
-        };
-        if (names.count(name)) return true;
-        return false;
+        const char* text = name.GetText();
+        if (text[0] == '_') return true;
+        if (not strncmp(text, "usd", 3)) return true;
+        if (not strncmp(text, "part:", 5)) return true;
+        return name == _filteredPrimvarTokens->PreMenvPosingRefPose ||
+           name == _filteredPrimvarTokens->gprimID ||
+           name == _filteredPrimvarTokens->asset_name ||
+           name == _filteredPrimvarTokens->orig_vert_index;
     }
 
     // utility to set a Vec3f attribute

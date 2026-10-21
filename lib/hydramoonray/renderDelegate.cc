@@ -435,7 +435,10 @@ void HdMoonray_RenderDelegate::markAllVolumesDirty(HdDirtyBits bits)
 
 void HdMoonray_RenderDelegate::markAllRprimsDirty(HdDirtyBits bits)
 {
-    if (mRenderIndex) mRenderIndex->GetChangeTracker().MarkAllRprimsDirty(bits);
+    if (!mRenderIndex) return;
+    HdChangeTracker& tracker = mRenderIndex->GetChangeTracker();
+    for (const SdfPath& id : mRenderIndex->GetRprimIds())
+        tracker.MarkRprimDirty(id, bits);
 }
 
 }

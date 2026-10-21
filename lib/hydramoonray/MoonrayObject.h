@@ -146,7 +146,7 @@ public:
     MoonrayAttrIterator beginAttributes() { return MoonrayAttrIterator(mSceneObject, mSceneObject->getSceneClass().beginAttributes()); }
     MoonrayAttrIterator endAttributes() {  return MoonrayAttrIterator(mSceneObject, mSceneObject->getSceneClass().endAttributes());}
     MoonrayAttribute getAttribute(const std::string& name) { return MoonrayAttribute(mSceneObject, name); }
-    bool hasAttribute(const std::string& name) const { return mSceneObject->getSceneClass().getAttribute(name) != nullptr; }
+    bool hasAttribute(const std::string& name) const { return mSceneObject->getSceneClass().hasAttribute(name); }
 
     MoonrayObject getInstanceIdData() const;
     void assign(const MoonrayObject& obj, const std::string& partName, const MoonrayAssignment& assignment);

@@ -53,19 +53,11 @@ variants = [
     [   # variant 2
         'os-rocky-9',
         'refplat-vfx2026.0',
-        'usd_imaging-0.26.5.x',
+        'usd_imaging-0.26.5.x.4.6',
         'openimageio-3.1',
         'opt_level-optdebug',
         'python-3.13'
-    ],
-    #[   # variant 3
-    #    'os-rocky-9',
-    #    'refplat-vfx2025.0',
-    #    'usd_imaging-0.25.11',
-    #    'openimageio-3.0',
-    #    'opt_level-optdebug',
-    #    'python-3.11'
-    #],
+    ]
 ]
 
 conf_CI_variants = variants
