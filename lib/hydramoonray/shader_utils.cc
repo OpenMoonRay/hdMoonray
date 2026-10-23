@@ -49,12 +49,17 @@ getObjectAttributeValue(
     return MoonrayObject();
 }
 
+// lookup for node connections
+// attrname -> path of the connected node
+using Connections = std::unordered_map<std::string, SdfPath>;
+
 // construct a Moonray shader SceneObject from a HdMaterialNode, and set its parameters
 MoonrayObject
 makeMoonrayShader(
     HdMoonray_RenderDelegate& renderDelegate,
     HdSceneDelegate *sceneDelegate,
     const HdMaterialNode& node,
+    const Connections& connections,
     const SdfPath& nodeId) 
 {
     MoonrayObject shaderObj = renderDelegate.scene().create(node.identifier.GetString(), nodeId);
@@ -63,6 +68,17 @@ makeMoonrayShader(
             UpdateGuard guard(shaderObj); 
             for (auto attrIt = shaderObj.beginAttributes(); attrIt != shaderObj.endAttributes(); ++attrIt) {
                 const std::string& attrName = (*attrIt).name();
+                // check first for a connection
+                auto connIt = connections.find(attrName);
+                if (connIt != connections.end()) {
+                    MoonrayObject input = renderDelegate.scene().getObject(connIt->second);
+                    (*attrIt).set(input);
+                    continue;
+                }
+
+                // if no connection, look for a direct value in the node parameters
+                (*attrIt).bind(MoonrayObject());
+
                 auto valIt = node.parameters.find(TfToken(attrName));
                 if (valIt != node.parameters.end()) {
                     // Object valued RDL attributes are handled specially.
@@ -116,34 +132,27 @@ getTerminalInternal(const SdfPath& id,
 
     const HdMaterialNetwork & network = iter->second;
 
+    // collect the connections for lookup by output node and output attribute name
+    // (HDM-424 : we want to avoid marking the bindings dirty by clearing and re-setting them)
+    TfHashMap<SdfPath, Connections, SdfPath::Hash> connections;
+    for (const HdMaterialRelationship& rel : network.relationships) {
+        Connections& conn = connections[rel.outputId.MakeAbsolutePath(id)];
+        conn[rel.outputName.GetString()] = rel.inputId.MakeAbsolutePath(id);
+    }
+
     MoonrayObject last;
     for (const HdMaterialNode& node : network.nodes) {
         MoonrayObject next;
 
         // Moonray name must be absolute so that it is unique in the scene.
         // (HDM-401 : USD 0.25.5 returns relative node paths)
+        SdfPath absPath = node.path.MakeAbsolutePath(id);
         next = makeMoonrayShader(renderDelegate,
                                  sceneDelegate,
                                  node,
-                                 node.path.MakeAbsolutePath(id));
+                                 connections[absPath],
+                                 absPath);
         if (next.isValid()) last = next; // HDM-368 : don't give up on error
-    }
-
-    for (const HdMaterialRelationship& rel : network.relationships) {
-
-        MoonrayObject input = renderDelegate.scene().getObject(rel.inputId.MakeAbsolutePath(id));
-        if (input.isNull()) continue;
-
-        MoonrayObject output = renderDelegate.scene().getObject(rel.outputId.MakeAbsolutePath(id));
-        if (output.isNull()) continue;
-
-        try {
-            UpdateGuard guard(output);
-            const std::string outputAttrName = rel.outputName.GetString();
-            output.getAttribute(outputAttrName).set(input);
-        } catch (const std::exception& e) {
-            Logger::error(rel.outputId, ": ", e.what());
-        }
     }
 
     return last.isValid() ? last : MoonrayObject();
@@ -199,6 +208,7 @@ getNodeByConnection(const SdfPath& id,
 
         // found the connected network, import all the shader nodes
         // and set the connected one
+        Connections connections;
         for (const HdMaterialNode & node : network.nodes) {
             // we have to skip the actual light filter node
             if (node.identifier == "MoonrayLightFilter" || 
@@ -209,6 +219,7 @@ getNodeByConnection(const SdfPath& id,
             MoonrayObject shader = makeMoonrayShader(renderDelegate, 
                                                      sceneDelegate, 
                                                      node, 
+                                                     connections,
                                                      node.path.MakeAbsolutePath(id));
             if (shader.isNull()) continue;
             if (node.path == inputId) ret = shader;

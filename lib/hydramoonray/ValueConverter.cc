@@ -8,11 +8,6 @@
 
 namespace hdMoonray {
 
-static void _clearBinding(SceneObject* sceneObj, const Attribute* attribute)
-{
-    if (attribute->isBindable())
-        sceneObj->setBinding(*attribute,nullptr);
-}
 
 template<typename T>
 static void _set(SceneObject* sceneObj, const Attribute* attribute, const T& value) {
@@ -70,7 +65,6 @@ static bool _setAttributeRef(SceneObject* sceneObj, const Attribute* attribute, 
 {
     if (val.IsHolding<H>()) {
         _set(sceneObj, attribute, _convertRef<T,H>(val.UncheckedGet<H>()));
-        _clearBinding(sceneObj,attribute);
         return true;
     } else {
         return false;
@@ -140,7 +134,6 @@ static bool _setAttribute(SceneObject* sceneObj, const Attribute* attribute, con
 {
     if (val.IsHolding<H>()) {
         _set(sceneObj, attribute, _convert<T,H>(val.UncheckedGet<H>()));
-        _clearBinding(sceneObj,attribute);
         return true;
     } else {
         return false;
@@ -189,7 +182,6 @@ ValueConverter::setAttribute(SceneObject* sceneObj, const Attribute* attribute, 
             for (auto it = attribute->beginEnumValues(); it != attribute->endEnumValues(); ++it) {
                 if (it->second == *key) {
                     _set(sceneObj, attribute, it->first);
-                    _clearBinding(sceneObj,attribute);
                     return;
                 }
             }
@@ -347,7 +339,6 @@ void
 ValueConverter::setDefault(SceneObject* sceneObj, const Attribute* attribute)
 {
     sceneObj->resetToDefault(attribute);
-    _clearBinding(sceneObj,attribute);
 }
 
 void _setUnit(SceneObject* sceneObj, const Attribute* attr)
@@ -379,9 +370,14 @@ void _setUnit(SceneObject* sceneObj, const Attribute* attr)
 
 void ValueConverter::setBinding(SceneObject* sceneObj, const Attribute* attr, SceneObject* binding)
 {
-    _setUnit(sceneObj,attr);
-    if (attr->isBindable())
-        sceneObj->setBinding(attr->getName(),binding);
+    if (attr->isBindable()) {
+        // HDM-424 : scene_rdl2 sets the dirty flag (mBindingSetMask) even if the binding is the same.
+        // We want to avoid unnecessary updates if the binding is the same.
+        if (sceneObj->getBinding(*attr) != binding) {
+            _setUnit(sceneObj,attr);
+            sceneObj->setBinding(*attr, binding);
+        }
+    }
 }
 
 }
