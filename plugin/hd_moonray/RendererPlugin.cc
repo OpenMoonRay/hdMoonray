@@ -6,6 +6,9 @@
 #include <hydramoonray/RenderDelegate.h>
 #include <pxr/imaging/hd/rendererPlugin.h>
 #include <pxr/imaging/hd/rendererPluginRegistry.h>
+#if PXR_VERSION >= 2603
+#include <pxr/imaging/hd/rendererCreateArgs.h>
+#endif
 
 #include <iostream>
 
@@ -40,6 +43,14 @@ public:
     }
 #else
 bool IsSupported() const override {
+        return true;
+    }
+#endif
+#if PXR_VERSION >= 2603
+    // USD 26.3 added a new pure-virtual IsSupported(HdRendererCreateArgs const&, ...)
+    // overload (the bool-only overload above is now a deprecated, non-pure helper).
+    bool IsSupported(pxr::HdRendererCreateArgs const &rendererCreateArgs,
+                      std::string *reasonWhyNot = nullptr) const override {
         return true;
     }
 #endif
