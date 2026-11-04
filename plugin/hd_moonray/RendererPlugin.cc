@@ -50,7 +50,7 @@ bool IsSupported() const override {
     // USD 26.3 added a new pure-virtual IsSupported(HdRendererCreateArgs const&, ...)
     // overload (the bool-only overload above is now a deprecated, non-pure helper).
     bool IsSupported(pxr::HdRendererCreateArgs const &rendererCreateArgs,
-                      std::string *reasonWhyNot = nullptr) const override {
+                     std::string *reasonWhyNot = nullptr) const override {
         return true;
     }
 #endif
