@@ -207,6 +207,17 @@
     }
 
     parm {
+        name        "maxMeshResolution"
+        label       "Max Mesh Resolution"
+        type        float
+        size        1
+        default     { 0.0 }
+        range       { 0! 8 }
+        help        "Clamp mesh resolution to a maximum (disabled if 0.0)"
+        parmtag     { "uiscope" "viewport" }
+    }
+
+    parm {
         name        "pruneWillow"
         label       "Prune Willow"
         type        toggle

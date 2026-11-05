@@ -20,11 +20,13 @@ def SphereLight "light1"
                                    (0, 1, 0, 0),
                                    (0, 0, 1, 0),
                                    (-20, 60, 50, 1) )
-    float exposure = 10
-    float inputs:exposure = 10
     uniform token[] xformOpOrder = ["xformOp:transform"]
+
+    float inputs:exposure = 10
+
     bool collection:shadowLink:includeRoot = false
     rel collection:shadowLink:includes = [</sphere3>]
+    
     int moonray:visible_in_camera = 1
 }
 
@@ -34,15 +36,17 @@ def SphereLight "light2"
                                    (0, 1, 0, 0),
                                    (0, 0, 1, 0),
                                    (-80, 60, 50, 1) )
-    float exposure = 10
-    float inputs:exposure = 10
     uniform token[] xformOpOrder = ["xformOp:transform"]
+
+    float inputs:exposure = 10
+
     bool collection:shadowLink:includeRoot = false
     rel collection:shadowLink:includes = [</sphere1>]
+
     int moonray:visible_in_camera = 1
 }
 
-def Mesh "back"
+def Mesh "back" (prepend apiSchemas = ["MaterialBindingAPI"])
 {
     matrix4d xformOp:transform = ( (0, -100, 0, 0),
                                    (0,    0, -100, 0),
@@ -57,7 +61,7 @@ def Mesh "back"
     color3f[] primvars:displayColor = [(0.6,0.55,0.4)] ( interpolation = "constant" )
 }
 
-def Mesh "bottom"
+def Mesh "bottom" (prepend apiSchemas = ["MaterialBindingAPI"])
 {
     matrix4d xformOp:transform = ( (100, 0, 0, 0),
                                    (0, 100, 0, 0),
@@ -72,7 +76,7 @@ def Mesh "bottom"
     color3f[] primvars:displayColor = [(0.6,0.55,0.4)] ( interpolation = "constant" )
 }
 
-def Mesh "left"
+def Mesh "left" (prepend apiSchemas = ["MaterialBindingAPI"])
 {
     matrix4d xformOp:transform = ( (0, 100, 0, 0),
                                    (-100, 0, 0, 0),
@@ -87,7 +91,7 @@ def Mesh "left"
     color3f[] primvars:displayColor = [(0.7,0.1,0.08)] ( interpolation = "constant" )
 }
 
-def Mesh "right"
+def Mesh "right" (prepend apiSchemas = ["MaterialBindingAPI"])
 {
     matrix4d xformOp:transform = ( (0, -100, 0, 0),
                                    (100, 0, 0, 0),
@@ -102,7 +106,7 @@ def Mesh "right"
     color3f[] primvars:displayColor = [(0.2,0.7,0.2)] ( interpolation = "constant" )
 }
 
-def Mesh "top"
+def Mesh "top" (prepend apiSchemas = ["MaterialBindingAPI"])
 {
     matrix4d xformOp:transform = ( (-100, 0, 0, 0),
                                    (0, -100, 0, 0),
@@ -117,7 +121,7 @@ def Mesh "top"
     color3f[] primvars:displayColor = [(0.6,0.55,0.4)] ( interpolation = "constant" )
 }
 
-def Sphere "sphere1"
+def Sphere "sphere1" (prepend apiSchemas = ["MaterialBindingAPI"])
 {
     matrix4d xformOp:transform = ( (-10, 0, 0, 0),
                                    (0, -10, 0, 0),
@@ -127,7 +131,7 @@ def Sphere "sphere1"
     color3f[] primvars:displayColor = [(1,0,0)] ( interpolation = "constant" )
 }
 
-def Sphere "sphere2"
+def Sphere "sphere2" (prepend apiSchemas = ["MaterialBindingAPI"])
 {
     matrix4d xformOp:transform = (  (-14, 0, 0, 0),
                                     (0, -14, 0, 0),
@@ -137,7 +141,7 @@ def Sphere "sphere2"
     color3f[] primvars:displayColor = [(0,1,0)] ( interpolation = "constant" )
 }
 
-def Sphere "sphere3"
+def Sphere "sphere3" (prepend apiSchemas = ["MaterialBindingAPI"])
 {
     matrix4d xformOp:transform = (  (-10, 0, 0, 0),
                                     (0, -10, 0, 0),

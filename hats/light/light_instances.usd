@@ -1,0 +1,67 @@
+#usda 1.0
+
+# Moonray doesn't appear to render lights if no geometry present
+def Mesh "mesh" {
+    float3[] extent = [(-1, 0, -1), (1, 2, 1)]
+    float3[] points = [(1, 0, 1), (-1, 0, 1), (-1, 0, -1), (1, 0, -1), (0, 2, 0)]
+    int[] faceVertexCounts = [4, 3, 3, 3, 3]
+    int[] faceVertexIndices =  [0, 1, 2, 3, 1, 0, 4, 2, 1, 4, 3, 2, 4, 0, 3, 4]
+    normal3f[] primvars:normals = [
+        (0, -1, 0), (0, 0.45, 0.89), (-0.89, 0.45, 0), (0, 0.45, -0.89), (0.89, 0.45, 0)
+    ] ( interpolation = "uniform")
+    uniform token subdivisionScheme = "none"
+}
+
+def Xform "pn" 
+{
+    def Xform "sn" (instanceable = true)
+    {
+        float3 xformOp:translate = (10, 0, 0)
+        uniform token[] xformOpOrder = ["xformOp:translate"]
+        def PointInstancer "pointInstancer" {
+            point3f[] positions = [
+                (0, 0, 0), (5, 0, 0), (10, 0, 0)
+            ]
+            int[] protoIndices = [0, 0, 0]
+            add rel prototypes = [ <prototype> ]
+            def Xform "prototype" {
+                def SphereLight "sphere"
+                {
+                    token moonray:visible_in_camera = "force on"
+                    color3f inputs:color = (1, 0, 0)
+                    float inputs:intensity = 3
+                    float inputs:radius = 1.5
+                }
+            }
+        }
+    }   
+}
+
+def Xform "p" 
+{
+    def Xform "s" (instanceable = true) 
+    {
+        float3 xformOp:translate = (-10, 0, 0)
+        uniform token[] xformOpOrder = ["xformOp:translate"]
+        def SphereLight "sphere" 
+        {
+            color3f inputs:color = (0, 1, 0)
+            float inputs:intensity = 3
+            float inputs:radius = 1.5
+
+            token moonray:visible_in_camera = "force on"
+        }
+    }
+}
+
+def Xform "p2" (
+    append references = </p/s>
+) {
+    double3 xformOp:translate = (4, 0, 0)
+}
+
+def Xform "p3" (
+    append references = </p/s>
+) {
+    double3 xformOp:translate = (-3, 0, 0)
+}

@@ -1,6 +1,8 @@
 SceneVariables {
-    ["camera"] = PerspectiveCamera("primaryCamera"),
-    ["layer"] = Layer("defaultLayer"),
+    ["camera"] = PerspectiveCamera("/DEFAULT/primaryCamera"),
+    ["layer"] = Layer("/DEFAULT/defaultLayer"),
+    ["image_width"] = 960,
+    ["image_height"] = 960,
     ["enable_motion_blur"] = false,
 }
 
@@ -22,17 +24,17 @@ RdlMeshGeometry("/wall") {
     ["primitive_attributes"] = { UserData("/wall.primvars:primId")},
 }
 
-GeometrySet("allGeometry") {
+GeometrySet("/DEFAULT/allGeometry") {
     RdlMeshGeometry("/floor"),
     RdlMeshGeometry("/wall"),
 }
 
-Layer("defaultLayer") {
-    {RdlMeshGeometry("/floor"), "", BaseMaterial("/surface/baseMtl"), LightSet("LightSet164831"), undef(), undef(), LightFilterSet("LightFilterSet22401"), undef(), undef()},
-    {RdlMeshGeometry("/wall"), "", BaseMaterial("/surface/baseMtl"), LightSet("LightSet164831"), undef(), undef(), LightFilterSet("LightFilterSet22401"), undef(), undef()},
+Layer("/DEFAULT/defaultLayer") {
+    {RdlMeshGeometry("/floor"), "", DwaBaseMaterial("/surface/baseMtl"), LightSet("LightSet164831"), undef(), undef(), LightFilterSet("LightFilterSet22401"), undef(), undef()},
+    {RdlMeshGeometry("/wall"), "", DwaBaseMaterial("/surface/baseMtl"), LightSet("LightSet164831"), undef(), undef(), LightFilterSet("LightFilterSet22401"), undef(), undef()},
 }
 
-BaseMaterial("/surface/baseMtl") {
+DwaBaseMaterial("/surface/baseMtl") {
 }
 
 SpotLight("/spot") {
@@ -61,7 +63,7 @@ PerspectiveCamera("/camera") {
     ["film_width_aperture"] = 240,
 }
 
-PerspectiveCamera("primaryCamera") {
+PerspectiveCamera("/DEFAULT/primaryCamera") {
     ["node_xform"] = blur(Mat4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 20, 1), Mat4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 20, 1)),
     ["near"] = 0.00999999978,
     ["mb_shutter_open"] = 0,
@@ -70,10 +72,18 @@ PerspectiveCamera("primaryCamera") {
     ["film_width_aperture"] = 240,
 }
 
-CookieLightFilter_v2("/cookie_v2") {
-    ["node_xform"] = blur(Mat4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 3, 5, 0, 1), Mat4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 3, 5, 0, 1)),
-    ["projector_focal"] = 50,
-    ["texture"] = "/work/gshad/moonshine_test/rats_data/light/filter/cookie/maps/dapple.tx",
+RenderOutput("/_outputs/instanceId") {
+    ["result"] = "primitive attribute",
+    ["primitive_attribute"] = "instanceId",
+    ["file_name"] = "/tmp/scene.exr",
+    ["math_filter"] = "closest",
+}
+
+RenderOutput("/_outputs/elementId") {
+    ["result"] = "primitive attribute",
+    ["primitive_attribute"] = "elementId",
+    ["file_name"] = "/tmp/scene.exr",
+    ["math_filter"] = "closest",
 }
 
 UserData("/floor.primvars:primId") {
@@ -82,8 +92,33 @@ UserData("/floor.primvars:primId") {
     ["rate"] = "constant",
 }
 
+CookieLightFilter_v2("/cookie_v2") {
+    ["node_xform"] = blur(Mat4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 3, 5, 0, 1), Mat4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 3, 5, 0, 1)),
+    ["projector_focal"] = 50,
+    ["texture"] = "/work/gshad/moonshine_test/rats_data/light/filter/cookie/maps/dapple.tx",
+}
+
+RenderOutput("/_outputs/depth") {
+    ["result"] = "depth",
+    ["file_name"] = "/tmp/scene.exr",
+    ["math_filter"] = "min",
+}
+
 UserData("/wall.primvars:primId") {
     ["float_key"] = "primId",
     ["float_values_0"] = { 1},
     ["rate"] = "constant",
+}
+
+RenderOutput("/_outputs/instanceIdA") {
+    ["result"] = "primitive attribute",
+    ["primitive_attribute"] = "instanceIdA",
+    ["math_filter"] = "closest",
+}
+
+RenderOutput("/_outputs/primId") {
+    ["result"] = "primitive attribute",
+    ["primitive_attribute"] = "primId",
+    ["file_name"] = "/tmp/scene.exr",
+    ["math_filter"] = "closest",
 }

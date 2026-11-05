@@ -1,0 +1,24 @@
+#usda 1.0
+
+def Plane "wall" 
+{
+    float3[] extent = [(-10, -4, 0), (10, 4, 0)]
+    double length = 8 
+    double width = 20
+}
+
+def RectLight "rectLight" 
+{
+    color3f inputs:color = (1, 0.25, 0.25) 
+    float inputs:height = 5 
+    float inputs:width = 3 
+    asset inputs:texture:file = "/work/gshad/moonshine_test/rats_data/light/rect_textured/env_maps/burning_man-med.exr"
+    float3 xformOp:translate = (-6, -1, 0.2) 
+    uniform token[] xformOpOrder = ["xformOp:translate"]
+    # this is the correct method moving forward
+    color3f inputs:moonray:contrast = (0.5, 0.6, 0.7)
+    # backwards compatibility
+    float2 moonray:texture_translation = (0.1,0.15)
+}
+
+

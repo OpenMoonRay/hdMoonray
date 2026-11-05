@@ -1,7 +1,9 @@
 SceneVariables {
-    ["camera"] = PerspectiveCamera("primaryCamera"),
-    ["layer"] = Layer("defaultLayer"),
-    ["enable_motion_blur"] = false,
+    ["frame"] = 4,
+    ["camera"] = PerspectiveCamera("/DEFAULT/primaryCamera"),
+    ["layer"] = Layer("/DEFAULT/defaultLayer"),
+    ["image_width"] = 960,
+    ["image_height"] = 540,
 }
 
 RdlMeshGeometry("/grid/mesh_0") {
@@ -15,12 +17,12 @@ RdlMeshGeometry("/grid/mesh_0") {
     ["smooth_normal"] = false,
 }
 
-GeometrySet("allGeometry") {
+GeometrySet("/DEFAULT/allGeometry") {
     RdlMeshGeometry("/grid/mesh_0"),
 }
 
-Layer("defaultLayer") {
-    {RdlMeshGeometry("/grid/mesh_0"), "", UsdPreviewSurface("/materials/usdpreviewsurface1/usdpreviewsurface1"), LightSet("LightSet0E11AB"), undef(), undef(), undef(), undef(), undef()},
+Layer("/DEFAULT/defaultLayer") {
+    {RdlMeshGeometry("/grid/mesh_0"), "", UsdPreviewSurface("/materials/usdpreviewsurface1/usdpreviewsurface1"), LightSet("LightSet3AC404"), undef(), undef(), LightFilterSet("/DEFAULT/emptyLightFilterSet"), undef(), undef()},
 }
 
 UsdPreviewSurface("/materials/usdpreviewsurface1/usdpreviewsurface1") {
@@ -28,26 +30,61 @@ UsdPreviewSurface("/materials/usdpreviewsurface1/usdpreviewsurface1") {
     ["emissiveColor"] = bind(undef(), Rgb(1, 1, 1)),
 }
 
-EnvLight("defaultLight") {
-    ["max_shadow_distance"] = 100,
+EnvLight("/defaultLight") {
 }
 
-LightSet("LightSet0E11AB") {
-    EnvLight("defaultLight"),
+LightFilterSet("/DEFAULT/emptyLightFilterSet") {
+}
+
+LightSet("LightSet3AC404") {
+    EnvLight("/defaultLight"),
 }
 
 PerspectiveCamera("/camera") {
-    ["node_xform"] = blur(Mat4(0.44838321609003223, 0.89384142415126377, 0, 0, -0.89384142415126377, 0.44838321609003223, 0, 0, 0, 0, 1, 0, 0, 0.59200000000000041, 10, 1), Mat4(0.44838321609003223, 0.89384142415126377, 0, 0, -0.89384142415126377, 0.44838321609003223, 0, 0, 0, 0, 1, 0, 0, 0.59200000000000041, 10, 1)),
+    ["node_xform"] = blur(Mat4(0.44838321609003218, 0.89384142415126366, -0, 0, -0.89384142415126366, 0.44838321609003218, 0, 0, 0, -0, 1, 0, 0, 0.59200000000000041, 10, 1), Mat4(0.34318784763569554, 0.93926678916864648, -0, 0, -0.93926678916864648, 0.34318784763569554, 0, 0, 0, -0, 1, 0, -2.7755575615628914e-17, 0.44400000000000028, 10, 1)),
     ["far"] = 1000000,
     ["focal"] = blur(0.5, 0.5),
     ["film_width_aperture"] = 0.209549993,
 }
 
-PerspectiveCamera("primaryCamera") {
-    ["node_xform"] = blur(Mat4(0.44838321609003223, 0.89384142415126377, 0, 0, -0.89384142415126377, 0.44838321609003223, 0, 0, 0, 0, 1, 0, 0, 0.59200000000000041, 10, 1), Mat4(0.44838321609003223, 0.89384142415126377, 0, 0, -0.89384142415126377, 0.44838321609003223, 0, 0, 0, 0, 1, 0, 0, 0.59200000000000041, 10, 1)),
+PerspectiveCamera("/DEFAULT/primaryCamera") {
+    ["node_xform"] = blur(Mat4(0.44838321609003218, 0.89384142415126366, -0, 0, -0.89384142415126366, 0.44838321609003218, 0, 0, 0, -0, 1, 0, 0, 0.59200000000000041, 10, 1), Mat4(0.34318784763569554, 0.93926678916864648, -0, 0, -0.93926678916864648, 0.34318784763569554, 0, 0, 0, -0, 1, 0, -2.7755575615628914e-17, 0.44400000000000028, 10, 1)),
     ["far"] = 1000000,
     ["focal"] = blur(0.5, 0.5),
     ["film_width_aperture"] = 0.209549993,
+}
+
+RenderOutput("/_outputs/instanceId") {
+    ["result"] = "primitive attribute",
+    ["primitive_attribute"] = "instanceId",
+    ["file_name"] = "/tmp/scene.exr",
+    ["math_filter"] = "closest",
+}
+
+RenderOutput("/_outputs/instanceIdA") {
+    ["result"] = "primitive attribute",
+    ["primitive_attribute"] = "instanceIdA",
+    ["math_filter"] = "closest",
+}
+
+RenderOutput("/_outputs/elementId") {
+    ["result"] = "primitive attribute",
+    ["primitive_attribute"] = "elementId",
+    ["file_name"] = "/tmp/scene.exr",
+    ["math_filter"] = "closest",
+}
+
+RenderOutput("/_outputs/depth") {
+    ["result"] = "depth",
+    ["file_name"] = "/tmp/scene.exr",
+    ["math_filter"] = "min",
+}
+
+RenderOutput("/_outputs/primId") {
+    ["result"] = "primitive attribute",
+    ["primitive_attribute"] = "primId",
+    ["file_name"] = "/tmp/scene.exr",
+    ["math_filter"] = "closest",
 }
 
 UserData("/grid/mesh_0.primvars:primId") {

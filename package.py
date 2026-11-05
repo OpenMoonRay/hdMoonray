@@ -16,7 +16,7 @@ if 'early' not in locals() or not callable(early):
 
 @early()
 def version():
-    _version = '7.6'
+    _version = '10.3'
     from rezbuild import earlybind
     return earlybind.version(this, _version)
 
@@ -31,39 +31,10 @@ authors = [
 help = ('For assistance, '
         "please contact the folio's owner at: moonbase-dev@dreamworks.com")
 
-if 'scons' in sys.argv:
-    build_system = 'scons'
-    build_system_pbr = 'bart_scons-10'
-else:
-    build_system = 'cmake'
-    build_system_pbr = 'cmake_modules-1.1'
+build_system = 'cmake'
 
 variants = [
     [   # variant 0
-        'os-rocky-9',
-        'refplat-vfx2023.1',
-        'usd_imaging-0.23.8.x',
-        'openimageio-2.4.8.0.x',
-        'opt_level-optdebug',
-        'python-3.10'
-    ],
-    [   # variant 1
-        'os-rocky-9',
-        'refplat-vfx2023.1',
-        'usd_imaging-0.23.8.x',
-        'openimageio-2.4.8.0.x',
-        'opt_level-debug',
-        'python-3.10'
-    ],
-    [   # variant 2
-        'os-rocky-9',
-        'refplat-vfx2024.0',
-        'usd_imaging-0.24.3.x',
-        'openimageio-2.4.8.0.x',
-        'opt_level-optdebug',
-        'python-3.11'
-    ],
-    [   # variant 3
         'os-rocky-9',
         'refplat-vfx2025.0',
         'usd_imaging-0.25.5.1.x',
@@ -71,7 +42,7 @@ variants = [
         'opt_level-optdebug',
         'python-3.11'
     ],
-    [   # variant 4
+    [   # variant 1
         'os-rocky-9',
         'refplat-houdini21.0',
         'usd_imaging-0.25.5.1.x.5',
@@ -79,22 +50,17 @@ variants = [
         'opt_level-optdebug',
         'python-3.11'
     ],
-    [   # variant 5
+    [   # variant 2
         'os-rocky-9',
-        'refplat-vfx2022.0',
-        'usd_imaging-0.22.5.x.4',
-        'openimageio-2.3.20.0.x',
+        'refplat-vfx2026.0',
+        'usd_imaging-0.26.5.x.4.6',
+        'openimageio-3.1',
         'opt_level-optdebug',
-        'python-3.9'
-    ],
+        'python-3.13'
+    ]
 ]
 
 conf_CI_variants = variants
-
-sconsTargets = {
-    'refplat-vfx2022.0': ['@install'] + unittestflags + ratsflags,
-    'refplat-vfx2023.0': ['@install'] + unittestflags + ratsflags,
-}
 
 requires = [
     'moonray-18.4',
@@ -108,21 +74,10 @@ requires = [
 ]
 
 private_build_requires = [
-    build_system_pbr,
-    'gcc-6.3.x|9.3.x|11.x',
+    'cmake_modules-2.0',
+    'gcc-11.x|14.2.x',
     'cppunit'
 ]
-
-tests = {
-    # "rats-debug": {
-    #     "command": "rats -a --rco=2 --nohtml --rac --var res 14 --ofwc hd_render",
-    #     "requires": ["rats", "opt_level-debug", "usd_core_dwa_plugin"]
-    #     },
-    "rats-opt-debug": {
-        "command": "rats -a --rco=2 --nohtml --rac --maxConcurrentTests=10",
-        "requires": ["rats", "opt_level-optdebug", "usd_core_dwa_plugin", "moonshine_usd", "usd_imaging-0.22.5", "moonshine_dwa", "houdini_dwa-19", "python-3.9", "gcc", "refplat-vfx2022"]
-        }
-    }
 
 def commands():
     prependenv('PXR_PLUGINPATH_NAME', '{root}/plugin/pxr') # usd_core-0.23.5 and later

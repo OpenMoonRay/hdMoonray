@@ -32,9 +32,9 @@ public:
     float getElapsedSeconds() const override;
     bool isFrameComplete() const override;
 
-    bool allocate(scene_rdl2::rdl2::RenderOutput*, PixelData&, const PixelSize&) override;
-    bool resolve(scene_rdl2::rdl2::RenderOutput*, PixelData&) override;
-    void deallocate(scene_rdl2::rdl2::RenderOutput*, PixelData&) override;
+    bool allocate(MoonrayOutput, PixelData&, const PixelSize&) override;
+    bool resolve(MoonrayOutput, PixelData&,bool force=false) override;
+    void deallocate(MoonrayOutput, PixelData&) override;
 
     void applySettings(const RenderSettings&) override;
     void setExecMode(std::string mode);

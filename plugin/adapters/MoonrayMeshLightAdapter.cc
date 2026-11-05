@@ -2,10 +2,17 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "MoonrayMeshLightAdapter.h"
+#include "dataSourceMeshLight.h"
+
 #include <pxr/usdImaging/usdImaging/delegate.h>
 #include <pxr/usdImaging/usdImaging/indexProxy.h>
 #include <pxr/usdImaging/usdImaging/tokens.h>
 #include "pxr/imaging/hd/tokens.h"
+#include <pxr/usdImaging/usdImaging/lightAdapter.h>
+#include <pxr/usdImaging/usdImaging/delegate.h>
+#include <pxr/usdImaging/usdImaging/dataSourceMaterial.h>
+#include <pxr/imaging/hd/overlayContainerDataSource.h>
+#include "pxr/imaging/hd/retainedDataSource.h"
 
 PXR_NAMESPACE_OPEN_SCOPE
 
@@ -23,6 +30,63 @@ TF_REGISTRY_FUNCTION(TfType)
 
 MoonrayMeshLightAdapter::~MoonrayMeshLightAdapter()
 {
+}
+
+TfTokenVector
+MoonrayMeshLightAdapter::GetImagingSubprims(UsdPrim const& prim)
+{
+    return { TfToken() };
+}
+
+TfToken
+MoonrayMeshLightAdapter::GetImagingSubprimType(
+        UsdPrim const& prim,
+        TfToken const& subprim)
+{
+    if (subprim.IsEmpty()) {
+        return geometryLightToken;
+    }
+    return TfToken();
+}
+
+HdContainerDataSourceHandle
+MoonrayMeshLightAdapter::GetImagingSubprimData(
+        UsdPrim const& prim,
+        TfToken const& subprim,
+        const UsdImagingDataSourceStageGlobals &stageGlobals)
+{
+    if (!subprim.IsEmpty()) {
+        return nullptr;
+    }
+
+    return HdOverlayContainerDataSource::New(
+        HdRetainedContainerDataSource::New(
+            HdPrimTypeTokens->material,
+            UsdImagingDataSourceMaterial::New(
+                prim,
+                stageGlobals,
+                HdMaterialTerminalTokens->light)
+            ),
+            MoonrayDataSourceMeshLightPrim::New(
+                prim.GetPath(),
+                prim,
+                stageGlobals)
+        );
+}
+
+HdDataSourceLocatorSet
+MoonrayMeshLightAdapter::InvalidateImagingSubprim(
+        UsdPrim const& prim,
+        TfToken const& subprim,
+        TfTokenVector const& properties,
+        const UsdImagingPropertyInvalidationType invalidationType)
+{
+    if (subprim.IsEmpty()) {
+        return MoonrayDataSourceMeshLightPrim::Invalidate(
+            prim, subprim, properties, invalidationType);
+    }
+    
+    return HdDataSourceLocatorSet();
 }
 
 bool

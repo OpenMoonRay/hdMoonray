@@ -1,0 +1,81 @@
+#usda 1.0
+
+def Group "const"
+{
+    # const : a single value applies to the entire prim
+    def BasisCurves "bezier"
+    {
+        uniform token[] xformOpOrder = ["xformOp:translate"]
+        float3 xformOp:translate = (0, 0, 0)
+
+        uniform token type = "cubic"
+        uniform token basis = "bezier"
+        int[] curveVertexCounts = [7,7]
+        point3f[] points = [(0, 0, 0), (1, 1, 0), (1, 2, 0), (0, 3, 0), (-1, 4, 0), (-1, 5, 0), (0, 6, 0),
+                            (0.5, 0, 0), (1.5, 1, 0), (1.5, 2, 0), (0.5, 3, 0), (-0.5, 4, 0), (-0.5, 5, 0), (0.5, 6, 0)]
+        float[] widths = [0.5] (interpolation = "constant")
+        color3f[] primvars:displayColor = [(0, 0, 1)] (interpolation = "constant")
+    }
+}
+
+def Group "uniform"
+{
+    # uniform : UsdGeom doc says "For a curve prim, provide an array with a single element for each curve segment"
+    # based on the Storm implementation, this should perhaps be "per curve"
+
+    # The bezier 2 curves, so we define 2 values : each should affect an entire curve
+    def BasisCurves "bezier"
+    {
+        uniform token[] xformOpOrder = ["xformOp:translate"]
+        float3 xformOp:translate = (4, 0, 0)
+
+        uniform token type = "cubic"
+        uniform token basis = "bezier"
+        int[] curveVertexCounts = [7,7]
+        point3f[] points = [(0, 0, 0), (1, 1, 0), (1, 2, 0), (0, 3, 0), (-1, 4, 0), (-1, 5, 0), (0, 6, 0),
+                            (0.5, 0, 0), (1.5, 1, 0), (1.5, 2, 0), (0.5, 3, 0), (-0.5, 4, 0), (-0.5, 5, 0), (0.5, 6, 0)]
+        float[] widths = [0.2, 0.8] (interpolation = "uniform")
+        color3f[] primvars:displayColor = [(0, 1, 0), (0, 0, 1)] (interpolation = "uniform")
+    }
+}
+
+def Group "vertex"
+{
+    # vertex: values are defined per vertex, and interpolated using the basis functions 
+
+    # We have a single curve with 7 verts, so we define 7 values
+    def BasisCurves "bezier"
+    {
+        uniform token[] xformOpOrder = ["xformOp:translate"]
+        float3 xformOp:translate = (8, 0, 0)
+
+        uniform token type = "cubic"
+        uniform token basis = "bezier"
+        int[] curveVertexCounts = [7]
+        point3f[] points = [(0, 0, 0), (1, 1, 0), (1, 2, 0), (0, 3, 0), (-1, 4, 0), (-1, 5, 0), (0, 6, 0)]
+        float[] widths = [0, .5, .5, .8, .5, .5, 0] (interpolation = "vertex")
+        color3f[] primvars:displayColor = [(0, 0, 1), (0, 1, 0), (0, 1, 1), (1, 0, 0), (1,0,1), (1,1,0),
+                                           (1,1,1)] (interpolation = "vertex")
+    }
+}
+
+def Group "varying"
+{
+    # varying: doc says "two values are defined per segment, and interpolated linearly"
+    # Storm seems to require 1 initial value + 1 value per segment
+
+    # The bezier has 7 vertices and 2 segments. verts 0,1,2,3 define the first segment and 3,4,5,6 the second
+    # There are 3 values using varying interpolation per Storm
+    def BasisCurves "bezier"
+    {
+        uniform token[] xformOpOrder = ["xformOp:translate"]
+        float3 xformOp:translate = (12, 0, 0)
+
+        uniform token type = "cubic"
+        uniform token basis = "bezier"
+        int[] curveVertexCounts = [7]
+        point3f[] points = [(0, 0, 0), (1, 1, 0), (1, 2, 0), (0, 3, 0), (-1, 4, 0), (-1, 5, 0), (0, 6, 0)]
+        float[] widths = [0, .8, .4] (interpolation = "varying")
+        color3f[] primvars:displayColor = [(0, 0, 1), (0, 1, 0), (1, 0, 0)] (interpolation = "varying")
+    }
+}

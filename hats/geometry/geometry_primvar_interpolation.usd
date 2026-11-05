@@ -106,3 +106,7 @@ def Mesh "invalid"
     )
     uniform token subdivisionScheme = "none"
 }
+
+def DomeLight "defaultLight"
+{
+}

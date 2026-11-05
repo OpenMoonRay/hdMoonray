@@ -9,6 +9,12 @@
                         ],
                         "displayName": "Moonray",
                         "priority": 99
+                    },
+                    "MoonraySceneIndexPlugin" : {
+                        "bases": ["HdSceneIndexPlugin"],
+                        "loadWithRenderer": [ "Moonray" ],
+                        "priority": 0,
+                        "displayName": "Scene Indexes for Moonray"
                     }
                 }
             },

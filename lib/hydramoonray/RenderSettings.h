@@ -8,7 +8,7 @@
 
 namespace hdMoonray {
 
-class RenderDelegate;
+class HdMoonray_RenderDelegate;
 
 
 // Render settings are stored generically by the RenderDelegate. The job of this class is
@@ -19,7 +19,7 @@ class RenderDelegate;
 class RenderSettings
 {
 public:
-    RenderSettings(RenderDelegate& delegate) : mDelegate(delegate) {}
+    RenderSettings(HdMoonray_RenderDelegate& delegate) : mDelegate(delegate) {}
 
     void addDescriptors(pxr::HdRenderSettingDescriptorList& descriptorList) const;
 
@@ -39,9 +39,14 @@ public:
     std::string getExecutionMode() const;
     void setDeepIdAttributeName();
 
+    // a couple of settings need to be applied before the delegate is even created,
+    // these are obtained by calling these functions from the plugin class
+    static bool staticDisableRender(pxr::HdRenderSettingsMap const& settings);
+    static uint32_t staticThreads(pxr::HdRenderSettingsMap const& settings);
+
 private:
 
-    RenderDelegate& mDelegate;
+    HdMoonray_RenderDelegate& mDelegate;
 };
 
 }

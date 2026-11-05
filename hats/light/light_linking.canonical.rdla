@@ -1,15 +1,17 @@
 SceneVariables {
-    ["camera"] = PerspectiveCamera("primaryCamera"),
-    ["layer"] = Layer("defaultLayer"),
+    ["camera"] = PerspectiveCamera("/DEFAULT/primaryCamera"),
+    ["layer"] = Layer("/DEFAULT/defaultLayer"),
+    ["image_width"] = 960,
+    ["image_height"] = 960,
     ["enable_motion_blur"] = false,
 }
 
-AttributeMap("displayColor") {
+AttributeMap("/DEFAULT/displayColorMap") {
     ["default_value"] = bind(undef(), Rgb(0.5, 0.5, 0.5)),
     ["primitive_attribute_name"] = "displayColor",
 }
 
-AttributeMap("displayOpacity") {
+AttributeMap("/DEFAULT/displayOpacityMap") {
     ["primitive_attribute_name"] = "displayOpacity",
     ["primitive_attribute_type"] = "float",
 }
@@ -37,22 +39,22 @@ RdlMeshGeometry("/sphere3") {
     ["primitive_attributes"] = { UserData("/sphere3.primvars:primId")},
 }
 
-GeometrySet("allGeometry") {
+GeometrySet("/DEFAULT/allGeometry") {
     RdlMeshGeometry("/sphere1"),
     RdlMeshGeometry("/sphere2"),
     RdlMeshGeometry("/sphere3"),
 }
 
-Layer("defaultLayer") {
-    {RdlMeshGeometry("/sphere1"), "", UsdPreviewSurface("defaultMaterial"), LightSet("LightSet071701"), undef(), undef(), undef(), undef(), undef()},
-    {RdlMeshGeometry("/sphere2"), "", UsdPreviewSurface("defaultMaterial"), LightSet("LightSet0BB081"), undef(), undef(), undef(), undef(), undef()},
-    {RdlMeshGeometry("/sphere3"), "", UsdPreviewSurface("defaultMaterial"), LightSet("LightSet049980"), undef(), undef(), undef(), undef(), undef()},
+Layer("/DEFAULT/defaultLayer") {
+    {RdlMeshGeometry("/sphere1"), "", UsdPreviewSurface("/DEFAULT/defaultMaterial"), LightSet("LightSet071701"), undef(), undef(), LightFilterSet("/DEFAULT/emptyLightFilterSet"), undef(), undef()},
+    {RdlMeshGeometry("/sphere2"), "", UsdPreviewSurface("/DEFAULT/defaultMaterial"), LightSet("LightSet0BB081"), undef(), undef(), LightFilterSet("/DEFAULT/emptyLightFilterSet"), undef(), undef()},
+    {RdlMeshGeometry("/sphere3"), "", UsdPreviewSurface("/DEFAULT/defaultMaterial"), LightSet("LightSet049980"), undef(), undef(), LightFilterSet("/DEFAULT/emptyLightFilterSet"), undef(), undef()},
 }
 
-UsdPreviewSurface("defaultMaterial") {
-    ["diffuseColor"] = bind(AttributeMap("displayColor"), Rgb(1, 1, 1)),
+UsdPreviewSurface("/DEFAULT/defaultMaterial") {
+    ["diffuseColor"] = bind(AttributeMap("/DEFAULT/displayColorMap"), Rgb(1, 1, 1)),
     ["roughness"] = bind(undef(), 0.300000012),
-    ["opacity"] = bind(AttributeMap("displayOpacity"), 1),
+    ["opacity"] = bind(AttributeMap("/DEFAULT/displayOpacityMap"), 1),
 }
 
 EnvLight("/dome1") {
@@ -61,6 +63,9 @@ EnvLight("/dome1") {
 
 EnvLight("/dome2") {
     ["color"] = Rgb(0, 1, 0),
+}
+
+LightFilterSet("/DEFAULT/emptyLightFilterSet") {
 }
 
 LightSet("LightSet049980") {
@@ -85,7 +90,7 @@ PerspectiveCamera("/camera") {
     ["film_width_aperture"] = 240,
 }
 
-PerspectiveCamera("primaryCamera") {
+PerspectiveCamera("/DEFAULT/primaryCamera") {
     ["node_xform"] = blur(Mat4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 16, 1), Mat4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 16, 1)),
     ["near"] = 0.00999999978,
     ["mb_shutter_open"] = 0,
@@ -94,9 +99,41 @@ PerspectiveCamera("primaryCamera") {
     ["film_width_aperture"] = 240,
 }
 
+RenderOutput("/_outputs/depth") {
+    ["result"] = "depth",
+    ["file_name"] = "/tmp/scene.exr",
+    ["math_filter"] = "min",
+}
+
+RenderOutput("/_outputs/primId") {
+    ["result"] = "primitive attribute",
+    ["primitive_attribute"] = "primId",
+    ["file_name"] = "/tmp/scene.exr",
+    ["math_filter"] = "closest",
+}
+
+RenderOutput("/_outputs/instanceIdA") {
+    ["result"] = "primitive attribute",
+    ["primitive_attribute"] = "instanceIdA",
+    ["math_filter"] = "closest",
+}
+
+RenderOutput("/_outputs/instanceId") {
+    ["result"] = "primitive attribute",
+    ["primitive_attribute"] = "instanceId",
+    ["file_name"] = "/tmp/scene.exr",
+    ["math_filter"] = "closest",
+}
+
 UserData("/sphere2.primvars:primId") {
     ["float_key"] = "primId",
     ["float_values_0"] = { 1},
+    ["rate"] = "constant",
+}
+
+UserData("/sphere3.primvars:primId") {
+    ["float_key"] = "primId",
+    ["float_values_0"] = { 2},
     ["rate"] = "constant",
 }
 
@@ -106,8 +143,9 @@ UserData("/sphere1.primvars:primId") {
     ["rate"] = "constant",
 }
 
-UserData("/sphere3.primvars:primId") {
-    ["float_key"] = "primId",
-    ["float_values_0"] = { 2},
-    ["rate"] = "constant",
+RenderOutput("/_outputs/elementId") {
+    ["result"] = "primitive attribute",
+    ["primitive_attribute"] = "elementId",
+    ["file_name"] = "/tmp/scene.exr",
+    ["math_filter"] = "closest",
 }

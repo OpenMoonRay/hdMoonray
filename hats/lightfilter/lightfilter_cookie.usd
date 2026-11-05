@@ -13,7 +13,7 @@ def Camera "camera"
     float verticalAperture = 240
     float2 clippingRange = (0.01, 10000)
 }
-def Mesh "floor" 
+def Mesh "floor" (prepend apiSchemas = ["MaterialBindingAPI"])
 {
     float3[] extent = [(-0.5, 0, -0.5), (0.5, 0, 0.5)]
     int[] faceVertexCounts = [4]
@@ -28,7 +28,7 @@ def Mesh "floor"
     rel material:binding = </surface>
 }
 
-def Mesh "wall" 
+def Mesh "wall" (prepend apiSchemas = ["MaterialBindingAPI"])
 {
     float3[] extent = [(-0.5, 0, -0.5), (0.5, 0, 0.5)]
     int[] faceVertexCounts = [4]
@@ -49,7 +49,7 @@ def Material "surface"
 
     def Shader "baseMtl"
     {
-        uniform token info:id = "BaseMaterial"
+        uniform token info:id = "DwaBaseMaterial"
         color4f outputs:surface
     }
 }

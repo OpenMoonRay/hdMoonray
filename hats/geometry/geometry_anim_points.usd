@@ -1,0 +1,26 @@
+#usda 1.0
+(
+    startTimeCode = 1
+    endTimeCode = 10
+)
+
+def Plane "plane"
+{
+    double width = 13
+    double width.timeSamples = {
+        1: 1,
+        10: 10
+    }
+}
+
+def Camera "camera"
+{
+    uniform token[] xformOpOrder = ["xformOp:translate"]
+    float3 xformOp:translate = (0, 0, 50)
+    double shutter:open = -0.25
+    double shutter:close = 0.25
+}
+
+def DomeLight "defaultLight"
+{
+}

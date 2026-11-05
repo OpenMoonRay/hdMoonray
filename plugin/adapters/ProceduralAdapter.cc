@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "ProceduralAdapter.h"
+#include "dataSourceProcedural.h"
 #include <pxr/usd/usdGeom/procedural.h>
 #include <pxr/usd/usdGeom/subset.h>
 #include "pxr/usdImaging/usdImaging/indexProxy.h"
@@ -34,6 +35,53 @@ ProceduralAdapter::ProceduralAdapter(): UsdImagingGprimAdapter()
 
 ProceduralAdapter::~ProceduralAdapter()
 {
+}
+
+TfTokenVector
+ProceduralAdapter::GetImagingSubprims(UsdPrim const& prim)
+{
+    return { TfToken() };
+}
+
+TfToken
+ProceduralAdapter::GetImagingSubprimType(
+        UsdPrim const& prim,
+        TfToken const& subprim)
+{
+    if (subprim.IsEmpty()) {
+        return proceduralToken;
+    }
+    return TfToken();
+}
+
+HdContainerDataSourceHandle
+ProceduralAdapter::GetImagingSubprimData(
+        UsdPrim const& prim,
+        TfToken const& subprim,
+        const UsdImagingDataSourceStageGlobals &stageGlobals)
+{
+    if (subprim.IsEmpty()) {
+        return MoonrayDataSourceProceduralPrim::New(
+            prim.GetPath(),
+            prim,
+            stageGlobals);
+    }
+    return nullptr;
+}
+
+HdDataSourceLocatorSet
+ProceduralAdapter::InvalidateImagingSubprim(
+        UsdPrim const& prim,
+        TfToken const& subprim,
+        TfTokenVector const& properties,
+        const UsdImagingPropertyInvalidationType invalidationType)
+{
+    if (subprim.IsEmpty()) {
+        return MoonrayDataSourceProceduralPrim::Invalidate(
+            prim, subprim, properties, invalidationType);
+    }
+    
+    return HdDataSourceLocatorSet();
 }
 
 bool
