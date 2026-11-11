@@ -3,13 +3,13 @@
 
 #pragma once
 
+#include "MoonrayOutput.h"
+#include "PixelData.h"
+
 #include <pxr/imaging/hd/renderDelegate.h>
 
 #include <scene_rdl2/scene/rdl2/SceneContext.h>
 #include <scene_rdl2/scene/rdl2/Utils.h>
-
-#include "PixelData.h"
-
 namespace scene_rdl2 {
     namespace rdl2 { class RenderOutput; }
     namespace fb_util { class VariablePixelBuffer; }
@@ -55,22 +55,17 @@ public:
     /// True when converged
     virtual bool isFrameComplete() const=0;
 
-
-    /// A null RenderOutput* indicates the beauty buffer. This function should be used to test this
-    /// so it can be grepped for:
-    static bool isBeauty(const scene_rdl2::rdl2::RenderOutput* ro) { return not ro; }
-
     /// Update the PixelData to point to readable memory of correct size. Return false if none.
     /// The expected size and channels are in "request" in case this cannot otherwise be determined.
-    virtual bool allocate(scene_rdl2::rdl2::RenderOutput*, PixelData&, const PixelSize& request) = 0;
+    virtual bool allocate(MoonrayOutput, PixelData&, const PixelSize& request) = 0;
 
     /// Update the PixelData to point to current image. This can alter the size, type, and data
     /// pointer from the result of the previous call and/or allocate(). This can return false on
     /// error or if it is believed the old image is the same or better.
-    virtual bool resolve(scene_rdl2::rdl2::RenderOutput*, PixelData&) = 0;
+    virtual bool resolve(MoonrayOutput, PixelData&, bool forceUpdate = false) = 0;
 
     /// Free memory allocated by allocate() or resolve(). Destructor should also free anything not deallocated
-    virtual void deallocate(scene_rdl2::rdl2::RenderOutput*, PixelData&) = 0;
+    virtual void deallocate(MoonrayOutput, PixelData&) = 0;
 
     virtual void applySettings(const RenderSettings&)=0;
     void setIsHoudini(bool v) { mIsHoudini = v; }

@@ -3,10 +3,15 @@
 
 #pragma once
 
+#include <scene_rdl2/render/logging/logging.h>
+
 #include <pxr/imaging/hd/types.h>
 #include <pxr/usd/sdf/path.h>
 
+
 namespace hdMoonray {
+
+using scene_rdl2::logging::Logger;
 
 void hdmLogSyncStart(const std::string& type, const pxr::SdfPath& id, pxr::HdDirtyBits *dirtyBits);
 void hdmLogSyncEnd(const pxr::SdfPath& id);

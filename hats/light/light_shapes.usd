@@ -1,0 +1,71 @@
+#usda 1.0
+
+def Plane "wall" 
+{
+    float3[] extent = [(-10, -4, 0), (10, 4, 0)]
+    double length = 8 
+    double width = 20
+}
+
+def RectLight "rectLight" 
+{
+    color3f inputs:color = (1, 0.25, 0.25) 
+    float inputs:height = 5 
+    float inputs:width = 3 
+    asset inputs:texture:file = "/work/gshad/moonshine_test/rats_data/light/rect_textured/env_maps/burning_man-med.exr"
+    float3 xformOp:translate = (-6, -1, 0.2) 
+    uniform token[] xformOpOrder = ["xformOp:translate"]
+}
+
+def DiskLight "diskLight"
+{
+    color3f inputs:color = (1, 1, 0.25) 
+    float inputs:radius = 2 
+    float3 xformOp:translate = (-2, -1, 0.2) 
+    uniform token[] xformOpOrder = ["xformOp:translate"]
+}
+
+def CylinderLight "cylinderlight"
+{
+    color3f inputs:color = (0.25, 1, 0.25)
+    float inputs:length = 2.5 
+    float inputs:radius = 1.2 
+    float3 xformOp:translate = (2, -1, 1) 
+    uniform token[] xformOpOrder = ["xformOp:translate"]
+}
+
+def SphereLight "sphereLight" 
+{
+    color3f inputs:color = (0.25, 0.25, 1) 
+    float inputs:intensity = 4 
+    float inputs:radius = 1.5 
+    float3 xformOp:translate = (6, -1, 1) 
+    uniform token[] xformOpOrder = ["xformOp:translate"]
+}
+
+def DiskLight "spotLight"
+{
+    color3f inputs:color = (1, 0.25, 1) 
+    float inputs:radius = 2
+    float inputs:intensity = 10
+
+    # these should cause hdm to generate a spotlight
+    float inputs:shaping:cone:angle = 30
+    float inputs:shaping:cone:softness = 1
+
+    float3 xformOp:translate = (8, -1, 0.5) 
+    uniform token[] xformOpOrder = ["xformOp:translate"]
+}
+
+def RectLight "shapedRect"
+{
+     color3f inputs:color = (0.25, 1, 1) 
+    float inputs:height = 3 
+    float inputs:width = 3 
+    
+    # this should cause hdm to set the "spread" attribute
+    float inputs:shaping:cone:angle = 45
+
+    float3 xformOp:translate = (-6, -1, 0.2) 
+    uniform token[] xformOpOrder = ["xformOp:translate"]
+}

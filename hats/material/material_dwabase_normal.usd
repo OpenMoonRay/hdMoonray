@@ -45,7 +45,8 @@ def RectLight "key"
     bool inputs:normalize = true
 }
 
-def "plane" ( payload = @/work/rd/raas/hydra/rats/data/plane_xz.usda@ )
+def "plane" ( payload = @/work/rd/raas/hydra/rats/data/plane_xz.usda@
+              prepend apiSchemas = ["MaterialBindingAPI"])
 {
     matrix4d xformOp:transform = ( (18, 0, 0, 0),
                                    ( 0, 1, 0, 0),
@@ -79,7 +80,8 @@ def Material "surfacing_plane"
         }
 }
 
-def "geom" ( payload = @/work/rd/raas/hydra/rats/data/sphere.usdc@ )
+def "geom" ( payload = @/work/rd/raas/hydra/rats/data/sphere.usdc@ 
+             prepend apiSchemas = ["MaterialBindingAPI"])
 {
       matrix4d xformOp:transform = ( (1, 0, 0, 0),
                                      (0, 1, 0, 0),

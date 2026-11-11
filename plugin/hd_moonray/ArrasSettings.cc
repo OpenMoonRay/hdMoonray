@@ -3,10 +3,10 @@
 
 #include "ArrasSettings.h"
 
+#include <hydramoonray/HdmLog.h>
 #include <hydramoonray/RenderSettings.h>
 #include <hydramoonray/Utils.h>
 
-#include <scene_rdl2/render/logging/logging.h>
 #include <sdk/sdk.h>
 
 #include <pxr/base/vt/value.h>
@@ -31,7 +31,6 @@ TF_DEFINE_PRIVATE_TOKENS(Tokens,
    (denoiseNormalGuiding)
 );
 
-using scene_rdl2::logging::Logger;
 using namespace hdMoonray;
 
 std::string getMoonPackage()

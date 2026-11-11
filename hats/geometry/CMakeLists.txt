@@ -4,6 +4,7 @@
 add_hats_test(geometry_basis_curves CAMERA camera)
 add_hats_test(geometry_instances)
 add_hats_test(geometry_primvar_interpolation)
+add_hats_test(geometry_curve_interpolation)
 add_hats_test(geometry_primvars)
 add_hats_test(geometry_procedural)
 add_hats_test(geometry_skel)

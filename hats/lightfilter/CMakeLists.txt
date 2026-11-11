@@ -9,7 +9,7 @@ add_hats_test(lightfilter_cookie_projector CAMERA camera)
 add_hats_test(lightfilter_cookie_v2 CAMERA camera)
 add_hats_test(lightfilter_decay CAMERA camera)
 add_hats_test(lightfilter_intensity CAMERA camera)
+add_hats_test(lightfilter_linking CAMERA camera)
 add_hats_test(lightfilter_rod CAMERA camera)
 add_hats_test(lightfilter_vdb CAMERA camera)
-
 

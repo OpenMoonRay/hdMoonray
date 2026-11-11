@@ -1,0 +1,142 @@
+#usda 1.0
+
+def Camera "camera"
+{
+    float3 xformOp:rotateXYZ = (-30,0,0)
+    float3 xformOp:translate = (0, 0.75, 50)
+    uniform token[] xformOpOrder = ["xformOp:rotateXYZ", "xformOp:translate"]
+}
+
+def RectLight "red"
+{
+    float3 xformOp:rotateXYZ = (-60,-60,0)
+    float3 xformOp:translate = (0, 0, 100)
+    uniform token[] xformOpOrder = ["xformOp:rotateXYZ", "xformOp:translate"]
+    float inputs:intensity = 12
+    color3f inputs:color = (1, 0, 0)
+    bool inputs:normalize = true
+}
+
+def RectLight "green"
+{
+    float3 xformOp:rotateXYZ = (-60,-60,0)
+    float3 xformOp:translate = (0, 0, 100)
+    uniform token[] xformOpOrder = ["xformOp:rotateXYZ", "xformOp:translate"]
+    float inputs:intensity = 12
+    color3f inputs:color = (0, 1, 0)
+    bool inputs:normalize = true
+}
+
+def RectLight "blue"
+{
+    float3 xformOp:rotateXYZ = (-60,-60,0)
+    float3 xformOp:translate = (0, 0, 100)
+    uniform token[] xformOpOrder = ["xformOp:rotateXYZ", "xformOp:translate"]
+    float inputs:intensity = 12
+    color3f inputs:color = (0, 0, 1)
+    bool inputs:normalize = true
+}
+
+def "sphere1" ( payload = @/work/rd/raas/hydra/rats/data/sphere.usdc@ 
+                prepend apiSchemas = ["MaterialBindingAPI"])
+{
+    float3 xformOp:scale = (2,2,2)
+    float3 xformOp:translate = (3,1,0)
+    uniform token[] xformOpOrder = ["xformOp:scale","xformOp:translate"]
+    rel material:binding = </mat1>
+}
+def "sphere2" ( payload = @/work/rd/raas/hydra/rats/data/sphere.usdc@ 
+                prepend apiSchemas = ["MaterialBindingAPI"])
+{
+    float3 xformOp:scale = (2,2,2)
+    float3 xformOp:translate = (0,1,0)
+    uniform token[] xformOpOrder = ["xformOp:scale","xformOp:translate"]
+    rel material:binding = </mat2>
+}
+def "sphere3" ( payload = @/work/rd/raas/hydra/rats/data/sphere.usdc@
+                prepend apiSchemas = ["MaterialBindingAPI"] )
+{
+    float3 xformOp:scale = (2,2,2)
+    float3 xformOp:translate = (-3,1,0)
+    uniform token[] xformOpOrder = ["xformOp:scale","xformOp:translate"]
+    rel material:binding = </mat3>
+}
+
+def Material "mat1"
+{
+    color4f outputs:moonray:surface.connect = <geomMtl.outputs:surface>
+
+    def Shader "geomMtl"
+    {
+        uniform token info:id = "AccentMaterial"
+        color4f outputs:surface
+        token inputs:background_material.connect = <../baseMtl.outputs:surface>
+        float inputs:diffuse = 0.1
+        float inputs:specular = 2.0
+        float inputs:roughness = 0.4
+        token inputs:specular_model = "GGX"
+        string[] inputs:diffuse_lightset = ["/green"]
+        string[] inputs:specular_lightset = ["/red"]
+    }
+
+    def Shader "baseMtl"
+    {
+        uniform token info:id = "DwaBaseMaterial"
+        color4f outputs:surface
+        bool inputs:show_diffuse = false
+        bool inputs:show_specular = false
+       
+    }
+}
+
+def Material "mat2"
+{
+    color4f outputs:moonray:surface.connect = <geomMtl.outputs:surface>
+
+    def Shader "geomMtl"
+    {
+        uniform token info:id = "AccentMaterial"
+        color4f outputs:surface
+        token inputs:background_material.connect = <../baseMtl.outputs:surface>
+        float inputs:diffuse = 0.1
+        float inputs:specular = 2.0
+        float inputs:roughness = 0.4
+        token inputs:specular_model = "GGX"
+        string[] inputs:diffuse_lightset = ["/red"]
+        string[] inputs:specular_lightset = ["/blue", "/green"]
+    }
+
+    def Shader "baseMtl"
+    {
+        uniform token info:id = "DwaBaseMaterial"
+        color4f outputs:surface
+        bool inputs:show_diffuse = false
+        bool inputs:show_specular = false
+    }
+}
+
+def Material "mat3"
+{
+    color4f outputs:moonray:surface.connect = <geomMtl.outputs:surface>
+
+    def Shader "geomMtl"
+    {
+        uniform token info:id = "AccentMaterial"
+        color4f outputs:surface
+        token inputs:background_material.connect = <../baseMtl.outputs:surface>
+        float inputs:diffuse = 0.1
+        float inputs:specular = 2.0
+        float inputs:roughness = 0.4
+        token inputs:specular_model = "GGX"
+        string[] inputs:diffuse_lightset = ["/blue", "/red"]
+        string[] inputs:specular_lightset = ["/green"]
+    }
+
+    def Shader "baseMtl"
+    {
+        uniform token info:id = "DwaBaseMaterial"
+        color4f outputs:surface
+        bool inputs:show_diffuse = false
+        bool inputs:show_specular = false
+    }
+}
